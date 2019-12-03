@@ -1,0 +1,6 @@
+pandas>=0.24.2
+numpy>=1.16.2
+pytorch>=1.0.1
+tensorflow>=1.14.0
+sklearn>=0.21.3
+Cython>=0.29.12
