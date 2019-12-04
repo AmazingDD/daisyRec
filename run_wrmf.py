@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-03 12:30:14
+@Date: 2019-12-03 14:52:58
 @LastEditors: Yudi
-@LastEditTime: 2019-12-04 15:11:02
+@LastEditTime: 2019-12-04 19:04:54
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -14,12 +14,12 @@ import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 
-from daisy.model.KNNRecommender import KNNWithMeans
+from daisy.model.WRMFRecommender import WRMF
 from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Item-KNN recommender test')
+    parser = argparse.ArgumentParser(description='WRMF recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -54,24 +54,28 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--sim_method', 
-                        type=str, 
-                        default='cosine', 
-                        help='method to calculate similarity, options: cosine/jaccard/pearson')
-    parser.add_argument('--maxk', 
-                        type=int, 
+    parser.add_argument('--lambda_val', 
+                        type=float, 
+                        default=0.1, 
+                        help='regularization for ALS')
+    parser.add_argument('--alpha', 
+                        type=float, 
                         default=40, 
-                        help='The (max) number of neighbors to take into account')
-    parser.add_argument('--mink', 
+                        help='confidence weight')
+    parser.add_argument('--epochs', 
                         type=int, 
-                        default=1, 
-                        help='The (min) number of neighbors to take into account')
+                        default=30, 
+                        help='No. of training epochs')
+    parser.add_argument('--factors', 
+                        type=int, 
+                        default=20, 
+                        help='latent factor number')
     args = parser.parse_args()
 
     '''Validation Process for Parameter Tuning'''
     df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=False)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
-    
+
     # get ground truth
     test_ur = get_ur(test_set)
     total_train_ur = get_ur(train_set)
@@ -96,10 +100,9 @@ if __name__ == '__main__':
         val_ur = get_ur(validation)
 
         # build recommender model
-        model = KNNWithMeans(user_num, item_num, 
-                             args.maxk, args.mink, 
-                             sim_options={'name': args.sim_method, 'user_based': False})
-        model.fit(train)
+        model = WRMF(user_num, item_num, train, 
+                     args.lambda_val, args.alpha, args.epochs, args.factors)
+        model.fit()
 
         # build candidates set
         assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
@@ -109,11 +112,14 @@ if __name__ == '__main__':
             sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
             samples = random.sample(sub_item_pool, sample_num)
             val_ucands[k] = list(v | set(samples))
-
+        
         # get predict result
+        print('')
+        print('Generate recommend list...')
+        print('')
         preds = {}
         for u in tqdm(val_ucands.keys()):
-            pred_rates = [model.predict(u, i)[0] for i in val_ucands[u]]
+            pred_rates = [model.predict(u, i) for i in val_ucands[u]]
             rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
             top_n = np.array(val_ucands[u])[rec_idx]
             preds[u] = top_n
@@ -155,11 +161,10 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # build recommender model
-    model = KNNWithMeans(user_num, item_num, 
-                         args.maxk, args.mink, 
-                         sim_options={'name': args.sim_method, 'user_based': False})
-    model.fit(train_set)
-
+    model = WRMF(user_num, item_num, train_set, 
+                    args.lambda_val, args.alpha, args.epochs, args.factors)
+    model.fit()
+    
     print('Start Calculating Metrics......')
     # build candidates set
     assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
@@ -171,9 +176,12 @@ if __name__ == '__main__':
         test_ucands[k] = list(v | set(samples))
 
     # get predict result
+    print('')
+    print('Generate recommend list...')
+    print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        pred_rates = [model.predict(u, i)[0] for i in test_ucands[u]]
+        pred_rates = [model.predict(u, i) for i in test_ucands[u]]
         rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
         top_n = np.array(test_ucands[u])[rec_idx]
         preds[u] = top_n
@@ -181,7 +189,7 @@ if __name__ == '__main__':
     # convert rank list to binary-interaction
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
-        
+    
     # calculate metrics for test set
     pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
     rec_k = recall_at_k(preds, test_ur, args.topk)

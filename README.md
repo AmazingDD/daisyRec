@@ -35,22 +35,22 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 
 | Algo. | File |
 | ------ | ------ |
-| Popular | MostPopRecommender.py |
-| Item-KNN | ItemKNNRecommender.py |
-| User-KNN | UserKNNRecommender.py |
+| Popular | run_mostpop.py |
+| Item-KNN | run_itemknn.py |
+| User-KNN | run_userknn.py |
 
 ## Examples to run:
 
 Default set top-K number to 10, you can change top-K number by modifying `topk` argument.
 
 ```
-python ItemKNNRecommender.py --sim_method=pearson
+python run_itemknn.py --sim_method=pearson
 ```
 
 Help message will give you more detail description for arguments, For example:
 
 ```
-python ItemKNNRecommender.py --help
+python run_itemknn.py --help
 ```
 
 ---

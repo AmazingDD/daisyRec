@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-03 14:20:00
+@LastEditTime: 2019-12-03 17:51:13
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -14,11 +14,12 @@ import random
 import numpy as np
 import pandas as pd
 import scipy.io as sio
+import torch.utils.data as data
 
 from collections import defaultdict
 from sklearn.model_selection import KFold, train_test_split
 
-def load_rate(src='ml-100k', prepro='origin', binary=False):
+def load_rate(src='ml-100k', prepro='origin', binary=True):
     # which dataset will use
     if src == 'ml-100k':
         df = pd.read_csv(f'./data/{src}/u.data', sep='\t', header=None, 
@@ -175,7 +176,8 @@ def load_rate(src='ml-100k', prepro='origin', binary=False):
     else:
         raise ValueError('Invalid dataset preprocess type, origin/5core/10core expected')
 
-def negative_sampling(ratings, num_ng=999):
+def negative_sampling(ratings, num_ng=4):
+    prime_df = ratings.copy()
     item_pool = set(ratings.item.unique())
 
     interact_status = ratings.groupby('user')['item'].apply(set).reset_index()
@@ -183,7 +185,19 @@ def negative_sampling(ratings, num_ng=999):
     interact_status['neg_items'] = interact_status['inter_items'].apply(lambda x: item_pool - x)
     interact_status['neg_samples'] = interact_status['neg_items'].apply(lambda x: random.sample(x, num_ng))
     
-    return interact_status[['user', 'neg_samples']]
+    neg_df = []
+    for _, row in interact_status[['user', 'neg_samples']].iterrows():
+        u = int(row['user'])
+        for i in row['neg_samples']:
+            neg_df.append([u, int(i), 0., 1])
+    neg_df = pd.DataFrame(neg_df, columns=['user', 'item', 'rating', 'timestamp'])
+
+    df_sampled = pd.concat([prime_df, neg_df], ignore_index=True)
+
+    del interact_status, prime_df, neg_df
+    gc.collect()
+
+    return df_sampled
 
 def split_test(df, test_method='fo', test_size=.2):
     if test_method == 'tfo':
@@ -268,3 +282,26 @@ def get_ir(df):
         ir[int(row['item'])].add(int(row['user']))
 
     return ir
+
+class PointMFData(data.Dataset):
+    def __init__(self, sampled_df):
+        super(PointMFData, self).__init__()
+        self.features_fill = []
+        self.labels_fill = []
+        for _, row in sampled_df.iterrows():
+            self.features_fill.append([int(row['user']), int(row['item'])])
+            self.labels_fill.append(row['rating'])
+        self.labels_fill = np.array(self.labels_fill, dtype=np.float32)
+
+    def __len__(self):
+        return len(self.labels_fill)
+
+    def __getitem__(self, idx):
+        features = self.features_fill
+        labels = self.labels_fill
+
+        user = features[idx][0]
+        item = features[idx][1]
+        label = labels[idx]
+
+        return user, item, label

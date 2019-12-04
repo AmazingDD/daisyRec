@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors: Yudi
-@LastEditTime: 2019-12-03 14:47:00
+@LastEditTime: 2019-12-04 16:02:05
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -51,7 +51,8 @@ if __name__ == '__main__':
                         help='No. of folds for cross-validation')
     parser.add_argument('--cand_num', 
                         type=int, 
-                        default=1000, help='No. of candidates item for predict')
+                        default=1000, 
+                        help='No. of candidates item for predict')
     # algo settings
     parser.add_argument('--sim_method', 
                         type=str, 
@@ -84,23 +85,21 @@ if __name__ == '__main__':
     candidates_num = args.cand_num
 
     # store metrics result for test set
-    fnl_precision, fnl_recall, fnl_map, fnl_ndcg, fnl_hr, fnl_mrr = [], [], [], [], [], []
-    best_metric = np.array([0. for _ in range(6)])
-    best_model, best_tag = None, None
+    fnl_metric = []
     for fold in range(fn):
         print(f'Start Validation [{fold + 1}]......')
         train = train_set_list[fold]
         validation = val_set_list[fold]
 
-        # build recommender model
-        model = KNNWithMeans(user_num, item_num, 
-                               args.maxk, args.mink, 
-                               sim_options={'name': args.sim_method, 'user_based': True})
-        model.fit(train)
-
         # get ground truth
         train_ur = get_ur(train)
         val_ur = get_ur(validation)
+
+        # build recommender model
+        model = KNNWithMeans(user_num, item_num, 
+                             args.maxk, args.mink, 
+                             sim_options={'name': args.sim_method, 'user_based': True})
+        model.fit(train)
 
         # build candidates set
         assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
@@ -134,22 +133,33 @@ if __name__ == '__main__':
         print('-'*20)
         print(f'Precision@{args.topk}: {pre_k:.4f}')
         print(f'Recall@{args.topk}: {rec_k:.4f}')
-        print(f'MAP@{args.topk}: {hr_k:.4f}')
-        print(f'NDCG@{args.topk}: {map_k:.4f}')
-        print(f'HR@{args.topk}: {mrr_k:.4f}')
-        print(f'MRR@{args.topk}: {ndcg_k:.4f}')
+        print(f'HR@{args.topk}: {hr_k:.4f}')
+        print(f'MAP@{args.topk}: {map_k:.4f}')
+        print(f'MRR@{args.topk}: {mrr_k:.4f}')
+        print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
 
         tmp_metric = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
+        fnl_metric.append(tmp_metric)
 
-        if sum(tmp_metric >= best_metric) >= 3:
-            best_model = model
-            best_metric = tmp_metric
-            best_tag = fold + 1
-
-        print(f'Model build by Validation [{best_tag}] is best......', '\n')
+    # get final validation metrics result by average operation
+    fnl_metric = np.array(fnl_metric).mean(axis=0)
+    print('='*20, 'Metrics for All Validation', '='*20)
+    print(f'Precision@{args.topk}: {fnl_metric[0]:.4f}')
+    print(f'Recall@{args.topk}: {fnl_metric[1]:.4f}')
+    print(f'HR@{args.topk}: {fnl_metric[2]:.4f}')
+    print(f'MAP@{args.topk}: {fnl_metric[3]:.4f}')
+    print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
+    print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
 
     '''Test Process for Metrics Exporting'''
     print('='*50, '\n')
+    # retrain model by the whole train set
+    # build recommender model
+    model = KNNWithMeans(user_num, item_num, 
+                         args.maxk, args.mink, 
+                         sim_options={'name': args.sim_method, 'user_based': True})
+    model.fit(train_set)
+
     print('Start Calculating Metrics......')
     # build candidates set
     assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
@@ -163,7 +173,7 @@ if __name__ == '__main__':
     # get predict result
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        pred_rates = [best_model.predict(u, i)[0] for i in test_ucands[u]]
+        pred_rates = [model.predict(u, i)[0] for i in test_ucands[u]]
         rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
         top_n = np.array(test_ucands[u])[rec_idx]
         preds[u] = top_n
@@ -182,8 +192,8 @@ if __name__ == '__main__':
 
     print(f'Precision@{args.topk}: {pre_k:.4f}')
     print(f'Recall@{args.topk}: {rec_k:.4f}')
-    print(f'MAP@{args.topk}: {hr_k:.4f}')
-    print(f'NDCG@{args.topk}: {map_k:.4f}')
-    print(f'HR@{args.topk}: {mrr_k:.4f}')
-    print(f'MRR@{args.topk}: {ndcg_k:.4f}')
+    print(f'HR@{args.topk}: {hr_k:.4f}')
+    print(f'MAP@{args.topk}: {map_k:.4f}')
+    print(f'MRR@{args.topk}: {mrr_k:.4f}')
+    print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
     print('='* 20, ' Done ', '='*20)

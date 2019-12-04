@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 22:40:23
 @LastEditors: Yudi
-@LastEditTime: 2019-12-03 11:42:03
+@LastEditTime: 2019-12-04 14:29:08
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: metrics for evaluating recommend list
@@ -104,9 +104,16 @@ def ndcg_at_k(r, k):
     return dcg_at_k(r, k) / idcg
 
 def hr_at_k(rs, test_ur):
-    numer, denom = 0., 0.
-    for user in test_ur.keys():
-        numer += np.sum(rs[user])
-        denom += len(test_ur[user])
+    # TODO Do-check
+    # numer, denom = 0., 0.
+    # for user in test_ur.keys():
+    #     numer += np.sum(rs[user])
+    #     denom += len(test_ur[user])
 
-    return numer / denom
+    # return numer / denom
+    uhr = 0
+    for r in rs.values():
+        if np.sum(r) != 0:
+            uhr += 1
+    
+    return uhr / len(rs)
