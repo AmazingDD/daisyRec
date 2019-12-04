@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-03 17:51:13
+@LastEditTime: 2019-12-04 22:13:08
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -305,3 +305,70 @@ class PointMFData(data.Dataset):
         label = labels[idx]
 
         return user, item, label
+
+class BuildCorpus(object):
+    def __init__(self, corpus_df, window=5, max_item_num=20000, unk='<UNK>'):
+        self.window = window
+        self.max_item_num = max_item_num
+        self.unk = unk
+
+        # build corpus
+        self.corpus = corpus_df.groupby('user')['item'].apply(lambda x: x.values.tolist()).reset_index()
+
+    def skipgram(self, record, i):
+        iitem = record[i]
+        left = record[max(i - self.window, 0): i]
+        right = record[i + 1: i + 1 + self.window]
+        return iitem, [self.unk for _ in range(self.window - len(left))] + \
+                        left + right + [self.unk for _ in range(self.window - len(right))]
+
+    def build(self):
+        max_item_num = self.max_item_num
+        corpus = self.corpus
+        print('building vocab...')
+        self.wc = {self.unk : 1}
+        for _, row in corpus.iterrows():
+            sent = row['item']
+            for item in sent:
+                self.wc[item] = self.wc.get(item, 0) + 1
+
+        self.idx2item = [self.unk] + sorted(self.wc, key=self.wc.get, reverse=True)[:max_item_num - 1]
+        self.item2idx = {self.idx2item[idx]: idx for idx, _ in enumerate(self.idx2item)}
+        self.vocab = set([item for item in self.item2idx])
+        print('build done')
+
+    def convert(self, corpus_train_df):
+        print('converting train by corpus build before...')
+        data = []
+        corpus = corpus_train_df.groupby('user')['item'].apply(lambda x: x.values.tolist()).reset_index()
+        for _, row in corpus.iterrows():
+            sent = []
+            for item in row['item']:
+                if item in self.vocab:
+                    sent.append(item)
+                else:
+                    sent.append(self.unk)
+            for i in range(len(sent)):
+                iitem, oitems = self.skipgram(sent, i)
+                data.append((self.item2idx[iitem], [self.item2idx[oitem] for oitem in oitems]))
+        
+        print('conversion done')
+
+        return data
+
+class PermutedSubsampledCorpus(data.Dataset):
+    def __init__(self, dt, ws=None):
+        if ws is not None:
+            self.dt = []
+            for iitem, oitems in dt:
+                if random.random() > ws[iitem]:
+                    self.dt.append((iitem, oitems))
+        else:
+            self.dt = dt
+
+    def __len__(self):
+        return len(self.dt)
+
+    def __getitem__(self, idx):
+        iitem, oitems = self.dt[idx]
+        return iitem, np.array(oitems)

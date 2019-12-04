@@ -1,12 +1,13 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-03 14:52:58
+@Date: 2019-12-04 21:25:49
 @LastEditors: Yudi
-@LastEditTime: 2019-12-04 21:59:19
+@LastEditTime: 2019-12-05 00:18:51
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
+import os
 import random
 import argparse
 import numpy as np
@@ -14,9 +15,24 @@ import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 
-from daisy.model.WRMFRecommender import WRMF
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+
+from daisy.model.Item2VecRecommender import Item2Vec, SGNS
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
+from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, BuildCorpus, PermutedSubsampledCorpus
+
+def get_weights(wc, idx2item, ss_t, whether_weights):
+    wf = np.array([wc[item] for item in idx2item])
+    wf = wf / wf.sum()
+    ws = 1 - np.sqrt(ss_t / wf)
+    ws = np.clip(ws, 0, 1)
+    vocab_size = len(idx2item)
+    weights = wf if whether_weights else None
+
+    return vocab_size, weights
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='WRMF recommender test')
@@ -54,27 +70,25 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--lambda_val', 
-                        type=float, 
-                        default=0.1, 
-                        help='regularization for ALS')
-    parser.add_argument('--alpha', 
-                        type=float, 
-                        default=40, 
-                        help='confidence weight')
-    parser.add_argument('--epochs', 
-                        type=int, 
-                        default=30, 
-                        help='No. of training epochs')
-    parser.add_argument('--factors', 
-                        type=int, 
-                        default=20, 
-                        help='latent factor number')
+    parser.add_argument('--unk', type=str, default='<UNK>', help='UNK token')
+    parser.add_argument('--window', type=int, default=5, help="window size")
+    parser.add_argument('--max_item', type=int, default=20000, help="maximum number of item set")
+    parser.add_argument('--e_dim', type=int, default=300, help="embedding dimension")
+    parser.add_argument('--n_negs', type=int, default=20, help="number of negative samples")
+    parser.add_argument('--epochs', type=int, default=6, help="number of epochs") # 100
+    parser.add_argument('--mb', type=int, default=4096, help="mini-batch size")
+    parser.add_argument('--ss_t', type=float, default=1e-5, help="subsample threshold")
+    parser.add_argument('--weights', action='store_true', help="use weights for negative sampling")
+    parser.add_argument('--cuda', action='store_true', help="use CUDA")
     args = parser.parse_args()
 
     '''Validation Process for Parameter Tuning'''
     df, user_num, item_num = load_rate(args.dataset, args.prepro)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
+
+    # pre-build Corpus for all item
+    pre = BuildCorpus(df, args.window, args.max_item, args.unk)
+    pre.build()
 
     # get ground truth
     test_ur = get_ur(test_set)
@@ -100,9 +114,17 @@ if __name__ == '__main__':
         val_ur = get_ur(validation)
 
         # build recommender model
-        model = WRMF(user_num, item_num, train, 
-                     args.lambda_val, args.alpha, args.epochs, args.factors)
-        model.fit()
+        dt = pre.convert(train)
+        vocab_size, weights = get_weights(pre.wc, pre.idx2item, args.ss_t, args.weights)
+        
+        embed_model = Item2Vec(item_num=vocab_size, embedding_size=args.e_dim)
+        model = SGNS(embedding=embed_model, item_num=vocab_size, n_negs=args.n_negs, weights=weights)
+
+        dataset = PermutedSubsampledCorpus(dt)  
+        dataloader = DataLoader(dataset, batch_size=args.mb, shuffle=True) 
+
+        model.fit(dataloader, args.epochs, pre.item2idx)
+        model.build_user_vec(train_ur)
 
         # build candidates set
         assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
@@ -112,7 +134,7 @@ if __name__ == '__main__':
             sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
             samples = random.sample(sub_item_pool, sample_num)
             val_ucands[k] = list(v | set(samples))
-        
+
         # get predict result
         print('')
         print('Generate recommend list...')
@@ -135,7 +157,7 @@ if __name__ == '__main__':
         map_k = map_at_k(preds.values())
         mrr_k = mrr_at_k(preds, args.topk)
         ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
-        
+
         print('-'*20)
         print(f'Precision@{args.topk}: {pre_k:.4f}')
         print(f'Recall@{args.topk}: {rec_k:.4f}')
@@ -161,10 +183,18 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # build recommender model
-    model = WRMF(user_num, item_num, train_set, 
-                    args.lambda_val, args.alpha, args.epochs, args.factors)
-    model.fit()
+    dt = pre.convert(train_set)
+    vocab_size, weights = get_weights(pre.wc, pre.idx2item, args.ss_t, args.weights)
     
+    embed_model = Item2Vec(item_num=vocab_size, embedding_size=args.e_dim)
+    model = SGNS(embedding=embed_model, item_num=vocab_size, n_negs=args.n_negs, weights=weights)
+
+    dataset = PermutedSubsampledCorpus(dt)  
+    dataloader = DataLoader(dataset, batch_size=args.mb, shuffle=True) 
+
+    model.fit(dataloader, args.epochs, pre.item2idx)
+    model.build_user_vec(total_train_ur)
+
     print('Start Calculating Metrics......')
     # build candidates set
     assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
