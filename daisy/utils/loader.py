@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-04 22:13:08
+@LastEditTime: 2019-12-05 14:43:12
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -14,6 +14,7 @@ import random
 import numpy as np
 import pandas as pd
 import scipy.io as sio
+import scipy.sparse as sp
 import torch.utils.data as data
 
 from collections import defaultdict
@@ -133,6 +134,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
     # reset rating to interaction, here just treat all rating as 1
     if binary:
         df['rating'] = 1.0
+
     # encoding user_id and item_id
     df['user'] = pd.Categorical(df['user']).codes
     df['item'] = pd.Categorical(df['item']).codes
@@ -142,6 +144,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
         user_num = df['user'].nunique()
         item_num = df['item'].nunique()
 
+        print(f'Finish loading [{src}]-[{prepro}] dataset')
         return df, user_num, item_num
     elif prepro == '5core':
         tmp1 = df.groupby(['user'], as_index=False)['item'].count()
@@ -157,6 +160,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
         user_num = df['user'].nunique()
         item_num = df['item'].nunique()
 
+        print(f'Finish loading [{src}]-[{prepro}] dataset')
         return df, user_num, item_num
     elif prepro == '10core':
         tmp1 = df.groupby(['user'], as_index=False)['item'].count()
@@ -172,6 +176,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
         user_num = df['user'].nunique()
         item_num = df['item'].nunique()
         
+        print(f'Finish loading [{src}]-[{prepro}] dataset')
         return df, user_num, item_num
     else:
         raise ValueError('Invalid dataset preprocess type, origin/5core/10core expected')
@@ -306,6 +311,44 @@ class PointMFData(data.Dataset):
 
         return user, item, label
 
+class PairMFData(data.Dataset):
+    def __init__(self, sampled_df, user_num, item_num, num_ng):
+        super(PairMFData, self).__init__()
+        self.num_ng = num_ng
+        self.sample_num = len(sampled_df)
+        self.features_fill = []
+
+        pair_pos = sp.dok_matrix((user_num, item_num), dtype=np.float32)
+        for _, row in sampled_df.iterrows():
+            pair_pos[int(row['user']), int(row['item'])] = 1.0
+        print('Finish build positive matrix......')
+
+        for _, row in sampled_df.iterrows():
+            u, i = int(row['user']), int(row['item'])
+            # negative samplings
+            for _ in range(num_ng):
+                j = np.random.randint(item_num)
+                while (u, j) in pair_pos:
+                    j = np.random.randint(item_num)
+                j = int(j)
+                r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
+                self.features_fill.append([u, i, j, r])
+
+        print(f'Finish negative samplings, sample number is {len(self.features_fill)}......')
+    
+    def __len__(self):
+        return self.num_ng * self.sample_num
+
+    def __getitem__(self, idx):
+        features = self.features_fill
+        user = features[idx][0]
+        item_i = features[idx][1]
+        item_j = features[idx][2]
+        label = features[idx][3]
+
+        return user, item_i, item_j, label
+
+""" Item2Vec Specific Process """
 class BuildCorpus(object):
     def __init__(self, corpus_df, window=5, max_item_num=20000, unk='<UNK>'):
         self.window = window

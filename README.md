@@ -38,16 +38,23 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 | Popular | run_mostpop.py |
 | Item-KNN | run_itemknn.py |
 | User-KNN | run_userknn.py |
+| WRMF | run_wrmf.py |
+| PureSVD | run_puresvd.py |
+| Item2Vec | run_item2vec.py|
+| CL-MF | run_clmf.py |
+| BPR-MF | run_bprmf.py |
+| HL-MF | run_hlmf.py |
+
 
 ## Examples to run:
 
 Default set top-K number to 10, you can change top-K number by modifying `topk` argument.
 
 ```
-python run_itemknn.py --sim_method=pearson
+python run_itemknn.py --sim_method=pearson --topk=15
 ```
 
-Help message will give you more detail description for arguments, For example:
+More details of arguments are available in help message, try:
 
 ```
 python run_itemknn.py --help
@@ -57,8 +64,18 @@ python run_itemknn.py --help
 
 ## Benchmarks
 
-Here are the Precision, Recall, MAP, NDCG, MRR of various algorithms on a 5-fold cross validation procedure. 
-The code for generating these tables is shown in each Recommender.py.
+Here are the 6 metrics: 
+
+- Pre(Precision)
+- Rec(Recall)
+- HR(Hit Rate)
+- MAP(Mean Average Precision)
+- MRR()
+- NDCG(Normalized Discounted Cumulative Gain)
+
+obtained by various algorithms with the best parameter settings. 
+
+The results above are reproducible.
 
 <!-- ## Simple Result Achieved for quick look
 
@@ -82,7 +99,7 @@ The code for generating these tables is shown in each Recommender.py.
 
 ## License
 
-Here is a Bibtex entry if you ever need to cite Daisy in a research paper (please keep us posted, we would love to know if Daisy was helpful to you):
+Here is a Bibtex entry if you ever need to cite **Daisy** in a research paper (please keep us posted, we would love to know if Daisy was helpful to you):
 
 ```
 @Misc{,
