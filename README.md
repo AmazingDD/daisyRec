@@ -16,6 +16,7 @@ The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**r comp**A**r*
     - [Last.fm](https://grouplens.org/datasets/hetrec-2011/)
     - [Book Crossing](https://grouplens.org/datasets/book-crossing/)
     - [Epinions](http://www.cse.msu.edu/~tangjili/trust.html)
+    - [Pinterest](https://sites.google.com/site/xueatalphabeta/academic-projects)
     - [CiteULike](https://github.com/js05212/citeulike-a)
     - [Amazon-Book](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv)
     - [Amazon-Electronic](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Electronics.csv)
@@ -44,7 +45,13 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 | CL-MF | run_clmf.py |
 | BPR-MF | run_bprmf.py |
 | HL-MF | run_hlmf.py |
-
+| CL-FM | run_clfm.py |
+| BPR-FM (*TODO*) | run_bprfm.py |
+| HL-FM (*TODO*)| run_hlfm.py |
+| CL-NeuMF (*TODO*) | run_clneumf.py |
+| BPR-NeuMF (*TODO*) | run_bprneumf.py |
+| HL-NeuMF (*TODO*) | run_hlneumf.py |
+| SLiM (*TODO*) | run_slim.py |
 
 ## Examples to run:
 
@@ -70,7 +77,7 @@ Here are the 6 metrics:
 - Rec(Recall)
 - HR(Hit Rate)
 - MAP(Mean Average Precision)
-- MRR()
+- MRR(Mean Reciprocal Rank)
 - NDCG(Normalized Discounted Cumulative Gain)
 
 obtained by various algorithms with the best parameter settings. 

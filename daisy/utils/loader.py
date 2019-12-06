@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-05 14:43:12
+@LastEditTime: 2019-12-06 17:08:36
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -146,6 +146,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
 
         print(f'Finish loading [{src}]-[{prepro}] dataset')
         return df, user_num, item_num
+
     elif prepro == '5core':
         tmp1 = df.groupby(['user'], as_index=False)['item'].count()
         tmp1.rename(columns={'item': 'cnt_item'}, inplace=True)
@@ -162,6 +163,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
 
         print(f'Finish loading [{src}]-[{prepro}] dataset')
         return df, user_num, item_num
+
     elif prepro == '10core':
         tmp1 = df.groupby(['user'], as_index=False)['item'].count()
         tmp1.rename(columns={'item': 'cnt_item'}, inplace=True)
@@ -178,10 +180,11 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
         
         print(f'Finish loading [{src}]-[{prepro}] dataset')
         return df, user_num, item_num
+
     else:
         raise ValueError('Invalid dataset preprocess type, origin/5core/10core expected')
 
-def negative_sampling(ratings, num_ng=4):
+def negative_sampling(ratings, num_ng=4, neg_label_val=0.):
     prime_df = ratings.copy()
     item_pool = set(ratings.item.unique())
 
@@ -194,7 +197,7 @@ def negative_sampling(ratings, num_ng=4):
     for _, row in interact_status[['user', 'neg_samples']].iterrows():
         u = int(row['user'])
         for i in row['neg_samples']:
-            neg_df.append([u, int(i), 0., 1])
+            neg_df.append([u, int(i), neg_label_val, 1])
     neg_df = pd.DataFrame(neg_df, columns=['user', 'item', 'rating', 'timestamp'])
 
     df_sampled = pd.concat([prime_df, neg_df], ignore_index=True)
@@ -288,6 +291,29 @@ def get_ir(df):
 
     return ir
 
+def build_feat_idx_dict(df:pd.DataFrame, 
+                        cat_cols:list=['user', 'item'], 
+                        num_cols:list=[]):
+    feat_idx_dict = {}
+    idx = 0
+    for col in cat_cols:
+        feat_idx_dict[col] = idx
+        idx = idx + df[col].max() + 1
+    for col in num_cols:
+        feat_idx_dict[col] = idx
+        idx += 1
+    print('Finish build feature index dictionary......')
+
+    cnt = 0
+    for col in cat_cols:
+        for _ in df[col].unique():
+            cnt += 1
+    for col in num_cols:
+        cnt += 1
+    print(f'Number of features: {cnt}')
+
+    return feat_idx_dict, cnt
+
 class PointMFData(data.Dataset):
     def __init__(self, sampled_df):
         super(PointMFData, self).__init__()
@@ -310,6 +336,41 @@ class PointMFData(data.Dataset):
         label = labels[idx]
 
         return user, item, label
+
+class PointFMData(data.Dataset):
+    def __init__(self, sampled_df, feat_idx_dict, cat_cols, num_cols, loss_type='square_loss'):
+        super(PointFMData, self).__init__()
+
+        self.labels = []
+        self.features = []
+        self.feature_values = []
+
+        assert loss_type in ['square_loss', 'log_loss'], 'Invalid loss type'
+        for _, row in sampled_df.iterrows():
+            feat, feat_value = [], []
+            for col in cat_cols:
+                feat.append(feat_idx_dict[col] + row[col])
+                feat_value.append(1)
+            for col in num_cols:
+                feat.append(feat_idx_dict[col])
+                feat_value.append(row[col])
+            self.features.append(np.array(feat, dtype=np.int64))
+            self.feature_values.append(np.array(feat_value, dtype=np.float32))
+
+            if loss_type == 'square_loss':
+                self.labels.append(np.float32(row['rating']))
+            else: # log_loss
+                label = 1 if float(row['rating']) > 0 else 0
+                self.labels.append(label)
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        labels = self.labels[idx]
+        features = self.features[idx]
+        feature_values = self.feature_values[idx]
+        return features, feature_values, labels
 
 class PairMFData(data.Dataset):
     def __init__(self, sampled_df, user_num, item_num, num_ng):
