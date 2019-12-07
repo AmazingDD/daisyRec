@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors: Yudi
-@LastEditTime: 2019-12-05 15:25:52
+@LastEditTime: 2019-12-08 00:23:27
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -77,6 +77,10 @@ if __name__ == '__main__':
                         type=float, 
                         default=0.0001, 
                         help='model regularization rate')
+    parser.add_argument('--lamda', 
+                        type=float, 
+                        default=0.001, 
+                        help='regularizer weight')
     parser.add_argument('--batch_size', 
                         type=int, 
                         default=4096,
@@ -119,8 +123,8 @@ if __name__ == '__main__':
                                        shuffle=True, num_workers=4)
 
         # build recommender model
-        model = HLMF(user_num, item_num, args.factors, args.epochs, 
-                      args.lr, args.wd, args.gpu)
+        model = HLMF(user_num, item_num, args.factors, args.lamda, 
+                     args.epochs, args.lr, args.wd, args.gpu)
         model.fit(train_loader)
 
         # build candidates set
@@ -184,8 +188,8 @@ if __name__ == '__main__':
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                    shuffle=True, num_workers=4)
     # build recommender model
-    model = HLMF(user_num, item_num, args.factors, 
-                  args.epochs, args.lr, args.wd, args.gpu)
+    model = HLMF(user_num, item_num, args.factors, args.lamda,
+                 args.epochs, args.lr, args.wd, args.gpu)
     model.fit(train_loader)
 
     print('Start Calculating Metrics......')

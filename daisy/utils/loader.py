@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-06 17:08:36
+@LastEditTime: 2019-12-08 00:40:50
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -338,7 +338,8 @@ class PointMFData(data.Dataset):
         return user, item, label
 
 class PointFMData(data.Dataset):
-    def __init__(self, sampled_df, feat_idx_dict, cat_cols, num_cols, loss_type='square_loss'):
+    def __init__(self, sampled_df, feat_idx_dict, 
+                 cat_cols, num_cols, loss_type='square_loss'):
         super(PointFMData, self).__init__()
 
         self.labels = []
@@ -371,6 +372,62 @@ class PointFMData(data.Dataset):
         features = self.features[idx]
         feature_values = self.feature_values[idx]
         return features, feature_values, labels
+
+class PairFMData(data.Dataset):
+    def __init__(self, sampled_df, feat_idx_dict, item_num, num_ng, is_training=None):
+        self.features = []
+        self.feature_values = []
+        self.labels = []
+
+        if is_training:
+            pair_pos = set()
+            for _, row in sampled_df.iterrows():
+                pair_pos.add((int(row['user']), int(row['item'])))
+            print('Finish build positive matrix......')
+
+        # construct whole data with negative sampling
+        for _, row in sampled_df.iterrows():
+            u, i = int(row['user']), int(row['item'])
+            if is_training:
+                # negative samplings
+                for _ in range(num_ng):
+                    j = np.random.randint(item_num)
+                    while (u, j) in pair_pos:
+                        j = np.random.randint(item_num)
+            else:
+                j = i
+            r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
+
+
+            # if you get a more detail feature dataframe, you need to optimize this part
+            self.features.append([np.array([u + feat_idx_dict['user'], 
+                                            i + feat_idx_dict['item']], dtype=np.int64), 
+                                np.array([u + feat_idx_dict['user'], 
+                                            j + feat_idx_dict['item']], dtype=np.int64)])
+            self.feature_values.append([np.array([1, 1], dtype=np.float32), 
+                                        np.array([1, 1], dtype=np.float32)])
+
+            self.labels.append(np.array(r))
+
+        
+    def __len__(self):
+        return len(self.features)
+
+    def __getitem__(self, idx):
+        features = self.features
+        feature_values = self.feature_values
+        labels = self.labels
+
+        features_i = features[idx][0]
+        features_j = features[idx][1]
+
+        feature_values_i = feature_values[idx][0]
+        feature_values_j = feature_values[idx][1]
+
+        labels = labels[idx]
+
+        return features_i, feature_values_i, features_j, feature_values_j, labels
+
 
 class PairMFData(data.Dataset):
     def __init__(self, sampled_df, user_num, item_num, num_ng):

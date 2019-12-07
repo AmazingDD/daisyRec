@@ -46,8 +46,8 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 | BPR-MF | run_bprmf.py |
 | HL-MF | run_hlmf.py |
 | CL-FM | run_clfm.py |
-| BPR-FM (*TODO*) | run_bprfm.py |
-| HL-FM (*TODO*)| run_hlfm.py |
+| BPR-FM | run_bprfm.py |
+| HL-FM | run_hlfm.py |
 | CL-NeuMF (*TODO*) | run_clneumf.py |
 | BPR-NeuMF (*TODO*) | run_bprneumf.py |
 | HL-NeuMF (*TODO*) | run_hlneumf.py |

@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:31
 @LastEditors: Yudi
-@LastEditTime: 2019-12-05 14:22:28
+@LastEditTime: 2019-12-08 00:15:57
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -17,7 +17,7 @@ import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
 class BPRMF(nn.Module):
-    def __init__(self, user_num, item_num, factor_num=32, 
+    def __init__(self, user_num, item_num, factor_num=32, lamda=0.0,
                  epochs=20, lr=0.01, wd=0.0001, gpuid='0', verbose=True):
         '''
         user_num: number of users;
@@ -32,6 +32,7 @@ class BPRMF(nn.Module):
         self.epochs = epochs
         self.lr = lr
         self.wd = wd
+        self.lamda = lamda
 
         self.embed_user = nn.Embedding(user_num, factor_num)
         self.embed_item = nn.Embedding(item_num, factor_num)
@@ -77,6 +78,7 @@ class BPRMF(nn.Module):
                 self.zero_grad()
                 pred_i, pred_j = self.forward(user, item_i, item_j)
                 loss = -(pred_i - pred_j).sigmoid().log().sum()
+                loss += self.lamda * (self.embed_item.weight.norm() + self.embed_user.weight.norm())
 
                 loss.backward()
                 optimizer.step()
