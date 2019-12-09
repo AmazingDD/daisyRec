@@ -57,9 +57,10 @@ coverage.xml
 *.tar
 *.json
 .DS_Store
+*.pt
+*.pkl
 
 # Django stuff:
-*.pkl
 *.log
 local_settings.py
 db.sqlite3
