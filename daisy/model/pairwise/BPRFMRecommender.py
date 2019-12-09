@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-06 23:04:24
 @LastEditors: Yudi
-@LastEditTime: 2019-12-09 16:07:37
+@LastEditTime: 2019-12-09 17:54:43
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -81,7 +81,7 @@ class BPRFM(nn.Module):
         else:
             self.cpu()
 
-        optimizer = optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = optim.SGD(self.parameters(), lr=self.lr)
 
         for epoch in range(1, self.epochs + 1):
             self.train() # Enable dropout and batch_norm

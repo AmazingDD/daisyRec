@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-07 00:59:27
 @LastEditors: Yudi
-@LastEditTime: 2019-12-08 00:43:24
+@LastEditTime: 2019-12-09 18:05:17
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -83,7 +83,7 @@ if __name__ == '__main__':
                         help='training epochs')
     parser.add_argument('--lr', 
                         type=float, 
-                        default=0.01,  # can be to large
+                        default=0.05,  # can be to large
                         help='learning rate')
     parser.add_argument('--lamda', 
                         type=float, 
