@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors: Yudi
-@LastEditTime: 2019-12-08 00:18:16
+@LastEditTime: 2019-12-09 16:23:17
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -46,7 +46,7 @@ if __name__ == '__main__':
                         help='split ratio for test set')
     parser.add_argument('--val_method', 
                         type=str, 
-                        default='cv', 
+                        default='loo', 
                         help='validation method, options: cv, tfo, loo, tloo')
     parser.add_argument('--fold_num', 
                         type=int, 
@@ -142,9 +142,28 @@ if __name__ == '__main__':
         print('')
         preds = {}
         for u in tqdm(val_ucands.keys()):
-            pred_rates = [model.predict(u, i) for i in val_ucands[u]]
-            rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
-            top_n = np.array(val_ucands[u])[rec_idx]
+            # build a validation MF dataset for certain user u to accelerate
+            tmp = pd.DataFrame({'user': [u for _ in val_ucands[u]], 
+                                'item': val_ucands[u], 
+                                'rating': [0. for _ in val_ucands[u]], # fake label, make nonsense
+                            })
+            tmp_dataset = PairMFData(tmp, user_num, item_num, 0, False)
+            tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
+                                         shuffle=False, num_workers=0)
+            # get top-N list with torch method 
+            for items in tmp_loader:
+                user_u, item_i = items[0], items[1]
+                if torch.cuda.is_available():
+                    user_u = user_u.cuda()
+                    item_i = item_i.cuda()
+                else:
+                    user_u = user_u.cpu()
+                    item_i = item_i.cpu()
+
+                prediction = model.predict(user_u, item_i)
+                _, indices = torch.topk(prediction, args.topk)
+                top_n = torch.take(torch.tensor(val_ucands[u]), indices).cpu().numpy()
+
             preds[u] = top_n
 
         # convert rank list to binary-interaction
@@ -209,9 +228,28 @@ if __name__ == '__main__':
     print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        pred_rates = [model.predict(u, i) for i in test_ucands[u]]
-        rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
-        top_n = np.array(test_ucands[u])[rec_idx]
+        # build a test MF dataset for certain user u to accelerate
+        tmp = pd.DataFrame({'user': [u for _ in test_ucands[u]], 
+                            'item': test_ucands[u], 
+                            'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
+                        })
+        tmp_dataset = PairMFData(tmp, user_num, item_num, 0, False)
+        tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
+                                     shuffle=False, num_workers=0)
+        # get top-N list with torch method 
+        for items in tmp_loader:
+            user_u, item_i = items[0], items[1]
+            if torch.cuda.is_available():
+                user_u = user_u.cuda()
+                item_i = item_i.cuda()
+            else:
+                user_u = user_u.cpu()
+                item_i = item_i.cpu()
+
+            prediction = model.predict(user_u, item_i)
+            _, indices = torch.topk(prediction, args.topk)
+            top_n = torch.take(torch.tensor(test_ucands[u]), indices).cpu().numpy()
+
         preds[u] = top_n
 
     # convert rank list to binary-interaction

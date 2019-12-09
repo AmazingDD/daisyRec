@@ -28,7 +28,13 @@ The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**r comp**A**r*
 
 2. Item-Ranking recommendation algorithms reimplementation with pytorch and tensorflow.
 
-3. Before running, you need first run `python setup.py build_ext --inplace` to generate `.so` file for `macOS` or `.pyd` file for `WindowsOS` used for further import.
+3. To get all dependencies, run:
+
+    `pip install -r requirement.txt`
+
+3. Before running, you need first run: 
+`python setup.py build_ext --inplace` 
+to generate `.so` file for `macOS` or `.pyd` file for `WindowsOS` used for further import.
 
 make sure you have a **CUDA** enviroment to accelarate since these deep-learning models could be based on it.
 
@@ -48,9 +54,9 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 | CL-FM | run_clfm.py |
 | BPR-FM | run_bprfm.py |
 | HL-FM | run_hlfm.py |
-| CL-NeuMF (*TODO*) | run_clneumf.py |
-| BPR-NeuMF (*TODO*) | run_bprneumf.py |
-| HL-NeuMF (*TODO*) | run_hlneumf.py |
+| CL-NeuMF | run_clneumf.py |
+| BPR-NeuMF | run_bprneumf.py |
+| HL-NeuMF | run_hlneumf.py |
 | SLiM (*TODO*) | run_slim.py |
 
 ## Examples to run:

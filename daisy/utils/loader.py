@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-08 00:40:50
+@LastEditTime: 2019-12-09 16:04:39
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -430,32 +430,39 @@ class PairFMData(data.Dataset):
 
 
 class PairMFData(data.Dataset):
-    def __init__(self, sampled_df, user_num, item_num, num_ng):
+    def __init__(self, sampled_df, user_num, item_num, num_ng, is_training=True):
         super(PairMFData, self).__init__()
+        self.is_training = is_training
         self.num_ng = num_ng
         self.sample_num = len(sampled_df)
         self.features_fill = []
 
-        pair_pos = sp.dok_matrix((user_num, item_num), dtype=np.float32)
-        for _, row in sampled_df.iterrows():
-            pair_pos[int(row['user']), int(row['item'])] = 1.0
-        print('Finish build positive matrix......')
+        if is_training:
+            pair_pos = sp.dok_matrix((user_num, item_num), dtype=np.float32)
+            for _, row in sampled_df.iterrows():
+                pair_pos[int(row['user']), int(row['item'])] = 1.0
+            print('Finish build positive matrix......')
 
         for _, row in sampled_df.iterrows():
             u, i = int(row['user']), int(row['item'])
-            # negative samplings
-            for _ in range(num_ng):
-                j = np.random.randint(item_num)
-                while (u, j) in pair_pos:
+            if is_training:
+                # negative samplings
+                for _ in range(num_ng):
                     j = np.random.randint(item_num)
-                j = int(j)
-                r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
-                self.features_fill.append([u, i, j, r])
+                    while (u, j) in pair_pos:
+                        j = np.random.randint(item_num)
+                    j = int(j)
+                    r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
+                    self.features_fill.append([u, i, j, r])
+            else:
+                r = np.float32(1)
+                self.features_fill.append([u, i, i, r])
 
-        print(f'Finish negative samplings, sample number is {len(self.features_fill)}......')
+        if is_training:
+            print(f'Finish negative samplings, sample number is {len(self.features_fill)}......')
     
     def __len__(self):
-        return self.num_ng * self.sample_num
+        return self.num_ng * self.sample_num if self.is_training else self.sample_num
 
     def __getitem__(self, idx):
         features = self.features_fill

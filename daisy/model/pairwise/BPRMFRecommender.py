@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:31
 @LastEditors: Yudi
-@LastEditTime: 2019-12-08 00:15:57
+@LastEditTime: 2019-12-09 16:17:49
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -88,9 +88,6 @@ class BPRMF(nn.Module):
             self.eval()
 
     def predict(self, u, i):
-        u = torch.tensor(u)
-        i = torch.tensor(i)
-
         pred_i, _ = self.forward(u, i, i)
 
-        return pred_i.cpu().item()
+        return pred_i.cpu()

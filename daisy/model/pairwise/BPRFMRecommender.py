@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-06 23:04:24
 @LastEditors: Yudi
-@LastEditTime: 2019-12-08 00:40:01
+@LastEditTime: 2019-12-09 16:07:37
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -119,4 +119,4 @@ class BPRFM(nn.Module):
     def predict(self, feat, feat_value):
         pred, _ = self.forward(feat, feat_value, feat, feat_value)
 
-        return pred
+        return pred.cpu()

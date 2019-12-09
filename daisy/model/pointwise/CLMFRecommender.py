@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 15:37:46
 @LastEditors: Yudi
-@LastEditTime: 2019-12-06 17:10:44
+@LastEditTime: 2019-12-09 16:39:58
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -89,9 +89,6 @@ class CLMF(nn.Module):
         print('Finish Training Process......')
 
     def predict(self, u, i):
-        u = torch.tensor(u)
-        i = torch.tensor(i)
-
-        pred = self.forward(u, i).cpu().item()
+        pred = self.forward(u, i).cpu()
         
         return pred

@@ -1,0 +1,180 @@
+'''
+@Author: Yu Di
+@Date: 2019-12-09 14:16:12
+@LastEditors: Yudi
+@LastEditTime: 2019-12-09 16:12:07
+@Company: Cardinal Operation
+@Email: yudi@shanshu.ai
+@Description: 
+'''
+import os
+from tqdm import tqdm
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.utils.data as data
+import torch.backends.cudnn as cudnn
+
+class BPRNeuMF(nn.Module):
+    def __init__(self, user_num, item_num, factor_num, num_layers, dropout, 
+                 lr, epochs, lamda, model_name, 
+                 GMF_model=None, MLP_model=None, gpuid='0'):
+        super(BPRNeuMF, self).__init__()
+        """
+        user_num: number of users;
+		item_num: number of items;
+		factor_num: number of predictive factors;
+		num_layers: the number of layers in MLP model;
+		dropout: dropout rate between fully connected layers;
+		model: 'MLP', 'GMF', 'NeuMF-end', and 'NeuMF-pre';
+		GMF_model: pre-trained GMF weights;
+		MLP_model: pre-trained MLP weights.
+        """
+        os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
+        cudnn.benchmark = True
+
+        self.lr = lr
+        self.epochs = epochs
+        self.lamda = lamda
+
+        self.dropout = dropout
+        self.model = model_name
+        self.GMF_model = GMF_model
+        self.MLP_model = MLP_model
+
+        self.embed_user_GMF = nn.Embedding(user_num, factor_num)
+        self.embed_item_GMF = nn.Embedding(item_num, factor_num)
+
+        self.embed_user_MLP = nn.Embedding(user_num, factor_num * (2 ** (num_layers - 1)))
+        self.embed_item_MLP = nn.Embedding(item_num, factor_num * (2 ** (num_layers - 1)))
+
+        MLP_modules = []
+        for i in range(num_layers):
+            input_size = factor_num * (2 ** (num_layers - i))
+            MLP_modules.append(nn.Dropout(p=self.dropout))
+            MLP_modules.append(nn.Linear(input_size, input_size // 2))
+            MLP_modules.append(nn.ReLU())
+        self.MLP_layers = nn.Sequential(*MLP_modules)
+
+        if self.model in ['MLP', 'GMF']:
+            predict_size = factor_num
+        else:
+            predict_size = factor_num * 2
+
+        self.predict_layer = nn.Linear(predict_size, 1)
+
+        self._init_weight_()
+
+    def _init_weight_(self):
+        '''weights initialization'''
+        if not self.model == 'NeuMF-pre':
+            nn.init.normal_(self.embed_user_GMF.weight, std=0.01)
+            nn.init.normal_(self.embed_item_GMF.weight, std=0.01)
+            nn.init.normal_(self.embed_user_MLP.weight, std=0.01)
+            nn.init.normal_(self.embed_item_MLP.weight, std=0.01)
+
+            for m in self.MLP_layers:
+                if isinstance(m, nn.Linear):
+                    nn.init.xavier_uniform_(m.weight)
+            nn.init.kaiming_uniform_(self.predict_layer.weight, 
+                                     a=1, nonlinearity='sigmoid')
+            for m in self.modules():
+                if isinstance(m, nn.Linear) and m.bias is not None:
+                    m.bias.data.zero_()
+
+        else:
+            # embedding layers
+            self.embed_user_GMF.weight.data.copy_(self.GMF_model.embed_user_GMF.weight)
+            self.embed_item_GMF.weight.data.copy_(self.GMF_model.embed_item_GMF.weight)
+            self.embed_user_MLP.weight.data.copy_(self.MLP_model.embed_user_MLP.weight)
+            self.embed_item_MLP.weight.data.copy_(self.MLP_model.embed_item_MLP.weight)
+
+            # mlp layers
+            for (m1, m2) in zip(self.MLP_layers, self.MLP_model.MLP_layers):
+                if isinstance(m1, nn.Linear) and isinstance(m2, nn.Linear):
+                    m1.weight.data.copy_(m2.weight)
+                    m1.bias.data.copy_(m2.bias)
+
+            # predict layers
+            predict_weight = torch.cat([self.GMF_model.predict_layer.weight, 
+                                        self.MLP_model.predict_layer.weight], dim=1)
+            predict_bias = self.GMF_model.predict_layer.bias + self.MLP_model.predict_layer.bias
+
+            self.predict_layer.weight.data.copy_(0.5 * predict_weight)
+            self.predict_layer.weight.data.copy_(0.5 * predict_bias)
+
+    def forward(self, user, item_i, item_j):
+        pred_i = self._out(user, item_i)
+        pred_j = self._out(user, item_j)
+
+        return pred_i, pred_j
+
+    def _out(self, user, item):
+        if not self.model == 'MLP':
+            embed_user_GMF = self.embed_user_GMF(user)
+            embed_item_GMF = self.embed_item_GMF(item)
+            output_GMF = embed_user_GMF * embed_item_GMF
+        if not self.model == 'GMF':
+            embed_user_MLP = self.embed_user_MLP(user)
+            embed_item_MLP = self.embed_item_MLP(item)
+            interaction = torch.cat((embed_user_MLP, embed_item_MLP), dim=-1)
+            output_MLP = self.MLP_layers(interaction)
+
+        if self.model == 'GMF':
+            concat = output_GMF
+        elif self.model == 'MLP':
+            concat = output_MLP
+        else:
+            concat = torch.cat((output_GMF, output_MLP), -1)
+
+        prediction = self.predict_layer(concat)
+        return prediction.view(-1)
+
+    def fit(self, train_loader):
+        if torch.cuda.is_available():
+            self.cuda()
+        else:
+            self.cpu()
+
+        if self.model == 'NeuMF-pre':
+            optimizer = optim.SGD(self.parameters(), lr=self.lr)
+        else:
+            optimizer = optim.Adam(self.parameters(), lr=self.lr)
+
+        for epoch in range(1, self.epochs + 1):
+            self.train()
+
+            # set process bar display
+            pbar = tqdm(train_loader)
+            pbar.set_description(f'[Epoch {epoch:03d}]')
+
+            for user, item_i, item_j, _ in pbar:
+                if torch.cuda.is_available():
+                    user = user.cuda()
+                    item_i = item_i.cuda()
+                    item_j = item_j.cuda()
+                else:
+                    user = user.cpu()
+                    item_i = item_i.cpu()
+                    item_j = item_j.cpu()
+
+                self.zero_grad()
+                pred_i, pred_j = self.forward(user, item_i, item_j)
+                loss = -(pred_i - pred_j).sigmoid().log().sum()
+                loss += self.lamda * (self.embed_item_GMF.weight.norm() + self.embed_user_GMF.weight.norm())
+                loss += self.lamda * (self.embed_item_MLP.weight.norm() + self.embed_user_MLP.weight.norm())
+
+                loss.backward()
+                optimizer.step()
+
+                pbar.set_postfix(loss=loss.item())
+            
+            self.eval()
+        print('Finish Training Process......')
+
+    def predict(self, u, i):
+        # consider it run too long for certain u,i, here return a tensor list instead
+        pred_i, _ = self.forward(u, i, i)
+
+        return pred_i.cpu()

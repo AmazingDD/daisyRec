@@ -1,12 +1,13 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-03 15:38:07
+@Date: 2019-12-09 14:42:14
 @LastEditors: Yudi
-@LastEditTime: 2019-12-09 16:42:45
+@LastEditTime: 2019-12-09 16:43:39
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
+import os
 import random
 import argparse
 import numpy as np
@@ -17,7 +18,7 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pointwise.CLMFRecommender import CLMF
+from daisy.model.pointwise.CLNeuMFRecommender import CLNeuMF
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, negative_sampling, PointMFData
 
@@ -61,30 +62,41 @@ if __name__ == '__main__':
                         type=int, 
                         default=4, 
                         help='negative sampling number')
-    parser.add_argument('--factors', 
+    parser.add_argument('--factor_num', 
                         type=int, 
-                        default=100, 
-                        help='The number of latent factors')
+                        default=32, 
+                        help='predictive factors numbers in the model')
+    parser.add_argument('--num_layers', 
+                        type=int, 
+                        default=3, 
+                        help='number of layers in MLP model')
+    parser.add_argument('--model_name', 
+                        type=str, 
+                        default='NeuMF-end', 
+                        help='target model name, if NeuMF-pre plz run MLP and GMF before')
+    parser.add_argument('--dropout', 
+                        type=float, 
+                        default=0.0, 
+                        help='dropout rate')
+    parser.add_argument('--lr', 
+                        type=float, 
+                        default=0.001, 
+                        help='learning rate')
     parser.add_argument('--epochs', 
                         type=int, 
                         default=20, 
-                        help='The number of iteration of the SGD procedure')
-    parser.add_argument('--lr', 
-                        type=float, 
-                        default=0.01, 
-                        help='learning rate')                    
-    parser.add_argument('--wd', 
-                        type=float, 
-                        default=0.001, 
-                        help='model regularization rate')
+                        help='training epochs')
     parser.add_argument('--batch_size', 
                         type=int, 
-                        default=256,
+                        default=256, 
                         help='batch size for training')
     parser.add_argument('--lamda', 
                         type=float, 
                         default=0.0, 
                         help='regularizer weight')
+    parser.add_argument('--out', 
+                        default=True, 
+                        help='save model or not')
     parser.add_argument('--gpu', 
                         type=str, 
                         default='0', 
@@ -123,9 +135,26 @@ if __name__ == '__main__':
         train_dataset = PointMFData(train_sampled)
         train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                        shuffle=True, num_workers=4)
+
+        # whether load pre-train model
+        model_name = args.model_name
+        assert model_name in ['MLP', 'GMF', 'NeuMF-end', 'NeuMF-pre']
+        GMF_model_path = f'./tmp/{args.dataset}/CL/GMF.pt'
+        MLP_model_path = f'./tmp/{args.dataset}/CL/MLP.pt'
+        NeuMF_model_path = f'./tmp/{args.dataset}/CL/NeuMF.pt'
+
+        if model_name == 'NeuMF-pre':
+            assert os.path.exists(GMF_model_path), 'lack of GMF model'    
+            assert os.path.exists(MLP_model_path), 'lack of MLP model'
+            GMF_model = torch.load(GMF_model_path)
+            MLP_model = torch.load(MLP_model_path)
+        else:
+            GMF_model = None
+            MLP_model = None
+
         # build recommender model
-        model = CLMF(user_num, item_num, args.factors, args.lamda, 
-                     args.epochs, args.lr, args.wd, args.gpu)
+        model = CLNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
+                        args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, args.gpu)
         model.fit(train_loader)
 
         # build candidates set
@@ -209,9 +238,26 @@ if __name__ == '__main__':
     train_dataset = PointMFData(train_sampled)
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                     shuffle=True, num_workers=4)
+
+    # whether load pre-train model
+    model_name = args.model_name
+    assert model_name in ['MLP', 'GMF', 'NeuMF-end', 'NeuMF-pre']
+    GMF_model_path = f'./tmp/{args.dataset}/CL/GMF.pt'
+    MLP_model_path = f'./tmp/{args.dataset}/CL/MLP.pt'
+    NeuMF_model_path = f'./tmp/{args.dataset}/CL/NeuMF.pt'
+
+    if model_name == 'NeuMF-pre':
+        assert os.path.exists(GMF_model_path), 'lack of GMF model'    
+        assert os.path.exists(MLP_model_path), 'lack of MLP model'
+        GMF_model = torch.load(GMF_model_path)
+        MLP_model = torch.load(MLP_model_path)
+    else:
+        GMF_model = None
+        MLP_model = None
+
     # build recommender model
-    model = CLMF(user_num, item_num, args.factors, args.lamda, 
-                 args.epochs, args.lr, args.wd, args.gpu)
+    model = CLNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
+                    args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, args.gpu)
     model.fit(train_loader)
 
     print('Start Calculating Metrics......')
@@ -274,3 +320,9 @@ if __name__ == '__main__':
     print(f'MRR@{args.topk}: {mrr_k:.4f}')
     print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
     print('='* 20, ' Done ', '='*20)
+
+    # whether save pre-trained model if necessary
+    if args.out:
+        if not os.path.exists(f'./tmp/{args.dataset}/CL/'):
+            os.makedirs(f'./tmp/{args.dataset}/CL/')
+        torch.save(model, f'./tmp/{args.dataset}/CL/{args.model_name.split("-")[0]}.pt')
