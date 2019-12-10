@@ -46,6 +46,7 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 | Item-KNN | run_itemknn.py |
 | User-KNN | run_userknn.py |
 | WRMF | run_wrmf.py |
+| SLiM | run_slim.py |
 | PureSVD | run_puresvd.py |
 | Item2Vec | run_item2vec.py|
 | CL-MF | run_clmf.py |
@@ -57,7 +58,9 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 | CL-NeuMF | run_clneumf.py |
 | BPR-NeuMF | run_bprneumf.py |
 | HL-NeuMF | run_hlneumf.py |
-| SLiM (*TODO*) | run_slim.py |
+| CL-SLiM *(TODO)* | run_clslim.py |
+| BPR-SLiM *(TODO)* | run_clslim.py |
+| HL-SLiM *(TODO)* | run_clslim.py |
 
 ## Examples to run:
 
