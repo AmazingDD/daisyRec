@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:22:54
 @LastEditors: Yudi
-@LastEditTime: 2019-12-03 12:28:57
+@LastEditTime: 2019-12-10 13:00:30
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -47,7 +47,13 @@ extensions = [
     Extension(
         name='daisy.model.similarities', 
         sources=['daisy/model/similarities' + ext], 
-        include_dirs=[np.get_include()]),
+        include_dirs=[np.get_include()]
+    ),
+    Extension(
+        name='daisy.model.slim', 
+        sources=['daisy/model/slim' + ext], 
+        include_dirs=[np.get_include()]
+    ),
 ]
 
 if USE_CYTHON:
