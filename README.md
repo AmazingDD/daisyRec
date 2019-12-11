@@ -59,8 +59,8 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 | BPR-NeuMF | run_bprneumf.py |
 | HL-NeuMF | run_hlneumf.py |
 | CL-SLiM | run_clslim.py |
-| BPR-SLiM *(TODO)* | run_bprslim.py |
-| HL-SLiM *(TODO)* | run_hlslim.py |
+| BPR-SLiM | run_bprslim.py |
+| HL-SLiM | run_hlslim.py |
 
 ## Examples to run:
 
