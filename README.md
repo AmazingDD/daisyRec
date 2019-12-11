@@ -58,9 +58,9 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 | CL-NeuMF | run_clneumf.py |
 | BPR-NeuMF | run_bprneumf.py |
 | HL-NeuMF | run_hlneumf.py |
-| CL-SLiM *(TODO)* | run_clslim.py |
-| BPR-SLiM *(TODO)* | run_clslim.py |
-| HL-SLiM *(TODO)* | run_clslim.py |
+| CL-SLiM | run_clslim.py |
+| BPR-SLiM *(TODO)* | run_bprslim.py |
+| HL-SLiM *(TODO)* | run_hlslim.py |
 
 ## Examples to run:
 
@@ -91,25 +91,139 @@ Here are the 6 metrics:
 
 obtained by various algorithms with the best parameter settings. 
 
+| Algorithms | Pre@5 | Pre@10 | Pre@15 | Pre@20 |
+| --- | --- | --- | --- | --- |
+| MostPop |  |  |  |  |
+|ItemKNN |  |  |  |  |
+| UserKNN |  |  |  |  |
+| WRMF |  |  |  |  |
+| SLiM |  |  |  |  |
+| PureSVD |  |  |  |  |
+| Item2Vec |  |  |  |  |
+| CL-SLiM |  |  |  |  |
+| BPR-SLiM |  |  |  |  |
+| HL-SLiM |  |  |  |  |
+| CL-MF |  |  |  |  |
+| BPR-MF |  |  |  |  |
+| HL-MF |  |  |  |  |
+| CL-FM |  |  |  |  |
+| BPR-FM |  |  |  |  |
+| HL-FM |  |  |  |  |
+| CL-NeuMF |  |  |  |  |
+| BPR-NeuMF |  |  |  |  |
+| HL-NeuMF |  |  |  |  |
+
+| Algorithms | Rec@5 | Rec@10 | Rec@15 | Rec@20 |
+| --- | --- | --- | --- | --- |
+| MostPop |  |  |  |  |
+|ItemKNN |  |  |  |  |
+| UserKNN |  |  |  |  |
+| WRMF |  |  |  |  |
+| SLiM |  |  |  |  |
+| PureSVD |  |  |  |  |
+| Item2Vec |  |  |  |  |
+| CL-SLiM |  |  |  |  |
+| BPR-SLiM |  |  |  |  |
+| HL-SLiM |  |  |  |  |
+| CL-MF |  |  |  |  |
+| BPR-MF |  |  |  |  |
+| HL-MF |  |  |  |  |
+| CL-FM |  |  |  |  |
+| BPR-FM |  |  |  |  |
+| HL-FM |  |  |  |  |
+| CL-NeuMF |  |  |  |  |
+| BPR-NeuMF |  |  |  |  |
+| HL-NeuMF |  |  |  |  |
+
+| Algorithms | MAP@5 | MAP@10 | MAP@15 | MAP@20 |
+| --- | --- | --- | --- | --- |
+| MostPop |  |  |  |  |
+|ItemKNN |  |  |  |  |
+| UserKNN |  |  |  |  |
+| WRMF |  |  |  |  |
+| SLiM |  |  |  |  |
+| PureSVD |  |  |  |  |
+| Item2Vec |  |  |  |  |
+| CL-SLiM |  |  |  |  |
+| BPR-SLiM |  |  |  |  |
+| HL-SLiM |  |  |  |  |
+| CL-MF |  |  |  |  |
+| BPR-MF |  |  |  |  |
+| HL-MF |  |  |  |  |
+| CL-FM |  |  |  |  |
+| BPR-FM |  |  |  |  |
+| HL-FM |  |  |  |  |
+| CL-NeuMF |  |  |  |  |
+| BPR-NeuMF |  |  |  |  |
+| HL-NeuMF |  |  |  |  |
+
+| Algorithms | HR@5 | HR@10 | HR@15 | HR@20 |
+| --- | --- | --- | --- | --- |
+| MostPop |  |  |  |  |
+|ItemKNN |  |  |  |  |
+| UserKNN |  |  |  |  |
+| WRMF |  |  |  |  |
+| SLiM |  |  |  |  |
+| PureSVD |  |  |  |  |
+| Item2Vec |  |  |  |  |
+| CL-SLiM |  |  |  |  |
+| BPR-SLiM |  |  |  |  |
+| HL-SLiM |  |  |  |  |
+| CL-MF |  |  |  |  |
+| BPR-MF |  |  |  |  |
+| HL-MF |  |  |  |  |
+| CL-FM |  |  |  |  |
+| BPR-FM |  |  |  |  |
+| HL-FM |  |  |  |  |
+| CL-NeuMF |  |  |  |  |
+| BPR-NeuMF |  |  |  |  |
+| HL-NeuMF |  |  |  |  |
+
+| Algorithms | MRR@5 | MRR@10 | MRR@15 | MRR@20 |
+| --- | --- | --- | --- | --- |
+| MostPop |  |  |  |  |
+|ItemKNN |  |  |  |  |
+| UserKNN |  |  |  |  |
+| WRMF |  |  |  |  |
+| SLiM |  |  |  |  |
+| PureSVD |  |  |  |  |
+| Item2Vec |  |  |  |  |
+| CL-SLiM |  |  |  |  |
+| BPR-SLiM |  |  |  |  |
+| HL-SLiM |  |  |  |  |
+| CL-MF |  |  |  |  |
+| BPR-MF |  |  |  |  |
+| HL-MF |  |  |  |  |
+| CL-FM |  |  |  |  |
+| BPR-FM |  |  |  |  |
+| HL-FM |  |  |  |  |
+| CL-NeuMF |  |  |  |  |
+| BPR-NeuMF |  |  |  |  |
+| HL-NeuMF |  |  |  |  |
+
+| Algorithms | NDCG@5 | NDCG@10 | NDCG@15 | NDCG@20 |
+| --- | --- | --- | --- | --- |
+| MostPop |  |  |  |  |
+|ItemKNN |  |  |  |  |
+| UserKNN |  |  |  |  |
+| WRMF |  |  |  |  |
+| SLiM |  |  |  |  |
+| PureSVD |  |  |  |  |
+| Item2Vec |  |  |  |  |
+| CL-SLiM |  |  |  |  |
+| BPR-SLiM |  |  |  |  |
+| HL-SLiM |  |  |  |  |
+| CL-MF |  |  |  |  |
+| BPR-MF |  |  |  |  |
+| HL-MF |  |  |  |  |
+| CL-FM |  |  |  |  |
+| BPR-FM |  |  |  |  |
+| HL-FM |  |  |  |  |
+| CL-NeuMF |  |  |  |  |
+| BPR-NeuMF |  |  |  |  |
+| HL-NeuMF |  |  |  |  |
+
 The results above are reproducible.
-
-<!-- ## Simple Result Achieved for quick look
-
-| Algo | HR@10 | NDCG@10 | MAP@10 |
-| ------ | ------ | ------ | -- |
-| Pop | 0.101  | 0.338 | 0.040 |
-| UserKNN | 0.141  | 0.341 | 0.069 |
-| ItemKNN | 0.153  | 0.351 | 0.079 |
-| SLiM | 0.359 | 0.706 | 0.262 |
-| NMF | 0.157 | 0.353 | 0.078 |
-| PureSVD | 0.347 | 0.638 | 0.248 |
-| SVD | 0.164 | 0.365 | 0.087 |
-| SVD++ | 0.152 | 0.360 | 0.077 |
-| WRMF | 0.586 | 0.833 | 0.451 |
-| BPR-MF | 0.705 | 0.407 | 0.315 |
-| NeuMF | 0.698  | 0.401 | 0.310 |
-| FM | 0.209 | 0.451 | 0.119 | -->
-<!-- | NeuFM(deprecated) | 0.214  | 0.453 | 0.119 | -->
 
 ---
 
