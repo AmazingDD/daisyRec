@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:16:12
 @LastEditors: Yudi
-@LastEditTime: 2019-12-09 16:47:10
+@LastEditTime: 2019-12-12 19:24:11
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -16,11 +16,11 @@ import torch.optim as optim
 import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
-class CLNeuMF(nn.Module):
+class PointNeuMF(nn.Module):
     def __init__(self, user_num, item_num, factor_num, num_layers, dropout, 
                  lr, epochs, lamda, model_name, 
-                 GMF_model=None, MLP_model=None, gpuid='0'):
-        super(CLNeuMF, self).__init__()
+                 GMF_model=None, MLP_model=None, gpuid='0', loss_type='CL'):
+        super(PointNeuMF, self).__init__()
         """
         user_num: number of users;
 		item_num: number of items;
@@ -65,6 +65,8 @@ class CLNeuMF(nn.Module):
         self.predict_layer = nn.Linear(predict_size, 1)
 
         self._init_weight_()
+
+        self.loss_type = loss_type
 
     def _init_weight_(self):
         '''weights initialization'''
@@ -131,7 +133,12 @@ class CLNeuMF(nn.Module):
         else:
             self.cpu()
 
-        criterion = nn.BCEWithLogitsLoss(reduction='sum')
+        if self.loss_type == 'CL':
+            criterion = nn.BCEWithLogitsLoss(reduction='sum')
+        elif self.loss_type == 'SL':
+            criterion = nn.MSELoss(reduction='sum')
+        else:
+            raise ValueError(f'Invalid loss type: {self.loss_type}')
 
         if self.model == 'NeuMF-pre':
             optimizer = optim.SGD(self.parameters(), lr=self.lr)

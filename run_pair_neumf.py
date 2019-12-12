@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors: Yudi
-@LastEditTime: 2019-12-09 16:25:19
+@LastEditTime: 2019-12-12 19:56:18
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -18,12 +18,12 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pairwise.HLNeuMFRecommender import HLNeuMF
+from daisy.model.pairwise.NeuMFRecommender import PairNeuMF
 from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, PairMFData
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='HL-NeuMF recommender test')
+    parser = argparse.ArgumentParser(description='Pair-Wise NeuMF recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -47,7 +47,7 @@ if __name__ == '__main__':
                         help='split ratio for test set')
     parser.add_argument('--val_method', 
                         type=str, 
-                        default='loo', 
+                        default='cv', 
                         help='validation method, options: cv, tfo, loo, tloo')
     parser.add_argument('--fold_num', 
                         type=int, 
@@ -58,6 +58,10 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
+    parser.add_argument('--loss_type', 
+                        type=str, 
+                        default='BPR', 
+                        help='loss function type')
     parser.add_argument('--num_ng', 
                         type=int, 
                         default=4, 
@@ -137,9 +141,9 @@ if __name__ == '__main__':
         # whether load pre-train model
         model_name = args.model_name
         assert model_name in ['MLP', 'GMF', 'NeuMF-end', 'NeuMF-pre']
-        GMF_model_path = f'./tmp/{args.dataset}/HL/GMF.pt'
-        MLP_model_path = f'./tmp/{args.dataset}/HL/MLP.pt'
-        NeuMF_model_path = f'./tmp/{args.dataset}/HL/NeuMF.pt'
+        GMF_model_path = f'./tmp/{args.dataset}/BPR/GMF.pt'
+        MLP_model_path = f'./tmp/{args.dataset}/BPR/MLP.pt'
+        NeuMF_model_path = f'./tmp/{args.dataset}/BPR/NeuMF.pt'
 
         if model_name == 'NeuMF-pre':
             assert os.path.exists(GMF_model_path), 'lack of GMF model'    
@@ -151,8 +155,9 @@ if __name__ == '__main__':
             MLP_model = None
 
         # build recommender model
-        model = HLNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
-                        args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, args.gpu)
+        model = PairNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
+                          args.lr, args.epochs, args.lamda, args.model_name, 
+                          GMF_model, MLP_model, args.gpu, args.loss_type)
         model.fit(train_loader)
 
         # build candidates set
@@ -238,9 +243,9 @@ if __name__ == '__main__':
     # whether load pre-train model
     model_name = args.model_name
     assert model_name in ['MLP', 'GMF', 'NeuMF-end', 'NeuMF-pre']
-    GMF_model_path = f'./tmp/{args.dataset}/HL/GMF.pt'
-    MLP_model_path = f'./tmp/{args.dataset}/HL/MLP.pt'
-    NeuMF_model_path = f'./tmp/{args.dataset}/HL/NeuMF.pt'
+    GMF_model_path = f'./tmp/{args.dataset}/BPR/GMF.pt'
+    MLP_model_path = f'./tmp/{args.dataset}/BPR/MLP.pt'
+    NeuMF_model_path = f'./tmp/{args.dataset}/BPR/NeuMF.pt'
 
     if model_name == 'NeuMF-pre':
         assert os.path.exists(GMF_model_path), 'lack of GMF model'    
@@ -252,8 +257,9 @@ if __name__ == '__main__':
         MLP_model = None
 
     # build recommender model
-    model = HLNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
-                    args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, args.gpu)
+    model = PairNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
+                      args.lr, args.epochs, args.lamda, args.model_name, 
+                      GMF_model, MLP_model, args.gpu, args.loss_type)
     model.fit(train_loader)
 
     print('Start Calculating Metrics......')
@@ -319,6 +325,6 @@ if __name__ == '__main__':
 
     # whether save pre-trained model if necessary
     if args.out:
-        if not os.path.exists(f'./tmp/{args.dataset}/HL/'):
-            os.makedirs(f'./tmp/{args.dataset}/HL/')
-        torch.save(model, f'./tmp/{args.dataset}/HL/{args.model_name.split("-")[0]}.pt')
+        if not os.path.exists(f'./tmp/{args.dataset}/BPR/'):
+            os.makedirs(f'./tmp/{args.dataset}/BPR/')
+        torch.save(model, f'./tmp/{args.dataset}/BPR/{args.model_name.split("-")[0]}.pt')

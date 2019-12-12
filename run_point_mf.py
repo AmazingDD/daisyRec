@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-05 15:35:52
+@Date: 2019-12-03 15:38:07
 @LastEditors: Yudi
-@LastEditTime: 2019-12-06 17:01:11
+@LastEditTime: 2019-12-12 19:26:16
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -17,14 +17,12 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pointwise.CLFMRecommender import CLFM
+from daisy.model.pointwise.MFRecommender import PointMF
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
-from daisy.utils.loader import build_feat_idx_dict, negative_sampling, PointFMData
-
+from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, negative_sampling, PointMFData
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Cross-Entropy FM recommender test')
+    parser = argparse.ArgumentParser(description='Point-Wise MF recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -63,32 +61,34 @@ if __name__ == '__main__':
                         type=int, 
                         default=4, 
                         help='negative sampling number')
-    parser.add_argument('--batch_norm', 
-                        default=True, 
-                        help='use batch_norm or not')
-    parser.add_argument('--dropout',
-                        default='[0.5, 0.2]', 
-                        help='dropout rate for FM and MLP')
-    parser.add_argument('--hidden_factor', 
+    parser.add_argument('--factors', 
                         type=int, 
-                        default=64, 
-                        help='predictive factors numbers in the model')
-    parser.add_argument('--batch_size', 
-                        type=int, 
-                        default=128, 
-                        help='batch size for training')
+                        default=100, 
+                        help='The number of latent factors')
     parser.add_argument('--epochs', 
                         type=int, 
                         default=20, 
-                        help='training epochs')
+                        help='The number of iteration of the SGD procedure')
     parser.add_argument('--lr', 
                         type=float, 
-                        default=0.05, 
-                        help='learning rate')
+                        default=0.01, 
+                        help='learning rate')                    
+    parser.add_argument('--wd', 
+                        type=float, 
+                        default=0.0, 
+                        help='model regularization rate')
+    parser.add_argument('--batch_size', 
+                        type=int, 
+                        default=256,
+                        help='batch size for training')
     parser.add_argument('--lamda', 
                         type=float, 
                         default=0.0, 
-                        help='regularizer for bilinear layers')
+                        help='regularizer weight')
+    parser.add_argument('--loss_type', 
+                        type=str, 
+                        default='CL', 
+                        help='loss function type')
     parser.add_argument('--gpu', 
                         type=str, 
                         default='0', 
@@ -96,15 +96,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     '''Validation Process for Parameter Tuning'''
-    # state column name for certain data type
-    cat_cols=['user', 'item']
-    num_cols=[]
-
     df, user_num, item_num = load_rate(args.dataset, args.prepro)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
-
-    # convert features to mapping dictionary
-    feat_idx_dict, num_features = build_feat_idx_dict(df, cat_cols, num_cols)
 
     # get ground truth
     test_ur = get_ur(test_set)
@@ -129,17 +122,14 @@ if __name__ == '__main__':
         val_ur = get_ur(validation)
 
         # start negative sampling
-        train_sampled = negative_sampling(train, args.num_ng, 0.)
-
+        train_sampled = negative_sampling(train, args.num_ng)
         # format training data
-        train_dataset = PointFMData(train_sampled, feat_idx_dict, cat_cols, num_cols)
-        print('Finish construct FM torch-dataset......')
-        train_loader = data.DataLoader(train_dataset, drop_last=True, batch_size=args.batch_size, 
+        train_dataset = PointMFData(train_sampled)
+        train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                        shuffle=True, num_workers=4)
-
         # build recommender model
-        model = CLFM(num_features, args.hidden_factor, args.batch_norm, eval(args.dropout), 
-                    args.epochs, args.lr, args.lamda, args.gpu)
+        model = PointMF(user_num, item_num, args.factors, args.lamda, 
+                        args.epochs, args.lr, args.wd, args.gpu, args.loss_type)
         model.fit(train_loader)
 
         # build candidates set
@@ -157,25 +147,25 @@ if __name__ == '__main__':
         print('')
         preds = {}
         for u in tqdm(val_ucands.keys()):
-            # build a validation FM dataset for certain user u
+            # build a validation MF dataset for certain user u
             tmp = pd.DataFrame({'user': [u for _ in val_ucands[u]], 
                                 'item': val_ucands[u], 
                                 'rating': [0. for _ in val_ucands[u]], # fake label, make nonsense
                                 })
-            tmp_dataset = PointFMData(tmp, feat_idx_dict, cat_cols, num_cols)
+            tmp_dataset = PointMFData(tmp)
             tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
                                          shuffle=False, num_workers=0)
-            # get top-N list with torch method 
-            for features, feature_values, _ in tmp_loader:
-                if torch.cuda.is_available():
-                    features = features.cuda()
-                    feature_values = feature_values.cuda()
-                else:
-                    features = features.cpu()
-                    feature_values = feature_values.cpu()
 
-                prediction = model.predict(features, feature_values)
-                prediction = prediction.clamp(min=-1.0, max=1.0)
+            # get top-N list with torch method 
+            for user_u, item_i, _ in tmp_loader:
+                if torch.cuda.is_available():
+                    user_u = user_u.cuda()
+                    item_i = item_i.cuda()
+                else:
+                    user_u = user_u.cpu()
+                    item_i = item_i.cpu()
+
+                prediction = model.predict(user_u, item_i)
                 _, indices = torch.topk(prediction, args.topk)
                 top_n = torch.take(torch.tensor(val_ucands[u]), indices).cpu().numpy()
 
@@ -218,17 +208,14 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # start negative sampling
-    train_sampled = negative_sampling(train_set, args.num_ng, 0.)
-
+    train_sampled = negative_sampling(train_set, args.num_ng)
     # format training data
-    train_dataset = PointFMData(train_sampled, feat_idx_dict, cat_cols, num_cols)
-    print('Finish construct FM torch-dataset......')
-    train_loader = data.DataLoader(train_dataset, drop_last=True, batch_size=args.batch_size, 
-                                   shuffle=True, num_workers=4)
-
+    train_dataset = PointMFData(train_sampled)
+    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
+                                    shuffle=True, num_workers=4)
     # build recommender model
-    model = CLFM(num_features, args.hidden_factor, args.batch_norm, eval(args.dropout), 
-                    args.epochs, args.lr, args.lamda, args.gpu)
+    model = PointMF(user_num, item_num, args.factors, args.lamda, 
+                    args.epochs, args.lr, args.wd, args.gpu, args.loss_type)
     model.fit(train_loader)
 
     print('Start Calculating Metrics......')
@@ -248,25 +235,25 @@ if __name__ == '__main__':
     print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        # build a test FM dataset for certain user u
+        # build a test MF dataset for certain user u
         tmp = pd.DataFrame({'user': [u for _ in test_ucands[u]], 
                             'item': test_ucands[u], 
                             'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
                             })
-        tmp_dataset = PointFMData(tmp, feat_idx_dict, cat_cols, num_cols)
+        tmp_dataset = PointMFData(tmp)
         tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
-                                     shuffle=False, num_workers=0)
-        # get top-N list with torch method 
-        for features, feature_values, _ in tmp_loader:
-            if torch.cuda.is_available():
-                features = features.cuda()
-                feature_values = feature_values.cuda()
-            else:
-                features = features.cpu()
-                feature_values = feature_values.cpu()
+                                        shuffle=False, num_workers=0)
 
-            prediction = model.predict(features, feature_values)
-            prediction = prediction.clamp(min=-1.0, max=1.0)
+        # get top-N list with torch method 
+        for user_u, item_i, _ in tmp_loader:
+            if torch.cuda.is_available():
+                user_u = user_u.cuda()
+                item_i = item_i.cuda()
+            else:
+                user_u = user_u.cpu()
+                item_i = item_i.cpu()
+
+            prediction = model.predict(user_u, item_i)
             _, indices = torch.topk(prediction, args.topk)
             top_n = torch.take(torch.tensor(test_ucands[u]), indices).cpu().numpy()
 

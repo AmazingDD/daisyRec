@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 18:49:52
 @LastEditors: Yudi
-@LastEditTime: 2019-12-11 11:25:39
+@LastEditTime: 2019-12-12 19:55:53
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -17,12 +17,12 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pairwise.HLSLiMRecommender import HLSLiM
+from daisy.model.pairwise.SLiMRecommender import PairSLiM
 from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, PairMFData
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Hinge Loss SLiM recommender test')
+    parser = argparse.ArgumentParser(description='Pair-Wise SLiM recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -57,6 +57,10 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
+    parser.add_argument('--loss_type', 
+                        type=str, 
+                        default='BPR', 
+                        help='loss function type')
     parser.add_argument('--num_ng', 
                         type=int, 
                         default=4, 
@@ -118,8 +122,8 @@ if __name__ == '__main__':
         train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                        shuffle=True, num_workers=4)
         # build recommender model
-        model = HLSLiM(train, user_num, item_num, args.epochs, 
-                       args.lr, args.beta, args.lamda, args.gpu)
+        model = PairSLiM(train, user_num, item_num, args.epochs, 
+                         args.lr, args.beta, args.lamda, args.gpu, args.loss_type)
         model.fit(train_loader)
 
         # build candidates set
@@ -184,8 +188,8 @@ if __name__ == '__main__':
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                     shuffle=True, num_workers=4)
     # build recommender model
-    model = HLSLiM(train, user_num, item_num, args.epochs, 
-                   args.lr, args.beta, args.lamda, args.gpu)
+    model = PairSLiM(train, user_num, item_num, args.epochs, 
+                     args.lr, args.beta, args.lamda, args.gpu, args.loss_type)
     model.fit(train_loader)
 
     print('Start Calculating Metrics......')

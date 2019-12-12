@@ -1,25 +1,32 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-06 23:04:24
+@Date: 2019-12-05 16:58:16
 @LastEditors: Yudi
-@LastEditTime: 2019-12-09 18:03:14
+@LastEditTime: 2019-12-12 19:23:41
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
 import os
+import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
-class HLFM(nn.Module):
+class PointFM(nn.Module):
     def __init__(self, num_features, num_factors, batch_norm, drop_prob,
-                 epochs=20, lr=0.01, lamda=0.0, gpuid='0', verbose=True):
-        super(HLFM, self).__init__()
+                 epochs=20, lr=0.01, lamda=0.0, gpuid='0', loss_type='CL', verbose=True):
+        '''
+        num_features: number of features,
+        num_factors: number of hidden factors,
+        batch_norm: bool type, whether to use batch norm or not,
+        drop_prob: list of the dropout rate for FM and MLP,
+        '''
+        super(PointFM, self).__init__()
 
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
         cudnn.benchmark = True
@@ -38,24 +45,17 @@ class HLFM(nn.Module):
 
         FM_modules = []
         if self.batch_norm:
-            FM_modules.append(nn.BatchNorm1d(num_factors))	
+            FM_modules.append(nn.BatchNorm1d(num_factors))
+        
         FM_modules.append(nn.Dropout(drop_prob[0]))
         self.FM_layers = nn.Sequential(*FM_modules)
 
         nn.init.normal_(self.embeddings.weight, std=0.01)
         nn.init.constant_(self.biases.weight, 0.0)
 
-    def forward(self, 
-                features_i, 
-                feature_values_i, 
-                features_j,
-                feature_values_j):
-        pred_i = self._out(features_i, feature_values_i)
-        pred_j = self._out(features_j, feature_values_j)
+        self.loss_type = loss_type
 
-        return pred_i, pred_j
-        
-    def _out(self, features, feature_values):
+    def forward(self, features, feature_values):
         nonzero_embed = self.embeddings(features)
         feature_values = feature_values.unsqueeze(dim=-1)
         nonzero_embed = nonzero_embed * feature_values
@@ -83,6 +83,13 @@ class HLFM(nn.Module):
 
         optimizer = optim.SGD(self.parameters(), lr=self.lr)
 
+        if self.loss_type == 'CL':
+            criterion = nn.BCEWithLogitsLoss(reduction='sum')
+        elif self.loss_type == 'SL':
+            criterion = nn.MSELoss(reduction='sum')
+        else:
+            raise ValueError(f'Invalid loss type: {self.loss_type}')
+
         for epoch in range(1, self.epochs + 1):
             self.train() # Enable dropout and batch_norm
 
@@ -90,25 +97,20 @@ class HLFM(nn.Module):
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch:03d}]')
 
-            for feat_i, feat_val_i, feat_j, feat_val_j, label in pbar:
+            for features, feature_values, labels in pbar:
                 if torch.cuda.is_available():
-                    feat_i = feat_i.cuda()
-                    feat_j = feat_j.cuda()
-                    feat_val_i = feat_val_i.cuda()
-                    feat_val_j = feat_val_j.cuda()
-                    label = label.cuda()
+                    features = features.cuda()
+                    feature_values = feature_values.cuda()
+                    labels = labels.cuda()
                 else:
-                    feat_i = feat_i.cpu()
-                    feat_j = feat_j.cpu()
-                    feat_val_i = feat_val_i.cpu()
-                    feat_val_j = feat_val_j.cpu()
-                    label = label.cpu()
+                    features = features.cpu()
+                    feature_values = feature_values.cpu()
+                    labels = labels.cpu()
 
                 self.zero_grad()
 
-                pred_i, pred_j = self.forward(feat_i, feat_val_i, feat_j, feat_val_j)
-
-                loss = torch.clamp(1 - (pred_i - pred_j) * label, min=0).sum()
+                prediction = self.forward(features, feature_values)
+                loss = criterion(prediction, labels)
                 loss += self.lamda * self.embeddings.weight.norm()
 
                 loss.backward()
@@ -117,8 +119,7 @@ class HLFM(nn.Module):
                 pbar.set_postfix(loss=loss.item())
 
             self.eval()
+        print('Finish Training Process......')
 
-    def predict(self, feat, feat_value):
-        pred, _ = self.forward(feat, feat_value, feat, feat_value)
-
-        return pred.cpu()
+    def predict(self, features, feature_values):
+        return self.forward(features, feature_values)

@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 16:14:00
 @LastEditors: Yudi
-@LastEditTime: 2019-12-11 11:22:38
+@LastEditTime: 2019-12-12 19:24:26
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -17,10 +17,10 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
-class HLSLiM(nn.Module):
+class PointSLiM(nn.Module):
     def __init__(self, data, user_num, item_num, epochs,
-                 lr=0.01, beta=0.0, lamda=0.0, gpuid='0'):
-        super(HLSLiM, self).__init__()
+                 lr=0.01, beta=0.0, lamda=0.0, gpuid='0', loss_type='CL'):
+        super(PointSLiM, self).__init__()
 
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
         cudnn.benchmark = True
@@ -45,16 +45,16 @@ class HLSLiM(nn.Module):
         self.beta = beta / 2  # Frobinious regularization
         self.lamda = lamda # lasso regularization
 
-    def forward(self, user, item_i, item_j):
+        self.loss_type = loss_type
+
+    def forward(self, user, item):
         tensor_A = torch.from_numpy(self.A).to(torch.float32)
         ru = tensor_A[user]
-        wi = self.W(item_i)
-        wj = self.W(item_j)
+        wi = self.W(item)
 
-        pred_i = (ru * wi).sum(dim=-1)
-        pred_j = (ru * wj).sum(dim=-1)
+        pred = (ru * wi).sum(dim=-1)
 
-        return pred_i, pred_j
+        return pred
 
     def fit(self, train_loader):
         if torch.cuda.is_available():
@@ -63,6 +63,12 @@ class HLSLiM(nn.Module):
             self.cpu()
         
         optimizer = optim.SGD(self.parameters(), self.lr)
+        if self.loss_type == 'CL':
+            criterion = nn.BCEWithLogitsLoss(reduction='sum')
+        elif self.loss_type == 'SL':
+            criterion = nn.MSELoss(reduction='sum')
+        else:
+            raise ValueError(f'Invalid loss type: {self.loss_type}')
         
         for epoch in range(1, self.epochs + 1):
             self.train()
@@ -70,22 +76,20 @@ class HLSLiM(nn.Module):
             # set process bar display
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch:03d}]')
-            for user, item_i, item_j, label in pbar:
+            for user, item, label in pbar:
                 if torch.cuda.is_available():
                     user = user.cuda()
-                    item_i = item_i.cuda()
-                    item_j = item_j.cuda()
+                    item = item.cuda()
                     label = label.cuda()
                 else:
                     user = user.cpu()
-                    item_i = item_i.cpu()
-                    item_j = item_j.cpu()
+                    item = item.cpu()
                     label = label.cpu()
 
                 self.zero_grad()
-                pred_i, pred_j = self.forward(user, item_i, item_j)
+                prediction = self.forward(user, item)
 
-                loss = torch.clamp(1 - (pred_i - pred_j) * label, min=0).sum()
+                loss = criterion(prediction, label)
                 loss += self.beta * self.W.weight.norm() + self.lamda * self.W.weight.norm(p=1)
 
                 loss.backward()

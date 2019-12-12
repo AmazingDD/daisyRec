@@ -1,12 +1,13 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-07 00:59:27
+@Date: 2019-12-09 14:42:14
 @LastEditors: Yudi
-@LastEditTime: 2019-12-09 18:05:17
+@LastEditTime: 2019-12-12 19:27:36
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
+import os
 import random
 import argparse
 import numpy as np
@@ -17,14 +18,12 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pairwise.HLFMRecommender import HLFM
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
-from daisy.utils.loader import build_feat_idx_dict, PairFMData
+from daisy.model.pointwise.NeuMFRecommender import PointNeuMF
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
-
+from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, negative_sampling, PointMFData
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Hinge loss FM recommender test')
+    parser = argparse.ArgumentParser(description='Point-Wise MF recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -63,32 +62,45 @@ if __name__ == '__main__':
                         type=int, 
                         default=4, 
                         help='negative sampling number')
-    parser.add_argument('--batch_norm', 
-                        default=True, 
-                        help='use batch_norm or not')
-    parser.add_argument('--dropout',
-                        default='[0.5, 0.2]', 
-                        help='dropout rate for FM and MLP')
-    parser.add_argument('--hidden_factor', 
+    parser.add_argument('--factor_num', 
                         type=int, 
-                        default=64, 
+                        default=32, 
                         help='predictive factors numbers in the model')
-    parser.add_argument('--batch_size', 
+    parser.add_argument('--num_layers', 
                         type=int, 
-                        default=2048, 
-                        help='batch size for training')
+                        default=3, 
+                        help='number of layers in MLP model')
+    parser.add_argument('--model_name', 
+                        type=str, 
+                        default='NeuMF-end', 
+                        help='target model name, if NeuMF-pre plz run MLP and GMF before')
+    parser.add_argument('--dropout', 
+                        type=float, 
+                        default=0.0, 
+                        help='dropout rate')
+    parser.add_argument('--lr', 
+                        type=float, 
+                        default=0.001, 
+                        help='learning rate')
     parser.add_argument('--epochs', 
                         type=int, 
                         default=20, 
                         help='training epochs')
-    parser.add_argument('--lr', 
-                        type=float, 
-                        default=0.05,  # can be to large
-                        help='learning rate')
+    parser.add_argument('--batch_size', 
+                        type=int, 
+                        default=256, 
+                        help='batch size for training')
     parser.add_argument('--lamda', 
                         type=float, 
-                        default=0.001, 
-                        help='regularizer for bilinear layers')
+                        default=0.0, 
+                        help='regularizer weight')
+    parser.add_argument('--out', 
+                        default=True, 
+                        help='save model or not')
+    parser.add_argument('--loss_type', 
+                        type=str, 
+                        default='CL', 
+                        help='loss function type')
     parser.add_argument('--gpu', 
                         type=str, 
                         default='0', 
@@ -96,15 +108,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     '''Validation Process for Parameter Tuning'''
-    # state column name for certain data type
-    cat_cols=['user', 'item']
-    num_cols=[]
-
     df, user_num, item_num = load_rate(args.dataset, args.prepro)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
-
-    # convert features to mapping dictionary
-    feat_idx_dict, num_features = build_feat_idx_dict(df, cat_cols, num_cols)
 
     # get ground truth
     test_ur = get_ur(test_set)
@@ -128,15 +133,33 @@ if __name__ == '__main__':
         train_ur = get_ur(train)
         val_ur = get_ur(validation)
 
+        # start negative sampling
+        train_sampled = negative_sampling(train, args.num_ng)
         # format training data
-        train_dataset = PairFMData(train, feat_idx_dict, item_num, args.num_ng, True)
-        print('Finish construct FM torch-dataset......')
-        train_loader = data.DataLoader(train_dataset, drop_last=True, batch_size=args.batch_size, 
+        train_dataset = PointMFData(train_sampled)
+        train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                        shuffle=True, num_workers=4)
 
+        # whether load pre-train model
+        model_name = args.model_name
+        assert model_name in ['MLP', 'GMF', 'NeuMF-end', 'NeuMF-pre']
+        GMF_model_path = f'./tmp/{args.dataset}/CL/GMF.pt'
+        MLP_model_path = f'./tmp/{args.dataset}/CL/MLP.pt'
+        NeuMF_model_path = f'./tmp/{args.dataset}/CL/NeuMF.pt'
+
+        if model_name == 'NeuMF-pre':
+            assert os.path.exists(GMF_model_path), 'lack of GMF model'    
+            assert os.path.exists(MLP_model_path), 'lack of MLP model'
+            GMF_model = torch.load(GMF_model_path)
+            MLP_model = torch.load(MLP_model_path)
+        else:
+            GMF_model = None
+            MLP_model = None
+
         # build recommender model
-        model = HLFM(num_features, args.hidden_factor, args.batch_norm, eval(args.dropout), 
-                      args.epochs, args.lr, args.lamda, args.gpu)
+        model = PointNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
+                           args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model,
+                           args.gpu, args.loss_type)
         model.fit(train_loader)
 
         # build candidates set
@@ -147,32 +170,32 @@ if __name__ == '__main__':
             sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
             samples = random.sample(sub_item_pool, sample_num)
             val_ucands[k] = list(v | set(samples))
-
+        
         # get predict result
         print('')
         print('Generate recommend list...')
         print('')
         preds = {}
         for u in tqdm(val_ucands.keys()):
-            # build a validation FM dataset for certain user u
+            # build a validation MF dataset for certain user u
             tmp = pd.DataFrame({'user': [u for _ in val_ucands[u]], 
                                 'item': val_ucands[u], 
                                 'rating': [0. for _ in val_ucands[u]], # fake label, make nonsense
                                 })
-            tmp_dataset = PairFMData(tmp, feat_idx_dict, item_num, 0, False)
+            tmp_dataset = PointMFData(tmp)
             tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
                                          shuffle=False, num_workers=0)
+
             # get top-N list with torch method 
-            for feat_i, feat_val_i, feat_j, feat_val_j, _ in tmp_loader:
+            for user_u, item_i, _ in tmp_loader:
                 if torch.cuda.is_available():
-                    feat_i = feat_i.cuda()
-                    feat_val_i = feat_val_i.cuda()
+                    user_u = user_u.cuda()
+                    item_i = item_i.cuda()
                 else:
-                    feat_i = feat_i.cpu()
-                    feat_val_i = feat_val_i.cpu()
-                
-                prediction = model.predict(feat_i, feat_val_i)
-                prediction = prediction.clamp(min=-1.0, max=1.0)
+                    user_u = user_u.cpu()
+                    item_i = item_i.cpu()
+
+                prediction = model.predict(user_u, item_i)
                 _, indices = torch.topk(prediction, args.topk)
                 top_n = torch.take(torch.tensor(val_ucands[u]), indices).cpu().numpy()
 
@@ -189,7 +212,7 @@ if __name__ == '__main__':
         map_k = map_at_k(preds.values())
         mrr_k = mrr_at_k(preds, args.topk)
         ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
-
+        
         print('-'*20)
         print(f'Precision@{args.topk}: {pre_k:.4f}')
         print(f'Recall@{args.topk}: {rec_k:.4f}')
@@ -214,17 +237,35 @@ if __name__ == '__main__':
     '''Test Process for Metrics Exporting'''
     print('='*50, '\n')
     # retrain model by the whole train set
+    # start negative sampling
+    train_sampled = negative_sampling(train_set, args.num_ng)
     # format training data
-    train_dataset = PairFMData(train_set, feat_idx_dict, item_num, args.num_ng, True)
-    print('Finish construct FM torch-dataset......')
-    train_loader = data.DataLoader(train_dataset, drop_last=True, batch_size=args.batch_size, 
-                                   shuffle=True, num_workers=4)
+    train_dataset = PointMFData(train_sampled)
+    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
+                                    shuffle=True, num_workers=4)
+
+    # whether load pre-train model
+    model_name = args.model_name
+    assert model_name in ['MLP', 'GMF', 'NeuMF-end', 'NeuMF-pre']
+    GMF_model_path = f'./tmp/{args.dataset}/CL/GMF.pt'
+    MLP_model_path = f'./tmp/{args.dataset}/CL/MLP.pt'
+    NeuMF_model_path = f'./tmp/{args.dataset}/CL/NeuMF.pt'
+
+    if model_name == 'NeuMF-pre':
+        assert os.path.exists(GMF_model_path), 'lack of GMF model'    
+        assert os.path.exists(MLP_model_path), 'lack of MLP model'
+        GMF_model = torch.load(GMF_model_path)
+        MLP_model = torch.load(MLP_model_path)
+    else:
+        GMF_model = None
+        MLP_model = None
 
     # build recommender model
-    model = HLFM(num_features, args.hidden_factor, args.batch_norm, eval(args.dropout), 
-                  args.epochs, args.lr, args.lamda, args.gpu)
+    model = PointNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
+                       args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, 
+                       args.gpu, args.loss_type)
     model.fit(train_loader)
-    
+
     print('Start Calculating Metrics......')
     # build candidates set
     assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
@@ -242,31 +283,30 @@ if __name__ == '__main__':
     print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        # build a test FM dataset for certain user u
+        # build a test MF dataset for certain user u
         tmp = pd.DataFrame({'user': [u for _ in test_ucands[u]], 
                             'item': test_ucands[u], 
                             'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
                             })
-        tmp_dataset = PairFMData(tmp, feat_idx_dict, item_num, 0, False)
+        tmp_dataset = PointMFData(tmp)
         tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
-                                     shuffle=False, num_workers=0)
+                                        shuffle=False, num_workers=0)
 
         # get top-N list with torch method 
-        for feat_i, feat_val_i, feat_j, feat_val_j, _ in tmp_loader:
+        for user_u, item_i, _ in tmp_loader:
             if torch.cuda.is_available():
-                feat_i = feat_i.cuda()
-                feat_val_i = feat_val_i.cuda()
+                user_u = user_u.cuda()
+                item_i = item_i.cuda()
             else:
-                feat_i = feat_i.cpu()
-                feat_val_i = feat_val_i.cpu()
+                user_u = user_u.cpu()
+                item_i = item_i.cpu()
 
-            prediction = model.predict(feat_i, feat_val_i)
-            prediction = prediction.clamp(min=-1.0, max=1.0)
+            prediction = model.predict(user_u, item_i)
             _, indices = torch.topk(prediction, args.topk)
             top_n = torch.take(torch.tensor(test_ucands[u]), indices).cpu().numpy()
 
         preds[u] = top_n
-    
+
     # convert rank list to binary-interaction
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
@@ -286,4 +326,9 @@ if __name__ == '__main__':
     print(f'MRR@{args.topk}: {mrr_k:.4f}')
     print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
     print('='* 20, ' Done ', '='*20)
-    
+
+    # whether save pre-trained model if necessary
+    if args.out:
+        if not os.path.exists(f'./tmp/{args.dataset}/CL/'):
+            os.makedirs(f'./tmp/{args.dataset}/CL/')
+        torch.save(model, f'./tmp/{args.dataset}/CL/{args.model_name.split("-")[0]}.pt')

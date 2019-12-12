@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 16:14:00
 @LastEditors: Yudi
-@LastEditTime: 2019-12-11 09:55:20
+@LastEditTime: 2019-12-12 19:07:47
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -17,10 +17,10 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
-class BPRSLiM(nn.Module):
+class PairSLiM(nn.Module):
     def __init__(self, data, user_num, item_num, epochs,
-                 lr=0.01, beta=0.0, lamda=0.0, gpuid='0'):
-        super(BPRSLiM, self).__init__()
+                 lr=0.01, beta=0.0, lamda=0.0, gpuid='0', loss_type='BPR'):
+        super(PairSLiM, self).__init__()
 
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
         cudnn.benchmark = True
@@ -44,6 +44,8 @@ class BPRSLiM(nn.Module):
         self.lr = lr
         self.beta = beta / 2  # Frobinious regularization
         self.lamda = lamda # lasso regularization
+
+        self.loss_type = loss_type
 
     def forward(self, user, item_i, item_j):
         tensor_A = torch.from_numpy(self.A).to(torch.float32)
@@ -70,20 +72,28 @@ class BPRSLiM(nn.Module):
             # set process bar display
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch:03d}]')
-            for user, item_i, item_j, _ in pbar:
+            for user, item_i, item_j, label in pbar:
                 if torch.cuda.is_available():
                     user = user.cuda()
                     item_i = item_i.cuda()
                     item_j = item_j.cuda()
+                    label = label.cuda()
                 else:
                     user = user.cpu()
                     item_i = item_i.cpu()
                     item_j = item_j.cpu()
+                    label = label.cpu()
 
                 self.zero_grad()
                 pred_i, pred_j = self.forward(user, item_i, item_j)
 
-                loss = -(pred_i - pred_j).sigmoid().log().sum()
+                if self.loss_type == 'BPR':
+                    loss = -(pred_i - pred_j).sigmoid().log().sum()
+                elif self.loss_type == 'HL':
+                    loss = torch.clamp(1 - (pred_i - pred_j) * label, min=0).sum()
+                else:
+                    raise ValueError(f'Invalid loss type: {self.loss_type}')
+
                 loss += self.beta * self.W.weight.norm() + self.lamda * self.W.weight.norm(p=1)
 
                 loss.backward()

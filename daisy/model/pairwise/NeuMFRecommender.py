@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:16:12
 @LastEditors: Yudi
-@LastEditTime: 2019-12-09 16:12:07
+@LastEditTime: 2019-12-12 19:17:47
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -16,11 +16,11 @@ import torch.optim as optim
 import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
-class BPRNeuMF(nn.Module):
+class PairNeuMF(nn.Module):
     def __init__(self, user_num, item_num, factor_num, num_layers, dropout, 
                  lr, epochs, lamda, model_name, 
-                 GMF_model=None, MLP_model=None, gpuid='0'):
-        super(BPRNeuMF, self).__init__()
+                 GMF_model=None, MLP_model=None, gpuid='0', loss_type='BPR'):
+        super(PairNeuMF, self).__init__()
         """
         user_num: number of users;
 		item_num: number of items;
@@ -65,6 +65,8 @@ class BPRNeuMF(nn.Module):
         self.predict_layer = nn.Linear(predict_size, 1)
 
         self._init_weight_()
+
+        self.loss_type = loss_type
 
     def _init_weight_(self):
         '''weights initialization'''
@@ -149,19 +151,28 @@ class BPRNeuMF(nn.Module):
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch:03d}]')
 
-            for user, item_i, item_j, _ in pbar:
+            for user, item_i, item_j, label in pbar:
                 if torch.cuda.is_available():
                     user = user.cuda()
                     item_i = item_i.cuda()
                     item_j = item_j.cuda()
+                    label = label.cuda()
                 else:
                     user = user.cpu()
                     item_i = item_i.cpu()
                     item_j = item_j.cpu()
+                    label = label.cpu()
 
                 self.zero_grad()
                 pred_i, pred_j = self.forward(user, item_i, item_j)
-                loss = -(pred_i - pred_j).sigmoid().log().sum()
+
+                if self.loss_type == 'BPR':
+                    loss = -(pred_i - pred_j).sigmoid().log().sum()
+                elif self.loss_type == 'HL':
+                    loss = torch.clamp(1 - (pred_i - pred_j) * label, min=0).sum()
+                else:
+                    raise ValueError(f'Invalid loss type: {self.loss_type}')
+
                 loss += self.lamda * (self.embed_item_GMF.weight.norm() + self.embed_user_GMF.weight.norm())
                 loss += self.lamda * (self.embed_item_MLP.weight.norm() + self.embed_user_MLP.weight.norm())
 
