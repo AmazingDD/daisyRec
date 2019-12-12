@@ -2,11 +2,12 @@
 @Author: Yu Di
 @Date: 2019-12-02 21:52:18
 @LastEditors: Yudi
-@LastEditTime: 2019-12-04 15:48:35
+@LastEditTime: 2019-12-12 12:22:40
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
+import logging
 import argparse
 import numpy as np
 import pandas as pd
@@ -17,6 +18,12 @@ from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':
+    # load logger configuration
+    logging.config.fileConfig("./log.conf")
+    logger_name = 'MostPop'
+    logger = logging.getLogger(logger_name)
+    logger.debug('MostPop experiment running...')
+
     parser = argparse.ArgumentParser(description='Most-Popular recommender test')
     # common settings
     parser.add_argument('--dataset', 
