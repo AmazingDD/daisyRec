@@ -1,4 +1,6 @@
-# daisyRec
+![DaisyRec](logo.png)
+
+[![Build Status](https://img.shields.io/badge/python-3.7-yellow.svg)]() [![Version](https://img.shields.io/badge/version-v1.0.0-orange)]() ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec) 
 
 ## Overview
 
@@ -40,27 +42,29 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 
 ## List of all algorithms
 
-| Algo. | File |
-| ------ | ------ |
-| Popular | run_mostpop.py |
-| Item-KNN | run_itemknn.py |
-| User-KNN | run_userknn.py |
-| WRMF | run_wrmf.py |
-| SLiM | run_slim.py |
-| PureSVD | run_puresvd.py |
-| Item2Vec | run_item2vec.py|
-| CL-MF | run_clmf.py |
-| BPR-MF | run_bprmf.py |
-| HL-MF | run_hlmf.py |
-| CL-FM | run_clfm.py |
-| BPR-FM | run_bprfm.py |
-| HL-FM | run_hlfm.py |
-| CL-NeuMF | run_clneumf.py |
-| BPR-NeuMF | run_bprneumf.py |
-| HL-NeuMF | run_hlneumf.py |
-| CL-SLiM | run_clslim.py |
-| BPR-SLiM | run_bprslim.py |
-| HL-SLiM | run_hlslim.py |
+#### _Common Algo._
+
+- Popular
+- Item-KNN
+- User-KNN
+- WRMF
+- PureSVD
+- Item2Vec
+
+#### _Point-wise with cross-entropy-loss/square-loss_ 
+
+- MF
+- FM
+- SLiM
+- NeuMF
+
+#### _Pair-wise with bpr-loss/hinge-loss_
+
+- MF
+- FM
+- SLiM
+- NeuMF
+
 
 ## Examples to run:
 
@@ -89,139 +93,9 @@ Here are the 6 metrics:
 - MRR(Mean Reciprocal Rank)
 - NDCG(Normalized Discounted Cumulative Gain)
 
-obtained by various algorithms with the best parameter settings. 
+obtained by various algorithms with the best parameter settings.
 
-| Algorithms | Pre@5 | Pre@10 | Pre@15 | Pre@20 |
-| --- | --- | --- | --- | --- |
-| MostPop |  |  |  |  |
-|ItemKNN |  |  |  |  |
-| UserKNN |  |  |  |  |
-| WRMF |  |  |  |  |
-| SLiM |  |  |  |  |
-| PureSVD |  |  |  |  |
-| Item2Vec |  |  |  |  |
-| CL-SLiM |  |  |  |  |
-| BPR-SLiM |  |  |  |  |
-| HL-SLiM |  |  |  |  |
-| CL-MF |  |  |  |  |
-| BPR-MF |  |  |  |  |
-| HL-MF |  |  |  |  |
-| CL-FM |  |  |  |  |
-| BPR-FM |  |  |  |  |
-| HL-FM |  |  |  |  |
-| CL-NeuMF |  |  |  |  |
-| BPR-NeuMF |  |  |  |  |
-| HL-NeuMF |  |  |  |  |
-
-| Algorithms | Rec@5 | Rec@10 | Rec@15 | Rec@20 |
-| --- | --- | --- | --- | --- |
-| MostPop |  |  |  |  |
-|ItemKNN |  |  |  |  |
-| UserKNN |  |  |  |  |
-| WRMF |  |  |  |  |
-| SLiM |  |  |  |  |
-| PureSVD |  |  |  |  |
-| Item2Vec |  |  |  |  |
-| CL-SLiM |  |  |  |  |
-| BPR-SLiM |  |  |  |  |
-| HL-SLiM |  |  |  |  |
-| CL-MF |  |  |  |  |
-| BPR-MF |  |  |  |  |
-| HL-MF |  |  |  |  |
-| CL-FM |  |  |  |  |
-| BPR-FM |  |  |  |  |
-| HL-FM |  |  |  |  |
-| CL-NeuMF |  |  |  |  |
-| BPR-NeuMF |  |  |  |  |
-| HL-NeuMF |  |  |  |  |
-
-| Algorithms | MAP@5 | MAP@10 | MAP@15 | MAP@20 |
-| --- | --- | --- | --- | --- |
-| MostPop |  |  |  |  |
-|ItemKNN |  |  |  |  |
-| UserKNN |  |  |  |  |
-| WRMF |  |  |  |  |
-| SLiM |  |  |  |  |
-| PureSVD |  |  |  |  |
-| Item2Vec |  |  |  |  |
-| CL-SLiM |  |  |  |  |
-| BPR-SLiM |  |  |  |  |
-| HL-SLiM |  |  |  |  |
-| CL-MF |  |  |  |  |
-| BPR-MF |  |  |  |  |
-| HL-MF |  |  |  |  |
-| CL-FM |  |  |  |  |
-| BPR-FM |  |  |  |  |
-| HL-FM |  |  |  |  |
-| CL-NeuMF |  |  |  |  |
-| BPR-NeuMF |  |  |  |  |
-| HL-NeuMF |  |  |  |  |
-
-| Algorithms | HR@5 | HR@10 | HR@15 | HR@20 |
-| --- | --- | --- | --- | --- |
-| MostPop |  |  |  |  |
-|ItemKNN |  |  |  |  |
-| UserKNN |  |  |  |  |
-| WRMF |  |  |  |  |
-| SLiM |  |  |  |  |
-| PureSVD |  |  |  |  |
-| Item2Vec |  |  |  |  |
-| CL-SLiM |  |  |  |  |
-| BPR-SLiM |  |  |  |  |
-| HL-SLiM |  |  |  |  |
-| CL-MF |  |  |  |  |
-| BPR-MF |  |  |  |  |
-| HL-MF |  |  |  |  |
-| CL-FM |  |  |  |  |
-| BPR-FM |  |  |  |  |
-| HL-FM |  |  |  |  |
-| CL-NeuMF |  |  |  |  |
-| BPR-NeuMF |  |  |  |  |
-| HL-NeuMF |  |  |  |  |
-
-| Algorithms | MRR@5 | MRR@10 | MRR@15 | MRR@20 |
-| --- | --- | --- | --- | --- |
-| MostPop |  |  |  |  |
-|ItemKNN |  |  |  |  |
-| UserKNN |  |  |  |  |
-| WRMF |  |  |  |  |
-| SLiM |  |  |  |  |
-| PureSVD |  |  |  |  |
-| Item2Vec |  |  |  |  |
-| CL-SLiM |  |  |  |  |
-| BPR-SLiM |  |  |  |  |
-| HL-SLiM |  |  |  |  |
-| CL-MF |  |  |  |  |
-| BPR-MF |  |  |  |  |
-| HL-MF |  |  |  |  |
-| CL-FM |  |  |  |  |
-| BPR-FM |  |  |  |  |
-| HL-FM |  |  |  |  |
-| CL-NeuMF |  |  |  |  |
-| BPR-NeuMF |  |  |  |  |
-| HL-NeuMF |  |  |  |  |
-
-| Algorithms | NDCG@5 | NDCG@10 | NDCG@15 | NDCG@20 |
-| --- | --- | --- | --- | --- |
-| MostPop |  |  |  |  |
-|ItemKNN |  |  |  |  |
-| UserKNN |  |  |  |  |
-| WRMF |  |  |  |  |
-| SLiM |  |  |  |  |
-| PureSVD |  |  |  |  |
-| Item2Vec |  |  |  |  |
-| CL-SLiM |  |  |  |  |
-| BPR-SLiM |  |  |  |  |
-| HL-SLiM |  |  |  |  |
-| CL-MF |  |  |  |  |
-| BPR-MF |  |  |  |  |
-| HL-MF |  |  |  |  |
-| CL-FM |  |  |  |  |
-| BPR-FM |  |  |  |  |
-| HL-FM |  |  |  |  |
-| CL-NeuMF |  |  |  |  |
-| BPR-NeuMF |  |  |  |  |
-| HL-NeuMF |  |  |  |  |
+<!-- insert KPI report here -->
 
 The results above are reproducible.
 
