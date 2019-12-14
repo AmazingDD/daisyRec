@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:22:54
 @LastEditors: Yudi
-@LastEditTime: 2019-12-10 13:00:30
+@LastEditTime: 2019-12-12 20:20:48
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -52,6 +52,11 @@ extensions = [
     Extension(
         name='daisy.model.slim', 
         sources=['daisy/model/slim' + ext], 
+        include_dirs=[np.get_include()]
+    ),
+    Extension(
+        name='daisy.model.matrix_factorization', 
+        sources=['daisy/model/matrix_factorization' + ext], 
         include_dirs=[np.get_include()]
     ),
 ]

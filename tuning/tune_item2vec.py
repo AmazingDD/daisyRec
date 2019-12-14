@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors: Yudi
-@LastEditTime: 2019-12-13 17:43:54
+@LastEditTime: 2019-12-13 17:21:06
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
                         help='top number of recommend list')
     parser.add_argument('--test_method', 
                         type=str, 
-                        default='fo', 
+                        default='loo', 
                         help='method for split test,options: loo/fo/tfo/tloo')
     parser.add_argument('--test_size', 
                         type=float, 
@@ -59,7 +59,7 @@ if __name__ == '__main__':
                         help='split ratio for test set')
     parser.add_argument('--val_method', 
                         type=str, 
-                        default='cv', 
+                        default='loo', 
                         help='validation method, options: cv, tfo, loo, tloo')
     parser.add_argument('--fold_num', 
                         type=int, 
@@ -82,7 +82,9 @@ if __name__ == '__main__':
     parser.add_argument('--cuda', action='store_true', help="use CUDA")
     args = parser.parse_args()
 
-    '''Test Process for Metrics Exporting'''
+    # TODO generate algo paramter settings for grid-search tuning
+
+    '''Validation Process for Parameter Tuning'''
     df, user_num, item_num = load_rate(args.dataset, args.prepro)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
 
@@ -94,85 +96,89 @@ if __name__ == '__main__':
     test_ur = get_ur(test_set)
     total_train_ur = get_ur(train_set)
 
+    train_set_list, val_set_list, fn = split_validation(train_set, 
+                                                        args.val_method, 
+                                                        args.fold_num)
+
     # initial candidate item pool
     item_pool = set(range(item_num))
     candidates_num = args.cand_num
 
-    print('='*50, '\n')
-    # retrain model by the whole train set
-    # build recommender model
-    dt = pre.convert(train_set)
-    vocab_size, weights = get_weights(pre.wc, pre.idx2item, args.ss_t, args.weights)
-    
-    embed_model = Item2Vec(item_num=vocab_size, embedding_size=args.e_dim)
-    model = SGNS(embedding=embed_model, item_num=vocab_size, n_negs=args.n_negs, weights=weights)
+    # store metrics result for test set
+    fnl_metric = []
+    for fold in range(fn):
+        print(f'Start Validation [{fold + 1}]......')
+        train = train_set_list[fold]
+        validation = val_set_list[fold]
 
-    dataset = PermutedSubsampledCorpus(dt)  
-    dataloader = DataLoader(dataset, batch_size=args.mb, shuffle=True) 
+        # get ground truth
+        train_ur = get_ur(train)
+        val_ur = get_ur(validation)
 
-    model.fit(dataloader, args.epochs, pre.item2idx)
-    model.build_user_vec(total_train_ur)
+        # build recommender model
+        dt = pre.convert(train)
+        vocab_size, weights = get_weights(pre.wc, pre.idx2item, args.ss_t, args.weights)
+        
+        embed_model = Item2Vec(item_num=vocab_size, embedding_size=args.e_dim)
+        model = SGNS(embedding=embed_model, item_num=vocab_size, n_negs=args.n_negs, weights=weights)
 
-    print('Start Calculating Metrics......')
-    # build candidates set
-    assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
-    test_ucands = defaultdict(list)
-    for k, v in test_ur.items():
-        sample_num = candidates_num - len(v)
-        sub_item_pool = item_pool - v - total_train_ur[k] # remove GT & interacted
-        samples = random.sample(sub_item_pool, sample_num)
-        test_ucands[k] = list(v | set(samples))
+        dataset = PermutedSubsampledCorpus(dt)  
+        dataloader = DataLoader(dataset, batch_size=args.mb, shuffle=True) 
 
-    # get predict result
-    print('')
-    print('Generate recommend list...')
-    print('')
-    preds = {}
-    for u in tqdm(test_ucands.keys()):
-        pred_rates = [model.predict(u, i) for i in test_ucands[u]]
-        rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
-        top_n = np.array(test_ucands[u])[rec_idx]
-        preds[u] = top_n
+        model.fit(dataloader, args.epochs, pre.item2idx)
+        model.build_user_vec(train_ur)
 
-    # convert rank list to binary-interaction
-    for u in preds.keys():
-        preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
-    
-    # calculate metrics for test set
-    pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
-    rec_k = recall_at_k(preds, test_ur, args.topk)
-    hr_k = hr_at_k(preds, test_ur)
-    map_k = map_at_k(preds.values())
-    mrr_k = mrr_at_k(preds, args.topk)
-    ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
+        # build candidates set
+        assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
+        val_ucands = defaultdict(list)
+        for k, v in val_ur.items():
+            sample_num = candidates_num - len(v)
+            sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
+            samples = random.sample(sub_item_pool, sample_num)
+            val_ucands[k] = list(v | set(samples))
 
-    print(f'Precision@{args.topk}: {pre_k:.4f}')
-    print(f'Recall@{args.topk}: {rec_k:.4f}')
-    print(f'HR@{args.topk}: {hr_k:.4f}')
-    print(f'MAP@{args.topk}: {map_k:.4f}')
-    print(f'MRR@{args.topk}: {mrr_k:.4f}')
-    print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
-    print('='* 20, ' Done ', '='*20)
+        # get predict result
+        print('')
+        print('Generate recommend list...')
+        print('')
+        preds = {}
+        for u in tqdm(val_ucands.keys()):
+            pred_rates = [model.predict(u, i) for i in val_ucands[u]]
+            rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
+            top_n = np.array(val_ucands[u])[rec_idx]
+            preds[u] = top_n
 
-    # process topN list and store result for reporting KPI
-    print('Save metric@k result to res folder...')
-    result_save_path = f'./res/{args.dataset}/'
-    if not os.path.exists(result_save_path):
-        os.makedirs(result_save_path)
+        # convert rank list to binary-interaction
+        for u in preds.keys():
+            preds[u] = [1 if i in val_ur[u] else 0 for i in preds[u]]
 
-    res = pd.DataFrame({'metric@K': ['pre', 'rec', 'hr', 'map', 'mrr', 'ndcg']})
+        # calculate metrics for validation set
+        pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
+        rec_k = recall_at_k(preds, val_ur, args.topk)
+        hr_k = hr_at_k(preds, val_ur)
+        map_k = map_at_k(preds.values())
+        mrr_k = mrr_at_k(preds, args.topk)
+        ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
 
-    for k in [1, 5, 10, 20, 30, 50]:
-        tmp_preds = preds.copy()        
-        tmp_preds = {key: rank_list[:k] for key, rank_list in tmp_preds.items()}
+        print('-'*20)
+        print(f'Precision@{args.topk}: {pre_k:.4f}')
+        print(f'Recall@{args.topk}: {rec_k:.4f}')
+        print(f'HR@{args.topk}: {hr_k:.4f}')
+        print(f'MAP@{args.topk}: {map_k:.4f}')
+        print(f'MRR@{args.topk}: {mrr_k:.4f}')
+        print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
 
-        pre_k = np.mean([precision_at_k(r, k) for r in tmp_preds.values()])
-        rec_k = recall_at_k(tmp_preds, test_ur, k)
-        hr_k = hr_at_k(tmp_preds, test_ur)
-        map_k = map_at_k(tmp_preds.values())
-        mrr_k = mrr_at_k(tmp_preds, k)
-        ndcg_k = np.mean([ndcg_at_k(r, k) for r in tmp_preds.values()])
+        tmp_metric = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
+        fnl_metric.append(tmp_metric)
 
-        res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
+    # get final validation metrics result by average operation
+    fnl_metric = np.array(fnl_metric).mean(axis=0)
+    print('='*20, 'Metrics for All Validation', '='*20)
+    print(f'Precision@{args.topk}: {fnl_metric[0]:.4f}')
+    print(f'Recall@{args.topk}: {fnl_metric[1]:.4f}')
+    print(f'HR@{args.topk}: {fnl_metric[2]:.4f}')
+    print(f'MAP@{args.topk}: {fnl_metric[3]:.4f}')
+    print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
+    print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
 
-    res.to_csv(f'{result_save_path}metric_result_item2vec.csv', index=False)
+    # record all tuning result and settings

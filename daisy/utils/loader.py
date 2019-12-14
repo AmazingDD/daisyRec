@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-09 16:04:39
+@LastEditTime: 2019-12-13 16:57:29
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -208,6 +208,14 @@ def negative_sampling(ratings, num_ng=4, neg_label_val=0.):
     return df_sampled
 
 def split_test(df, test_method='fo', test_size=.2):
+    """
+    :param df: raw data waiting for test set splitting
+    :param test_method: way to split test set
+                        'fo': split by ratio
+                        'tfo': split by ratio with timesstamp
+                        'tloo': leave one out with timestamp
+                        'loo': leave one out
+    """
     if test_method == 'tfo':
         df = df.sample(frac=1)
         df = df.sort_values(['timestamp']).reset_index(drop=True)
@@ -228,16 +236,27 @@ def split_test(df, test_method='fo', test_size=.2):
         test_set = df.groupby(['user']).apply(pd.DataFrame.sample, n=1).reset_index(drop=True)
         test_key = test_set[['user', 'item']].copy()
         train_set = df.set_index(['user', 'item']).drop(pd.MultiIndex.from_frame(test_key)).reset_index().copy()
-    
+
     else:
         raise ValueError('Invalid data_split value, expect: loo, fo, tloo, tfo')
 
     return train_set, test_set
 
-def split_validation(train_set, val_method='fo', fold_num=5):
-    if val_method in ['tloo', 'tfo', 'loo']:
+def split_validation(train_set, val_method='fo', fold_num=5, test_size=.1):
+    """
+    Parameter
+    ---------
+    :param train_set: train set waiting for split validation
+    :param val_method: way to split validation
+                       'cv': combine with fold_num => fold_num-CV
+                       'fo': combine with fold_num & test_size => fold_num-Split by ratio(9:1)
+                       'tfo': Split by ratio with timestamp, combine with test_size => 1-Split by ratio(9:1)
+                       'tloo': Leave one out with timestamp => 1-Leave one out
+                       'loo': combine with fold_num => fold_num-Leave one out
+    """
+    if val_method in ['tloo', 'tfo']:
         cnt = 1
-    elif val_method == 'cv':
+    elif val_method in ['cv', 'loo', 'fo']:
         cnt = fold_num
     else:
         raise ValueError('Invalid val_method value, expect: cv, loo, tloo, tfo')
@@ -248,21 +267,25 @@ def split_validation(train_set, val_method='fo', fold_num=5):
         for train_index, val_index in kf.split(train_set):
             train_set_list.append(train_set.iloc[train_index, :])
             val_set_list.append(train_set.iloc[val_index, :])
+    if val_method == 'fo':
+        for _ in range(fold_num):
+            train, validation = train_test_split(train_set, test_size=test_size)
+            train_set_list.append(train)
+            val_set_list.append(validation)
     elif val_method == 'tfo':
         train_set = train_set.sample(frac=1)
         train_set = train_set.sort_values(['timestamp']).reset_index(drop=True)
-
-        split_idx = int(np.ceil(len(train_set) * 0.9))
-
+        split_idx = int(np.ceil(len(train_set) * (1 - test_size)))
         train_set_list.append(train_set.iloc[:split_idx, :])
         val_set_list.append(train_set.iloc[split_idx:, :])
     elif val_method == 'loo':
-        val_set = train_set.groupby(['user']).apply(pd.DataFrame.sample, n=1).reset_index(drop=True)
-        val_key = val_set[['user', 'item']].copy()
-        train_set = train_set.set_index(['user', 'item']).drop(pd.MultiIndex.from_frame(val_key)).reset_index().copy()
+        for _ in range(fold_num):
+            val_set = train_set.groupby(['user']).apply(pd.DataFrame.sample, n=1).reset_index(drop=True)
+            val_key = val_set[['user', 'item']].copy()
+            sub_train_set = train_set.set_index(['user', 'item']).drop(pd.MultiIndex.from_frame(val_key)).reset_index().copy()
 
-        train_set_list.append(train_set)
-        val_set_list.append(val_set)
+            train_set_list.append(sub_train_set)
+            val_set_list.append(val_set)
     elif val_method == 'tloo':
         train_set = train_set.sample(frac=1)
         train_set = train_set.sort_values(['timestamp']).reset_index(drop=True)

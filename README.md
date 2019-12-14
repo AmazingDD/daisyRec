@@ -1,12 +1,12 @@
 ![DaisyRec](logo.png)
 
-[![Build Status](https://img.shields.io/badge/python-3.7-yellow.svg)]() [![Version](https://img.shields.io/badge/version-v1.0.0-orange)]() ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec) 
+[![Build Status](https://img.shields.io/badge/python-3.7-yellow.svg)]() [![Version](https://img.shields.io/badge/version-v1.1.0-orange)]() ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec) 
 
 ## Overview
 
-DaisyRec is a Python toolkit that deal with rating prediction and item ranking issue.
+DaisyRec is a Python toolkit dealing with rating prediction and item ranking issue.
 
-The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**r comp**A**r**I**son for recommender **SY**stem.
+The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**r**I**son for recommender **SY**stem.
 
 1. you can also download experiment data from links below: 
 
@@ -119,5 +119,7 @@ year = {2020}
 Starting from version 1.0.0, we will only provide bugfixes. 
 
 For bugs, issues or questions about Daisy, please use the GitHub project page. 
+
+In the future, we will integrate more algorithms and finish all KPI report.
 
 We expect more contributors join us for building a better **Daisy**.
