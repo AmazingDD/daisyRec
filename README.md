@@ -1,6 +1,6 @@
 ![DaisyRec](logo.png)
 
-[![Build Status](https://img.shields.io/badge/python-3.7-yellow.svg)]() [![Version](https://img.shields.io/badge/version-v1.1.0-orange)]() ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec) 
+[![Build Status](https://img.shields.io/badge/python-3.7-yellow.svg)]() [![Version](https://img.shields.io/badge/version-v1.1.1-orange)]() ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec) 
 
 ## Overview
 
@@ -18,7 +18,7 @@ The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**
     - [Last.fm](https://grouplens.org/datasets/hetrec-2011/)
     - [Book Crossing](https://grouplens.org/datasets/book-crossing/)
     - [Epinions](http://www.cse.msu.edu/~tangjili/trust.html)
-    - [Pinterest](https://sites.google.com/site/xueatalphabeta/academic-projects)
+    <!-- - [Pinterest](https://sites.google.com/site/xueatalphabeta/academic-projects) -->
     - [CiteULike](https://github.com/js05212/citeulike-a)
     - [Amazon-Book](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv)
     - [Amazon-Electronic](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Electronics.csv)
@@ -68,7 +68,7 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 
 ## Examples to run:
 
-Default set top-K number to 10, you can change top-K number by modifying `topk` argument.
+Default set top-K number to 50, you can change top-K number by modifying `topk` argument.
 
 ```
 python run_itemknn.py --sim_method=pearson --topk=15
