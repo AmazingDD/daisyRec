@@ -1,6 +1,6 @@
 ![DaisyRec](logo.png)
 
-[![Build Status](https://img.shields.io/badge/python-3.7-yellow.svg)]() [![Version](https://img.shields.io/badge/version-v1.1.1-orange)]() ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec) 
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/scikit-daisy) [![Version](https://img.shields.io/badge/version-v1.1.2-orange)]() ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec) 
 
 ## Overview
 

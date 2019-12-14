@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:22:54
 @LastEditors: Yudi
-@LastEditTime: 2019-12-12 20:20:48
+@LastEditTime: 2019-12-14 18:34:42
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -25,7 +25,7 @@ except ImportError:
 else:
     USE_CYTHON = True
 
-__version__ = '1.0.0'
+__version__ = '1.1.2'
 
 here = path.abspath(path.dirname(__file__))
 # Get the long description from README.md
@@ -68,18 +68,41 @@ else:
     ext_modules = extensions
 
 setup(
-    name='daisy',
-    author='Yu Di',
-    author_email='yudi_mars@126.com',
+    name='scikit-daisy',
     version=__version__,
+    author='Di. Yu',
+    author_email='yudi_mars@126.com',
+    maintainer='amazingDD',
+    maintainer_email='1172392977@qq.com',
+    license='Apache License',
+    packages=['daisy'],
+    platforms=['all'],
     description=('An item-ranking library for recommender systems.'),
-    long_description=long_description,
+    # long_description=long_description,
+    long_description='pytorch >= 1.0.0 is necessary',
     long_description_content_type='text/markdown',
-    url='http://amazingdd.github.io',
-    license='MIT',
+    url='https://github.com/AmazingDD/daisyRec',
     keywords='recommender recommendation system item-rank',
-
     ext_modules=ext_modules,
     cmdclass=cmdclass,
     install_requires=install_requires,
+
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Operating System :: OS Independent',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: BSD License',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: Implementation',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Topic :: Software Development :: Libraries'
+    ]
 )
+
+# how to send a package
+# 1. python setup.py sdist build / python setup.py bdist_wheel --universal
+# 2. pip install twine
+# 3. twine upload dist/*
