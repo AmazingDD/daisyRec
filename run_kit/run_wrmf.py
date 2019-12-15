@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 14:52:58
 @LastEditors: Yudi
-@LastEditTime: 2019-12-14 17:30:47
+@LastEditTime: 2019-12-15 16:14:38
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--lambda_val', 
+    parser.add_argument('--lamda', 
                         type=float, 
                         default=0.1, 
                         help='regularization for ALS')
@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # retrain model by the whole train set
     # build recommender model
     model = WRMF(user_num, item_num, train_set, 
-                    args.lambda_val, args.alpha, args.epochs, args.factors)
+                args.lamda, args.alpha, args.epochs, args.factors)
     model.fit()
     
     print('Start Calculating Metrics......')
