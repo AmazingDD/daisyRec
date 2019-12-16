@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-03 12:30:14
+@Date: 2019-12-03 22:38:37
 @LastEditors: Yudi
-@LastEditTime: 2019-12-14 17:25:54
+@LastEditTime: 2019-12-16 11:12:54
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -15,12 +15,12 @@ import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 
-from daisy.model.KNNRecommender import KNNWithMeans
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
+from daisy.model.PureSVDRecommender import PureSVD
+from daisy.utils.loader import load_rate, split_test, get_ur
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='User-KNN recommender test')
+    parser = argparse.ArgumentParser(description='PureSVD recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -55,24 +55,16 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--sim_method', 
-                        type=str, 
-                        default='pearson', 
-                        help='method to calculate similarity, options: cosine/jaccard/pearson')
-    parser.add_argument('--maxk', 
+    parser.add_argument('--factors', 
                         type=int, 
-                        default=40, 
-                        help='The (max) number of neighbors to take into account')
-    parser.add_argument('--mink', 
-                        type=int, 
-                        default=1, 
-                        help='The (min) number of neighbors to take into account')
+                        default=150, 
+                        help='No. of preserved singular value')
     args = parser.parse_args()
 
     '''Test Process for Metrics Exporting'''
-    df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=False)
+    df, user_num, item_num = load_rate(args.dataset, args.prepro)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
-    
+
     # get ground truth
     test_ur = get_ur(test_set)
     total_train_ur = get_ur(train_set)
@@ -84,9 +76,7 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # build recommender model
-    model = KNNWithMeans(user_num, item_num, 
-                         args.maxk, args.mink, 
-                         sim_options={'name': args.sim_method, 'user_based': True})
+    model = PureSVD(user_num, item_num, args.factors)
     model.fit(train_set)
 
     print('Start Calculating Metrics......')
@@ -100,9 +90,12 @@ if __name__ == '__main__':
         test_ucands[k] = list(v | set(samples))
 
     # get predict result
+    print('')
+    print('Generate recommend list...')
+    print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        pred_rates = [model.predict(u, i)[0] for i in test_ucands[u]]
+        pred_rates = [model.predict(u, i) for i in test_ucands[u]]
         rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
         top_n = np.array(test_ucands[u])[rec_idx]
         preds[u] = top_n
@@ -110,7 +103,7 @@ if __name__ == '__main__':
     # convert rank list to binary-interaction
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
-        
+
     # calculate metrics for test set
     pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
     rec_k = recall_at_k(preds, test_ur, args.topk)
@@ -148,4 +141,5 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}metric_result_userknn.csv', index=False)
+    res.to_csv(f'{result_save_path}metric_result_puresvd.csv', index=False)
+

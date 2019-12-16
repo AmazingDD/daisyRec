@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-03 15:38:07
+@Date: 2019-12-03 14:52:58
 @LastEditors: Yudi
-@LastEditTime: 2019-12-14 15:44:14
+@LastEditTime: 2019-12-16 11:13:23
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -15,15 +15,12 @@ import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 
-import torch
-import torch.utils.data as data
-
-from daisy.model.pointwise.MFRecommender import PointMF
+from daisy.model.WRMFRecommender import WRMF
+from daisy.utils.loader import load_rate, split_test, get_ur
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, negative_sampling, PointMFData
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Point-Wise MF recommender test')
+    parser = argparse.ArgumentParser(description='WRMF recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -47,7 +44,7 @@ if __name__ == '__main__':
                         help='split ratio for test set')
     parser.add_argument('--val_method', 
                         type=str, 
-                        default='loo', 
+                        default='cv', 
                         help='validation method, options: cv, tfo, loo, tloo')
     parser.add_argument('--fold_num', 
                         type=int, 
@@ -58,42 +55,22 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--num_ng', 
-                        type=int, 
-                        default=4, 
-                        help='negative sampling number')
-    parser.add_argument('--factors', 
-                        type=int, 
-                        default=100, 
-                        help='The number of latent factors')
-    parser.add_argument('--epochs', 
-                        type=int, 
-                        default=20, 
-                        help='The number of iteration of the SGD procedure')
-    parser.add_argument('--lr', 
-                        type=float, 
-                        default=0.01, 
-                        help='learning rate')                    
-    parser.add_argument('--wd', 
-                        type=float, 
-                        default=0.0, 
-                        help='model regularization rate')
-    parser.add_argument('--batch_size', 
-                        type=int, 
-                        default=256,
-                        help='batch size for training')
     parser.add_argument('--lamda', 
                         type=float, 
-                        default=0.0, 
-                        help='regularizer weight')
-    parser.add_argument('--loss_type', 
-                        type=str, 
-                        default='CL', 
-                        help='loss function type')
-    parser.add_argument('--gpu', 
-                        type=str, 
-                        default='0', 
-                        help='gpu card ID')
+                        default=0.1, 
+                        help='regularization for ALS')
+    parser.add_argument('--alpha', 
+                        type=float, 
+                        default=40, 
+                        help='confidence weight')
+    parser.add_argument('--epochs', 
+                        type=int, 
+                        default=30, 
+                        help='No. of training epochs')
+    parser.add_argument('--factors', 
+                        type=int, 
+                        default=20, 
+                        help='latent factor number')
     args = parser.parse_args()
 
     '''Test Process for Metrics Exporting'''
@@ -110,21 +87,14 @@ if __name__ == '__main__':
 
     print('='*50, '\n')
     # retrain model by the whole train set
-    # start negative sampling
-    train_sampled = negative_sampling(train_set, args.num_ng)
-    # format training data
-    train_dataset = PointMFData(train_sampled)
-    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
-                                    shuffle=True, num_workers=4)
     # build recommender model
-    model = PointMF(user_num, item_num, args.factors, args.lamda, 
-                    args.epochs, args.lr, args.wd, args.gpu, args.loss_type)
-    model.fit(train_loader)
-
+    model = WRMF(user_num, item_num, train_set, 
+                args.lamda, args.alpha, args.epochs, args.factors)
+    model.fit()
+    
     print('Start Calculating Metrics......')
     # build candidates set
     assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
-
     test_ucands = defaultdict(list)
     for k, v in test_ur.items():
         sample_num = candidates_num - len(v)
@@ -138,34 +108,15 @@ if __name__ == '__main__':
     print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        # build a test MF dataset for certain user u
-        tmp = pd.DataFrame({'user': [u for _ in test_ucands[u]], 
-                            'item': test_ucands[u], 
-                            'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
-                            })
-        tmp_dataset = PointMFData(tmp)
-        tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
-                                        shuffle=False, num_workers=0)
-
-        # get top-N list with torch method 
-        for user_u, item_i, _ in tmp_loader:
-            if torch.cuda.is_available():
-                user_u = user_u.cuda()
-                item_i = item_i.cuda()
-            else:
-                user_u = user_u.cpu()
-                item_i = item_i.cpu()
-
-            prediction = model.predict(user_u, item_i)
-            _, indices = torch.topk(prediction, args.topk)
-            top_n = torch.take(torch.tensor(test_ucands[u]), indices).cpu().numpy()
-
+        pred_rates = [model.predict(u, i) for i in test_ucands[u]]
+        rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
+        top_n = np.array(test_ucands[u])[rec_idx]
         preds[u] = top_n
 
     # convert rank list to binary-interaction
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
-
+    
     # calculate metrics for test set
     pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
     rec_k = recall_at_k(preds, test_ur, args.topk)
@@ -203,4 +154,4 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}metric_result_pointmf_{args.loss_type}.csv', index=False)
+    res.to_csv(f'{result_save_path}metric_result_wrmf.csv', index=False)

@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-10 18:49:52
+@Date: 2019-12-10 15:48:00
 @LastEditors: Yudi
-@LastEditTime: 2019-12-14 17:05:42
+@LastEditTime: 2019-12-16 11:13:07
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -15,15 +15,12 @@ import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 
-import torch
-import torch.utils.data as data
-
-from daisy.model.pointwise.SLiMRecommender import PointSLiM
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, PointMFData
+from daisy.model.SLiMRecommender import SLIM
+from daisy.utils.loader import load_rate, split_test, get_ur
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Point-Wise SLiM recommender test')
+    parser = argparse.ArgumentParser(description='SLiM with Coordinate Descend recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -58,43 +55,35 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--batch_size', 
-                        type=int, 
-                        default=2048, 
-                        help='batch size for training')
     parser.add_argument('--epochs', 
                         type=int, 
-                        default=20, 
-                        help='The number of iteration of the SGD procedure')
-    parser.add_argument('--lr', 
+                        default=1000, 
+                        help='No. of learning iteration')
+    parser.add_argument('--tol', 
                         type=float, 
-                        default=0.01, 
-                        help='learning rate')    
-    parser.add_argument('--beta', 
+                        default=0.0001, 
+                        help='learning threshold')
+    parser.add_argument('--elastic', 
                         type=float, 
-                        default=0.0, 
-                        help='Frobinious regularization')
-    parser.add_argument('--lamda', 
+                        default=0.02, 
+                        help='elastic net parameter')
+    parser.add_argument('--alpha', 
                         type=float, 
-                        default=0.0, 
-                        help='lasso regularization')
-    parser.add_argument('--loss_type', 
-                        type=str, 
-                        default='CL', 
-                        help='loss function type')
-    parser.add_argument('--gpu', 
-                        type=str, 
-                        default='0', 
-                        help='gpu card ID')
+                        default=0.5, 
+                        help='ratio if lasso result, 0 for ridge-regression, 1 for lasso-regression')
     args = parser.parse_args()
 
     '''Test Process for Metrics Exporting'''
-    df, user_num, item_num = load_rate(args.dataset, args.prepro)
+    df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=False)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
-
+    
     # get ground truth
     test_ur = get_ur(test_set)
     total_train_ur = get_ur(train_set)
+
+    train_set_list, val_set_list, fn = split_validation(train_set, 
+                                                        args.val_method, 
+                                                        args.fold_num)
 
     # initial candidate item pool
     item_pool = set(range(item_num))
@@ -103,19 +92,13 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # build recommender model
-    # format training data
-    train_dataset = PointMFData(train_set)
-    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
-                                    shuffle=True, num_workers=4)
-    # build recommender model
-    model = PointSLiM(train_set, user_num, item_num, args.epochs, 
-                      args.lr, args.beta, args.lamda, args.gpu, args.loss_type)
-    model.fit(train_loader)
+    model = SLIM(user_num, item_num, alpha=args.alpha, lam_bda=args.elastic, 
+                 max_iter=args.epochs, tol=args.tol)
+    model.fit(train_set)
 
     print('Start Calculating Metrics......')
     # build candidates set
     assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
-
     test_ucands = defaultdict(list)
     for k, v in test_ur.items():
         sample_num = candidates_num - len(v)
@@ -124,9 +107,6 @@ if __name__ == '__main__':
         test_ucands[k] = list(v | set(samples))
 
     # get predict result
-    print('')
-    print('Generate recommend list...')
-    print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
         pred_rates = [model.predict(u, i) for i in test_ucands[u]]
@@ -137,7 +117,7 @@ if __name__ == '__main__':
     # convert rank list to binary-interaction
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
-
+        
     # calculate metrics for test set
     pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
     rec_k = recall_at_k(preds, test_ur, args.topk)
@@ -175,4 +155,4 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}metric_result_pointslim_{args.loss_type}.csv', index=False)
+    res.to_csv(f'{result_save_path}metric_result_slim.csv', index=False)

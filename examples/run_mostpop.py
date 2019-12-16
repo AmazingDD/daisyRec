@@ -16,7 +16,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from daisy.model.MostPopRecommender import MostPop
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
+from daisy.utils.loader import load_rate, split_test, get_ur
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':

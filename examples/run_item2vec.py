@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-05 15:35:52
+@Date: 2019-12-04 21:25:49
 @LastEditors: Yudi
-@LastEditTime: 2019-12-14 10:00:58
+@LastEditTime: 2019-12-16 11:04:49
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -16,16 +16,26 @@ from tqdm import tqdm
 from collections import defaultdict
 
 import torch
-import torch.utils.data as data
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
 
-from daisy.model.pointwise.FMRecommender import PointFM
+from daisy.model.Item2VecRecommender import Item2Vec, SGNS
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
-from daisy.utils.loader import build_feat_idx_dict, negative_sampling, PointFMData
+from daisy.utils.loader import load_rate, split_test, get_ur, BuildCorpus, PermutedSubsampledCorpus
 
+def get_weights(wc, idx2item, ss_t, whether_weights):
+    wf = np.array([wc[item] for item in idx2item])
+    wf = wf / wf.sum()
+    ws = 1 - np.sqrt(ss_t / wf)
+    ws = np.clip(ws, 0, 1)
+    vocab_size = len(idx2item)
+    weights = wf if whether_weights else None
+
+    return vocab_size, weights
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Point-Wise FM recommender test')
+    parser = argparse.ArgumentParser(description='Item2Vec recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -49,7 +59,7 @@ if __name__ == '__main__':
                         help='split ratio for test set')
     parser.add_argument('--val_method', 
                         type=str, 
-                        default='loo', 
+                        default='cv', 
                         help='validation method, options: cv, tfo, loo, tloo')
     parser.add_argument('--fold_num', 
                         type=int, 
@@ -60,56 +70,25 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--num_ng', 
-                        type=int, 
-                        default=4, 
-                        help='negative sampling number')
-    parser.add_argument('--batch_norm', 
-                        default=True, 
-                        help='use batch_norm or not')
-    parser.add_argument('--dropout',
-                        default='[0.5, 0.2]', 
-                        help='dropout rate for FM and MLP')
-    parser.add_argument('--hidden_factor', 
-                        type=int, 
-                        default=64, 
-                        help='predictive factors numbers in the model')
-    parser.add_argument('--batch_size', 
-                        type=int, 
-                        default=128, 
-                        help='batch size for training')
-    parser.add_argument('--epochs', 
-                        type=int, 
-                        default=20, 
-                        help='training epochs')
-    parser.add_argument('--lr', 
-                        type=float, 
-                        default=0.05, 
-                        help='learning rate')
-    parser.add_argument('--lamda', 
-                        type=float, 
-                        default=0.0, 
-                        help='regularizer for bilinear layers')
-    parser.add_argument('--loss_type', 
-                        type=str, 
-                        default='CL', 
-                        help='loss function type')
-    parser.add_argument('--gpu', 
-                        type=str, 
-                        default='0', 
-                        help='gpu card ID')
+    parser.add_argument('--unk', type=str, default='<UNK>', help='UNK token')
+    parser.add_argument('--window', type=int, default=5, help="window size")
+    parser.add_argument('--max_item', type=int, default=20000, help="maximum number of item set")
+    parser.add_argument('--e_dim', type=int, default=300, help="embedding dimension")
+    parser.add_argument('--n_negs', type=int, default=20, help="number of negative samples")
+    parser.add_argument('--epochs', type=int, default=6, help="number of epochs") # 100
+    parser.add_argument('--mb', type=int, default=4096, help="mini-batch size")
+    parser.add_argument('--ss_t', type=float, default=1e-5, help="subsample threshold")
+    parser.add_argument('--weights', action='store_true', help="use weights for negative sampling")
+    parser.add_argument('--cuda', action='store_true', help="use CUDA")
     args = parser.parse_args()
 
     '''Test Process for Metrics Exporting'''
-    # state column name for certain data type
-    cat_cols=['user', 'item']
-    num_cols=[]
-
     df, user_num, item_num = load_rate(args.dataset, args.prepro)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
 
-    # convert features to mapping dictionary
-    feat_idx_dict, num_features = build_feat_idx_dict(df, cat_cols, num_cols)
+    # pre-build Corpus for all item
+    pre = BuildCorpus(df, args.window, args.max_item, args.unk)
+    pre.build()
 
     # get ground truth
     test_ur = get_ur(test_set)
@@ -121,24 +100,22 @@ if __name__ == '__main__':
 
     print('='*50, '\n')
     # retrain model by the whole train set
-    # start negative sampling
-    train_sampled = negative_sampling(train_set, args.num_ng, 0.)
-
-    # format training data
-    train_dataset = PointFMData(train_sampled, feat_idx_dict, cat_cols, num_cols)
-    print('Finish construct FM torch-dataset......')
-    train_loader = data.DataLoader(train_dataset, drop_last=True, batch_size=args.batch_size, 
-                                   shuffle=True, num_workers=4)
-
     # build recommender model
-    model = PointFM(num_features, args.hidden_factor, args.batch_norm, eval(args.dropout), 
-                    args.epochs, args.lr, args.lamda, args.gpu, args.loss_type)
-    model.fit(train_loader)
+    dt = pre.convert(train_set)
+    vocab_size, weights = get_weights(pre.wc, pre.idx2item, args.ss_t, args.weights)
+    
+    embed_model = Item2Vec(item_num=vocab_size, embedding_size=args.e_dim)
+    model = SGNS(embedding=embed_model, item_num=vocab_size, n_negs=args.n_negs, weights=weights)
+
+    dataset = PermutedSubsampledCorpus(dt)  
+    dataloader = DataLoader(dataset, batch_size=args.mb, shuffle=True) 
+
+    model.fit(dataloader, args.epochs, pre.item2idx)
+    model.build_user_vec(total_train_ur)
 
     print('Start Calculating Metrics......')
     # build candidates set
     assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
-
     test_ucands = defaultdict(list)
     for k, v in test_ur.items():
         sample_num = candidates_num - len(v)
@@ -152,34 +129,15 @@ if __name__ == '__main__':
     print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        # build a test FM dataset for certain user u
-        tmp = pd.DataFrame({'user': [u for _ in test_ucands[u]], 
-                            'item': test_ucands[u], 
-                            'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
-                            })
-        tmp_dataset = PointFMData(tmp, feat_idx_dict, cat_cols, num_cols)
-        tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
-                                     shuffle=False, num_workers=0)
-        # get top-N list with torch method 
-        for features, feature_values, _ in tmp_loader:
-            if torch.cuda.is_available():
-                features = features.cuda()
-                feature_values = feature_values.cuda()
-            else:
-                features = features.cpu()
-                feature_values = feature_values.cpu()
-
-            prediction = model.predict(features, feature_values)
-            prediction = prediction.clamp(min=-1.0, max=1.0)
-            _, indices = torch.topk(prediction, args.topk)
-            top_n = torch.take(torch.tensor(test_ucands[u]), indices).cpu().numpy()
-
+        pred_rates = [model.predict(u, i) for i in test_ucands[u]]
+        rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
+        top_n = np.array(test_ucands[u])[rec_idx]
         preds[u] = top_n
 
     # convert rank list to binary-interaction
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
-
+    
     # calculate metrics for test set
     pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
     rec_k = recall_at_k(preds, test_ur, args.topk)
@@ -217,4 +175,4 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}metric_result_pointfm_{args.loss_type}.csv', index=False)
+    res.to_csv(f'{result_save_path}metric_result_item2vec.csv', index=False)

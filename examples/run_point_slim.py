@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-05 10:41:50
+@Date: 2019-12-10 18:49:52
 @LastEditors: Yudi
-@LastEditTime: 2019-12-14 00:33:11
+@LastEditTime: 2019-12-16 11:12:44
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -18,12 +18,12 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pairwise.MFRecommender import PairMF
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, PairMFData
+from daisy.model.pointwise.SLiMRecommender import PointSLiM
+from daisy.utils.loader import load_rate, split_test, get_ur, PointMFData
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Pair-Wise MF recommender test')
+    parser = argparse.ArgumentParser(description='Point-Wise SLiM recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -58,38 +58,30 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--loss_type', 
-                        type=str, 
-                        default='BPR', 
-                        help='loss function type')
-    parser.add_argument('--num_ng', 
+    parser.add_argument('--batch_size', 
                         type=int, 
-                        default=4, 
-                        help='sample negative items for training')
-    parser.add_argument('--factors', 
-                        type=int, 
-                        default=32, 
-                        help='predictive factors numbers in the model')
+                        default=2048, 
+                        help='batch size for training')
     parser.add_argument('--epochs', 
                         type=int, 
                         default=20, 
-                        help='training epochs')
+                        help='The number of iteration of the SGD procedure')
     parser.add_argument('--lr', 
                         type=float, 
                         default=0.01, 
-                        help='learning rate')
-    parser.add_argument('--wd', 
+                        help='learning rate')    
+    parser.add_argument('--beta', 
                         type=float, 
-                        default=0.001, 
-                        help='model regularization rate')
+                        default=0.0, 
+                        help='Frobinious regularization')
     parser.add_argument('--lamda', 
                         type=float, 
                         default=0.0, 
-                        help='regularization weight')
-    parser.add_argument('--batch_size', 
-                        type=int, 
-                        default=4096, 
-                        help='batch size for training')
+                        help='lasso regularization')
+    parser.add_argument('--loss_type', 
+                        type=str, 
+                        default='CL', 
+                        help='loss function type')
     parser.add_argument('--gpu', 
                         type=str, 
                         default='0', 
@@ -110,13 +102,14 @@ if __name__ == '__main__':
 
     print('='*50, '\n')
     # retrain model by the whole train set
-    # format training data
-    train_dataset = PairMFData(train_set, user_num, item_num, args.num_ng)
-    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
-                                   shuffle=True, num_workers=4)
     # build recommender model
-    model = PairMF(user_num, item_num, args.factors, args.lamda,
-                   args.epochs, args.lr, args.wd, args.gpu, args.loss_type)
+    # format training data
+    train_dataset = PointMFData(train_set)
+    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
+                                    shuffle=True, num_workers=4)
+    # build recommender model
+    model = PointSLiM(train_set, user_num, item_num, args.epochs, 
+                      args.lr, args.beta, args.lamda, args.gpu, args.loss_type)
     model.fit(train_loader)
 
     print('Start Calculating Metrics......')
@@ -136,28 +129,9 @@ if __name__ == '__main__':
     print('')
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        # build a test MF dataset for certain user u to accelerate
-        tmp = pd.DataFrame({'user': [u for _ in test_ucands[u]], 
-                            'item': test_ucands[u], 
-                            'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
-                        })
-        tmp_dataset = PairMFData(tmp, user_num, item_num, 0, False)
-        tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
-                                     shuffle=False, num_workers=0)
-        # get top-N list with torch method 
-        for items in tmp_loader:
-            user_u, item_i = items[0], items[1]
-            if torch.cuda.is_available():
-                user_u = user_u.cuda()
-                item_i = item_i.cuda()
-            else:
-                user_u = user_u.cpu()
-                item_i = item_i.cpu()
-
-            prediction = model.predict(user_u, item_i)
-            _, indices = torch.topk(prediction, args.topk)
-            top_n = torch.take(torch.tensor(test_ucands[u]), indices).cpu().numpy()
-
+        pred_rates = [model.predict(u, i) for i in test_ucands[u]]
+        rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
+        top_n = np.array(test_ucands[u])[rec_idx]
         preds[u] = top_n
 
     # convert rank list to binary-interaction
@@ -201,4 +175,4 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}metric_result_pairmf_{args.loss_type}.csv', index=False)
+    res.to_csv(f'{result_save_path}metric_result_pointslim_{args.loss_type}.csv', index=False)

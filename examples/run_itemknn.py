@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors: Yudi
-@LastEditTime: 2019-12-13 17:45:36
+@LastEditTime: 2019-12-16 11:05:01
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -16,7 +16,7 @@ from tqdm import tqdm
 from collections import defaultdict
 
 from daisy.model.KNNRecommender import KNNWithMeans
-from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
+from daisy.utils.loader import load_rate, split_test, get_ur
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 if __name__ == '__main__':
