@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 21:52:18
 @LastEditors: Yudi
-@LastEditTime: 2019-12-13 17:31:56
+@LastEditTime: 2019-12-16 17:16:40
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -67,6 +67,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # TODO generate algo paramter settings for grid-search tuning
+    tune_log_path = './tune_log/'
+    if not os.path.exists(tune_log_path):
+        os.makedirs(tune_log_path)
+    
+    f = open(tune_log_path + f'mostpop_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
+             'w', 
+             encoding='utf-8')
+    f.write('Pre,Rec,HR,MAP,MRR,NDCG' + '\n')
 
     '''Validation Process for Parameter Tuning'''
     df, user_num, item_num = load_rate(args.dataset, args.prepro)
@@ -131,3 +139,9 @@ if __name__ == '__main__':
     print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
     print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
 
+    line = ''
+    fnl_metric = [f'{mt:.4f}' for mt in fnl_metric]
+    line += ','.join(fnl_metric) + '\n'
+
+    f.write(line)
+    f.close()

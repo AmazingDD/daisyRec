@@ -2,11 +2,12 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors: Yudi
-@LastEditTime: 2019-12-13 17:47:39
+@LastEditTime: 2019-12-16 22:25:45
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
+import os
 import random
 import argparse
 import numpy as np
@@ -69,6 +70,19 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # TODO generate algo paramter settings for grid-search tuning
+    param_list = []
+    for p1 in ['cosine', 'pearson', 'jaccard']:
+        for p2 in range(10, 101, 10):
+            param_list.append((p1, p2))
+
+    tune_log_path = './tune_log/'
+    if not os.path.exists(tune_log_path):
+        os.makedirs(tune_log_path)
+    
+    f = open(tune_log_path + f'itemknn_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
+             'w', 
+             encoding='utf-8')
+    f.write('sim_method,maxk,Pre,Rec,HR,MAP,MRR,NDCG' + '\n')
 
     '''Validation Process for Parameter Tuning'''
     df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=False)
@@ -86,69 +100,82 @@ if __name__ == '__main__':
     item_pool = set(range(item_num))
     candidates_num = args.cand_num
 
-    # store metrics result for test set
-    fnl_metric = []
-    for fold in range(fn):
-        print(f'Start Validation [{fold + 1}]......')
-        train = train_set_list[fold]
-        validation = val_set_list[fold]
+    for params in param_list:
+        sim_method, maxk = params
+        print(f'Parameter Settings: sim_method:{sim_method}, maxk: {maxk}')
 
-        # get ground truth
-        train_ur = get_ur(train)
-        val_ur = get_ur(validation)
+        # store metrics result for test set
+        fnl_metric = []
+        for fold in range(fn):
+            print(f'Start Validation [{fold + 1}]......')
+            train = train_set_list[fold]
+            validation = val_set_list[fold]
 
-        # build recommender model
-        model = KNNWithMeans(user_num, item_num, 
-                             args.maxk, args.mink, 
-                             sim_options={'name': args.sim_method, 'user_based': False})
-        model.fit(train)
+            # get ground truth
+            train_ur = get_ur(train)
+            val_ur = get_ur(validation)
 
-        # build candidates set
-        assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
-        val_ucands = defaultdict(list)
-        for k, v in val_ur.items():
-            sample_num = candidates_num - len(v)
-            sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
-            samples = random.sample(sub_item_pool, sample_num)
-            val_ucands[k] = list(v | set(samples))
+            # build recommender model
+            model = KNNWithMeans(user_num, item_num, 
+                                maxk, args.mink, 
+                                sim_options={'name': sim_method, 'user_based': False})
+            model.fit(train)
 
-        # get predict result
-        preds = {}
-        for u in tqdm(val_ucands.keys()):
-            pred_rates = [model.predict(u, i)[0] for i in val_ucands[u]]
-            rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
-            top_n = np.array(val_ucands[u])[rec_idx]
-            preds[u] = top_n
+            # build candidates set
+            assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
+            val_ucands = defaultdict(list)
+            for k, v in val_ur.items():
+                sample_num = candidates_num - len(v)
+                sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
+                sample_num = min(len(sub_item_pool), sample_num)
+                samples = random.sample(sub_item_pool, sample_num)
+                val_ucands[k] = list(v | set(samples))
 
-        # convert rank list to binary-interaction
-        for u in preds.keys():
-            preds[u] = [1 if i in val_ur[u] else 0 for i in preds[u]]
+            # get predict result
+            preds = {}
+            for u in tqdm(val_ucands.keys()):
+                pred_rates = [model.predict(u, i)[0] for i in val_ucands[u]]
+                rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
+                top_n = np.array(val_ucands[u])[rec_idx]
+                preds[u] = top_n
 
-        # calculate metrics for validation set
-        pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
-        rec_k = recall_at_k(preds, val_ur, args.topk)
-        hr_k = hr_at_k(preds, val_ur)
-        map_k = map_at_k(preds.values())
-        mrr_k = mrr_at_k(preds, args.topk)
-        ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
-        
-        print('-'*20)
-        print(f'Precision@{args.topk}: {pre_k:.4f}')
-        print(f'Recall@{args.topk}: {rec_k:.4f}')
-        print(f'HR@{args.topk}: {hr_k:.4f}')
-        print(f'MAP@{args.topk}: {map_k:.4f}')
-        print(f'MRR@{args.topk}: {mrr_k:.4f}')
-        print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
+            # convert rank list to binary-interaction
+            for u in preds.keys():
+                preds[u] = [1 if i in val_ur[u] else 0 for i in preds[u]]
 
-        tmp_metric = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
-        fnl_metric.append(tmp_metric)
+            # calculate metrics for validation set
+            pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
+            rec_k = recall_at_k(preds, val_ur, args.topk)
+            hr_k = hr_at_k(preds, val_ur)
+            map_k = map_at_k(preds.values())
+            mrr_k = mrr_at_k(preds, args.topk)
+            ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
+            
+            print('-'*20)
+            print(f'Precision@{args.topk}: {pre_k:.4f}')
+            print(f'Recall@{args.topk}: {rec_k:.4f}')
+            print(f'HR@{args.topk}: {hr_k:.4f}')
+            print(f'MAP@{args.topk}: {map_k:.4f}')
+            print(f'MRR@{args.topk}: {mrr_k:.4f}')
+            print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
 
-    # get final validation metrics result by average operation
-    fnl_metric = np.array(fnl_metric).mean(axis=0)
-    print('='*20, 'Metrics for All Validation', '='*20)
-    print(f'Precision@{args.topk}: {fnl_metric[0]:.4f}')
-    print(f'Recall@{args.topk}: {fnl_metric[1]:.4f}')
-    print(f'HR@{args.topk}: {fnl_metric[2]:.4f}')
-    print(f'MAP@{args.topk}: {fnl_metric[3]:.4f}')
-    print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
-    print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
+            tmp_metric = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
+            fnl_metric.append(tmp_metric)
+
+        # get final validation metrics result by average operation
+        fnl_metric = np.array(fnl_metric).mean(axis=0)
+        print('='*20, 'Metrics for All Validation', '='*20)
+        print(f'Precision@{args.topk}: {fnl_metric[0]:.4f}')
+        print(f'Recall@{args.topk}: {fnl_metric[1]:.4f}')
+        print(f'HR@{args.topk}: {fnl_metric[2]:.4f}')
+        print(f'MAP@{args.topk}: {fnl_metric[3]:.4f}')
+        print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
+        print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
+
+        line = f'{sim_method},{maxk},'
+        fnl_metric = [f'{mt:.4f}' for mt in fnl_metric]
+        line += ','.join(fnl_metric) + '\n'
+
+        f.write(line)
+
+    f.close()
