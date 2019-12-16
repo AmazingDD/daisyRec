@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors: Yudi
-@LastEditTime: 2019-12-16 11:12:26
+@LastEditTime: 2019-12-16 17:21:44
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -159,6 +159,7 @@ if __name__ == '__main__':
     for k, v in test_ur.items():
         sample_num = candidates_num - len(v)
         sub_item_pool = item_pool - v - total_train_ur[k] # remove GT & interacted
+        sample_num = min(len(sub_item_pool), sample_num)
         samples = random.sample(sub_item_pool, sample_num)
         test_ucands[k] = list(v | set(samples))
 
