@@ -1,6 +1,6 @@
 ![DaisyRec](logo.png)
 
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/scikit-daisy) [![Version](https://img.shields.io/badge/version-v1.1.2-orange)](https://github.com/AmazingDD/daisyRec) ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec) 
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/scikit-daisy) [![Version](https://img.shields.io/badge/version-v1.1.2-orange)](https://github.com/AmazingDD/daisyRec) ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec)
 
 ## Overview
 
@@ -8,7 +8,7 @@ DaisyRec is a Python toolkit dealing with rating prediction and item ranking iss
 
 The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**r**I**son for recommender **SY**stem.
 
-1. you can also download experiment data from links below: 
+1. You can also download experiment data from links below: 
 
     - [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/)
     - [MovieLens 1M](https://grouplens.org/datasets/movielens/1m/)
@@ -28,7 +28,7 @@ The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**
 
     then put certain dataset into corresponding folder in `data` folder.
 
-2. Item-Ranking recommendation algorithms reimplementation with pytorch and tensorflow.
+2. Item-Ranking recommendation algorithms reimplementation with pytorch.
 
 3. To get all dependencies, run:
 
@@ -38,7 +38,7 @@ The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**
 `python setup.py build_ext --inplace` 
 to generate `.so` file for `macOS` or `.pyd` file for `WindowsOS` used for further import.
 
-make sure you have a **CUDA** enviroment to accelarate since these deep-learning models could be based on it.
+Make sure you have a **CUDA** enviroment to accelarate since these deep-learning models could be based on it.
 
 ## List of all algorithms
 
@@ -50,15 +50,19 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 - WRMF
 - PureSVD
 - Item2Vec
+<!-- - BiasMF
+- RSVD2
+- SVD++ -->
+<!-- - AutoEncoder -->
 
-#### _Point-wise with cross-entropy-loss/square-loss_ 
+#### _Point-wise with cross-entropy-loss(CL)/square-loss(SL)_ 
 
 - MF
 - FM
 - SLiM
 - NeuMF
 
-#### _Pair-wise with bpr-loss/hinge-loss_
+#### _Pair-wise with bpr-loss(BPR)/hinge-loss(HL)_
 
 - MF
 - FM
@@ -68,10 +72,11 @@ make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 
 ## Examples to run:
 
-Default set top-K number to 50, you can change top-K number by modifying `topk` argument.
+The default top-K number is set to 50, you can change top-K number by modifying `topk` argument in `run_*.py`.
 
 ```
 python run_itemknn.py --sim_method=pearson --topk=15
+python run_point_fm.py --loss_type=CL
 ```
 
 More details of arguments are available in help message, try:
@@ -101,9 +106,9 @@ The results above are reproducible.
 
 ---
 
-## License
+## Cite
 
-Here is a Bibtex entry if you ever need to cite **Daisy** in a research paper (please keep us posted, we would love to know if Daisy was helpful to you):
+Here is a Bibtex entry if you ever need to cite **Daisy** in a research paper (please keep us posted, we would love to know if Daisy was helpful to you)
 
 ```
 @Misc{,
@@ -116,10 +121,28 @@ year = {2020}
 
 ## Development Status
 
-Starting from version 1.0.0, we will only provide bugfixes. 
+Starting from version 1.0.0, we will only provide bugfixes.
 
-For bugs, issues or questions about Daisy, please use the GitHub project page. 
+For bugs, issues or questions about Daisy, please use the GitHub project page.
 
 In the future, we will integrate more algorithms and finish all KPI report.
 
 We expect more contributors join us for building a better **Daisy**.
+
+## Appendix
+
+**Reference**
+
+* SLIM: Sparse Linear Methods for Top-N Recommender Systems
+* Probabilistic matrix factorization
+* Performance of recommender algorithms on top-N recommendation tasks
+* Factorization meets the neighborhood: a multifaceted collaborative filtering model
+* Collaborative Filtering for Implicit Feedback Datasets
+* BPR: Bayesian Personalized Ranking from Implicit Feedback
+
+* Factorization Machines
+* Neural Factorization Machines for Sparse Predictive Analytics
+* Neural Collaborative Filtering
+* Item2Vec: Neural Item Embedding for Collaborative Filtering
+* AutoRec: Autoencoders Meet Collaborative Filtering
+<!-- | eALS | EALSRecommender.py | Fast Matrix Factorization for Online Recommendation with Implicit Feedback | -->
