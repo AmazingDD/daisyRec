@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-13 16:57:29
+@LastEditTime: 2019-12-16 16:56:17
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -135,12 +135,12 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
     if binary:
         df['rating'] = 1.0
 
-    # encoding user_id and item_id
-    df['user'] = pd.Categorical(df['user']).codes
-    df['item'] = pd.Categorical(df['item']).codes
-
     # which type of pre-dataset will use
     if prepro == 'origin':
+        # encoding user_id and item_id
+        df['user'] = pd.Categorical(df['user']).codes
+        df['item'] = pd.Categorical(df['item']).codes
+
         user_num = df['user'].nunique()
         item_num = df['item'].nunique()
 
@@ -158,6 +158,10 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
         del tmp1, tmp2
         gc.collect()
 
+        # encoding user_id and item_id
+        df['user'] = pd.Categorical(df['user']).codes
+        df['item'] = pd.Categorical(df['item']).codes
+
         user_num = df['user'].nunique()
         item_num = df['item'].nunique()
 
@@ -174,6 +178,10 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
         df.drop(['cnt_item', 'cnt_user'], axis=1, inplace=True)
         del tmp1, tmp2
         gc.collect()
+
+        # encoding user_id and item_id
+        df['user'] = pd.Categorical(df['user']).codes
+        df['item'] = pd.Categorical(df['item']).codes
 
         user_num = df['user'].nunique()
         item_num = df['item'].nunique()
