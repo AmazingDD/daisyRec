@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors: Yudi
-@LastEditTime: 2019-12-16 16:56:17
+@LastEditTime: 2019-12-17 17:24:58
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -506,8 +506,10 @@ class PairMFData(data.Dataset):
 
 """ Item2Vec Specific Process """
 class BuildCorpus(object):
-    def __init__(self, corpus_df, window=5, max_item_num=20000, unk='<UNK>'):
-        self.window = window
+    def __init__(self, corpus_df, window=None, max_item_num=20000, unk='<UNK>'):
+        # if window is None, means no timestamp, then set max series length as window size
+        bad_window = corpus_df.groupby('user')['item'].count().max()
+        self.window = bad_window if window is None else window
         self.max_item_num = max_item_num
         self.unk = unk
 

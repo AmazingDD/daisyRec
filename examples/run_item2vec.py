@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors: Yudi
-@LastEditTime: 2019-12-16 17:17:50
+@LastEditTime: 2019-12-17 17:30:09
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     # algo settings
     parser.add_argument('--unk', type=str, default='<UNK>', help='UNK token')
     parser.add_argument('--window', type=int, default=5, help="window size")
-    parser.add_argument('--max_item', type=int, default=20000, help="maximum number of item set")
+    # parser.add_argument('--max_item', type=int, default=20000, help="maximum number of item set")
     parser.add_argument('--e_dim', type=int, default=300, help="embedding dimension")
     parser.add_argument('--n_negs', type=int, default=20, help="number of negative samples")
     parser.add_argument('--epochs', type=int, default=6, help="number of epochs") # 100
@@ -86,8 +86,14 @@ if __name__ == '__main__':
     df, user_num, item_num = load_rate(args.dataset, args.prepro)
     train_set, test_set = split_test(df, args.test_method, args.test_size)
 
+    # dataset has timestamp?
+    if args.dataset in ['lastfm', 'bx', 'citeulike']:
+        window = None
+    else:
+        window = args.window
+
     # pre-build Corpus for all item
-    pre = BuildCorpus(df, args.window, args.max_item, args.unk)
+    pre = BuildCorpus(df, window, item_num, args.unk)
     pre.build()
 
     # get ground truth
