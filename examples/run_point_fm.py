@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 15:35:52
 @LastEditors: Yudi
-@LastEditTime: 2019-12-16 17:20:57
+@LastEditTime: 2019-12-18 11:18:45
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
                         default=True, 
                         help='use batch_norm or not')
     parser.add_argument('--dropout',
-                        default='[0.5, 0.2]', 
+                        default='[0., 0.2]', 
                         help='dropout rate for FM and MLP')
     parser.add_argument('--hidden_factor', 
                         type=int, 

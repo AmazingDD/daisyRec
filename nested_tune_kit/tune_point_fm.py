@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 15:35:52
 @LastEditors: Yudi
-@LastEditTime: 2019-12-16 22:35:15
+@LastEditTime: 2019-12-18 11:36:18
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
                         default=True, 
                         help='use batch_norm or not')
     parser.add_argument('--dropout',
-                        default='[0.5, 0.2]', 
+                        default='[0., 0.2]', 
                         help='dropout rate for FM and MLP')
     parser.add_argument('--hidden_factor', 
                         type=int, 
@@ -80,7 +80,7 @@ if __name__ == '__main__':
                         help='batch size for training')
     parser.add_argument('--epochs', 
                         type=int, 
-                        default=20, 
+                        default=40, 
                         help='training epochs')
     parser.add_argument('--lr', 
                         type=float, 
@@ -101,6 +101,21 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # TODO generate algo paramter settings for grid-search tuning
+    param_list = []
+    for p1 in range(1, 11):
+        for p2 in [10, 20, 50, 100, 150, 200]:
+            for p3 in [1e-5, 1e-4, 1e-3]:
+                for p4 in [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]:
+                    param_list.append((p1, p2, p3, p4))
+
+    tune_log_path = './tune_log/'
+    if not os.path.exists(tune_log_path):
+        os.makedirs(tune_log_path)
+    
+    f = open(tune_log_path + f'{args.loss_type}-fm_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
+             'w', 
+             encoding='utf-8')
+    f.write('Pre,Rec,HR,MAP,MRR,NDCG,num_ng,hidden_factor,lr,lamda' + '\n')
 
     '''Validation Process for Parameter Tuning'''
     # state column name for certain data type
@@ -124,102 +139,113 @@ if __name__ == '__main__':
     # initial candidate item pool
     item_pool = set(range(item_num))
     candidates_num = args.cand_num
-    # store metrics result for final validation set
-    fnl_metric = []
-    for fold in range(fn):
-        print(f'Start Validation [{fold + 1}]......')
-        train = train_set_list[fold]
-        validation = val_set_list[fold]
 
-        # get ground truth
-        train_ur = get_ur(train)
-        val_ur = get_ur(validation)
+    for params in param_list:
+        num_ng, hidden_factor, lr, lamda = params
+        print(f'Parameter Settings: num_ng:{num_ng}, hidden_factor:{hidden_factor}, lr:{lr}, lamda:{lamda}')
 
-        # start negative sampling
-        train_sampled = negative_sampling(train, args.num_ng, 0.)
+        # store metrics result for final validation set
+        fnl_metric = []
+        for fold in range(fn):
+            print(f'Start Validation [{fold + 1}]......')
+            train = train_set_list[fold]
+            validation = val_set_list[fold]
 
-        # format training data
-        train_dataset = PointFMData(train_sampled, feat_idx_dict, cat_cols, num_cols)
-        print('Finish construct FM torch-dataset......')
-        train_loader = data.DataLoader(train_dataset, drop_last=True, batch_size=args.batch_size, 
-                                       shuffle=True, num_workers=4)
+            # get ground truth
+            train_ur = get_ur(train)
+            val_ur = get_ur(validation)
 
-        # build recommender model
-        model = PointFM(num_features, args.hidden_factor, args.batch_norm, eval(args.dropout), 
-                        args.epochs, args.lr, args.lamda, args.gpu, args.loss_type)
-        model.fit(train_loader)
+            # start negative sampling
+            train_sampled = negative_sampling(train, num_ng, 0.)
 
-        # build candidates set
-        assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
-        val_ucands = defaultdict(list)
-        for k, v in val_ur.items():
-            sample_num = candidates_num - len(v)
-            sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
-            sample_num = min(len(sub_item_pool), sample_num)
-            samples = random.sample(sub_item_pool, sample_num)
-            val_ucands[k] = list(v | set(samples))
-        
-        # get predict result
-        print('')
-        print('Generate recommend list...')
-        print('')
-        preds = {}
-        for u in tqdm(val_ucands.keys()):
-            # build a validation FM dataset for certain user u
-            tmp = pd.DataFrame({'user': [u for _ in val_ucands[u]], 
-                                'item': val_ucands[u], 
-                                'rating': [0. for _ in val_ucands[u]], # fake label, make nonsense
-                                })
-            tmp_dataset = PointFMData(tmp, feat_idx_dict, cat_cols, num_cols)
-            tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
-                                         shuffle=False, num_workers=0)
-            # get top-N list with torch method 
-            for features, feature_values, _ in tmp_loader:
-                if torch.cuda.is_available():
-                    features = features.cuda()
-                    feature_values = feature_values.cuda()
-                else:
-                    features = features.cpu()
-                    feature_values = feature_values.cpu()
+            # format training data
+            train_dataset = PointFMData(train_sampled, feat_idx_dict, cat_cols, num_cols)
+            print('Finish construct FM torch-dataset......')
+            train_loader = data.DataLoader(train_dataset, drop_last=True, batch_size=args.batch_size, 
+                                        shuffle=True, num_workers=4)
 
-                prediction = model.predict(features, feature_values)
-                prediction = prediction.clamp(min=-1.0, max=1.0)
-                _, indices = torch.topk(prediction, args.topk)
-                top_n = torch.take(torch.tensor(val_ucands[u]), indices).cpu().numpy()
+            # build recommender model
+            model = PointFM(num_features, hidden_factor, args.batch_norm, eval(args.dropout), 
+                            args.epochs, lr, lamda, args.gpu, args.loss_type)
+            model.fit(train_loader)
 
-            preds[u] = top_n
+            # build candidates set
+            assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
+            val_ucands = defaultdict(list)
+            for k, v in val_ur.items():
+                sample_num = candidates_num - len(v)
+                sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
+                sample_num = min(len(sub_item_pool), sample_num)
+                samples = random.sample(sub_item_pool, sample_num)
+                val_ucands[k] = list(v | set(samples))
+            
+            # get predict result
+            print('')
+            print('Generate recommend list...')
+            print('')
+            preds = {}
+            for u in tqdm(val_ucands.keys()):
+                # build a validation FM dataset for certain user u
+                tmp = pd.DataFrame({'user': [u for _ in val_ucands[u]], 
+                                    'item': val_ucands[u], 
+                                    'rating': [0. for _ in val_ucands[u]], # fake label, make nonsense
+                                    })
+                tmp_dataset = PointFMData(tmp, feat_idx_dict, cat_cols, num_cols)
+                tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
+                                            shuffle=False, num_workers=0)
+                # get top-N list with torch method 
+                for features, feature_values, _ in tmp_loader:
+                    if torch.cuda.is_available():
+                        features = features.cuda()
+                        feature_values = feature_values.cuda()
+                    else:
+                        features = features.cpu()
+                        feature_values = feature_values.cpu()
 
-        # convert rank list to binary-interaction
-        for u in preds.keys():
-            preds[u] = [1 if i in val_ur[u] else 0 for i in preds[u]]
+                    prediction = model.predict(features, feature_values)
+                    prediction = prediction.clamp(min=-1.0, max=1.0)
+                    _, indices = torch.topk(prediction, args.topk)
+                    top_n = torch.take(torch.tensor(val_ucands[u]), indices).cpu().numpy()
 
-        # calculate metrics for validation set
-        pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
-        rec_k = recall_at_k(preds, val_ur, args.topk)
-        hr_k = hr_at_k(preds, val_ur)
-        map_k = map_at_k(preds.values())
-        mrr_k = mrr_at_k(preds, args.topk)
-        ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
-        
-        print('-'*20)
-        print(f'Precision@{args.topk}: {pre_k:.4f}')
-        print(f'Recall@{args.topk}: {rec_k:.4f}')
-        print(f'HR@{args.topk}: {hr_k:.4f}')
-        print(f'MAP@{args.topk}: {map_k:.4f}')
-        print(f'MRR@{args.topk}: {mrr_k:.4f}')
-        print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
+                preds[u] = top_n
 
-        tmp_metric = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
-        fnl_metric.append(tmp_metric)
+            # convert rank list to binary-interaction
+            for u in preds.keys():
+                preds[u] = [1 if i in val_ur[u] else 0 for i in preds[u]]
 
-    # get final validation metrics result by average operation
-    fnl_metric = np.array(fnl_metric).mean(axis=0)
-    print('='*20, 'Metrics for All Validation', '='*20)
-    print(f'Precision@{args.topk}: {fnl_metric[0]:.4f}')
-    print(f'Recall@{args.topk}: {fnl_metric[1]:.4f}')
-    print(f'HR@{args.topk}: {fnl_metric[2]:.4f}')
-    print(f'MAP@{args.topk}: {fnl_metric[3]:.4f}')
-    print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
-    print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
+            # calculate metrics for validation set
+            pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
+            rec_k = recall_at_k(preds, val_ur, args.topk)
+            hr_k = hr_at_k(preds, val_ur)
+            map_k = map_at_k(preds.values())
+            mrr_k = mrr_at_k(preds, args.topk)
+            ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
+            
+            print('-'*20)
+            print(f'Precision@{args.topk}: {pre_k:.4f}')
+            print(f'Recall@{args.topk}: {rec_k:.4f}')
+            print(f'HR@{args.topk}: {hr_k:.4f}')
+            print(f'MAP@{args.topk}: {map_k:.4f}')
+            print(f'MRR@{args.topk}: {mrr_k:.4f}')
+            print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
 
-    # record all tuning result and settings
+            tmp_metric = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
+            fnl_metric.append(tmp_metric)
+
+        # get final validation metrics result by average operation
+        fnl_metric = np.array(fnl_metric).mean(axis=0)
+        print('='*20, 'Metrics for All Validation', '='*20)
+        print(f'Precision@{args.topk}: {fnl_metric[0]:.4f}')
+        print(f'Recall@{args.topk}: {fnl_metric[1]:.4f}')
+        print(f'HR@{args.topk}: {fnl_metric[2]:.4f}')
+        print(f'MAP@{args.topk}: {fnl_metric[3]:.4f}')
+        print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
+        print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
+
+        # record all tuning result and settings
+        fnl_metric = [f'{mt:.4f}' for mt in fnl_metric]
+        line = ','.join(fnl_metric) + f',{num_ng},{hidden_factor},{lr},{lamda}' + '\n'
+
+        f.write(line)
+
+    f.close()

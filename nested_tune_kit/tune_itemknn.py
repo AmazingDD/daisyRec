@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors: Yudi
-@LastEditTime: 2019-12-16 22:25:45
+@LastEditTime: 2019-12-17 10:46:51
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -82,7 +82,7 @@ if __name__ == '__main__':
     f = open(tune_log_path + f'itemknn_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
              'w', 
              encoding='utf-8')
-    f.write('sim_method,maxk,Pre,Rec,HR,MAP,MRR,NDCG' + '\n')
+    f.write('Pre,Rec,HR,MAP,MRR,NDCG,sim_method,maxk' + '\n')
 
     '''Validation Process for Parameter Tuning'''
     df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=False)
@@ -172,9 +172,9 @@ if __name__ == '__main__':
         print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
         print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
 
-        line = f'{sim_method},{maxk},'
+        # record all tuning result and settings
         fnl_metric = [f'{mt:.4f}' for mt in fnl_metric]
-        line += ','.join(fnl_metric) + '\n'
+        line = ','.join(fnl_metric) + f',{sim_method},{maxk}' + '\n'
 
         f.write(line)
 
