@@ -107,7 +107,7 @@ if __name__ == '__main__':
 
     for params in param_list:
         lamda, alpha, factors = params
-        print(f'Parameter Settings: lamda_val:{lamda_val}, alpha:{alpha}, factors:{factors}')
+        print(f'Parameter Settings: lamda_val:{lamda}, alpha:{alpha}, factors:{factors}')
     
         # store metrics result for test set
         fnl_metric = []
