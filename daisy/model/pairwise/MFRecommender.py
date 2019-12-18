@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-05 10:41:31
-@LastEditors: Yudi
-@LastEditTime: 2019-12-12 19:10:54
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-18 17:34:36
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -18,7 +18,8 @@ import torch.backends.cudnn as cudnn
 
 class PairMF(nn.Module):
     def __init__(self, user_num, item_num, factor_num=32, lamda=0.0,
-                 epochs=20, lr=0.01, wd=0.0001, gpuid='0', loss_type='BPR', verbose=True):
+                 epochs=20, lr=0.01, wd=0.0001, gpuid='0', loss_type='BPR', 
+                 early_stop=True):
         '''
         user_num: number of users;
 		item_num: number of items;
@@ -41,8 +42,7 @@ class PairMF(nn.Module):
         nn.init.normal_(self.embed_item.weight, std=0.01)
 
         self.loss_type = loss_type
-
-        self.verbose = verbose
+        self.early_stop = early_stop
 
     def forward(self, user, item_i, item_j):
         user = self.embed_user(user)
@@ -61,9 +61,12 @@ class PairMF(nn.Module):
             self.cpu()
 
         optimizer = optim.SGD(self.parameters(), lr=self.lr, weight_decay=self.wd)
+
+        last_loss = 0.
         for epoch in range(1, self.epochs + 1):
             self.train()
 
+            current_loss = 0.
             # set process bar display
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch:03d}]')
@@ -91,12 +94,22 @@ class PairMF(nn.Module):
 
                 loss += self.lamda * (self.embed_item.weight.norm() + self.embed_user.weight.norm())
 
+                if torch.isnan(loss):
+                    raise ValueError(f'Loss=Nan or Infinity: current settings does not fit the recommender')
+
                 loss.backward()
                 optimizer.step()
 
                 pbar.set_postfix(loss=loss.item())
+                current_loss += loss.item()
 
             self.eval()
+            delta_loss = float(current_loss - last_loss)
+            if (abs(delta_loss) < 1e-5) and self.early_stop:
+                print('Satisfy early stop mechanism')
+                break
+            else:
+                last_loss = current_loss
 
     def predict(self, u, i):
         pred_i, _ = self.forward(u, i, i)

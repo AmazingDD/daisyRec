@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-05 16:58:16
-@LastEditors: Yudi
-@LastEditTime: 2019-12-12 19:23:41
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-18 17:48:15
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -19,7 +19,8 @@ import torch.backends.cudnn as cudnn
 
 class PointFM(nn.Module):
     def __init__(self, num_features, num_factors, batch_norm, drop_prob,
-                 epochs=20, lr=0.01, lamda=0.0, gpuid='0', loss_type='CL', verbose=True):
+                 epochs=20, lr=0.01, lamda=0.0, gpuid='0', loss_type='CL', 
+                 early_stop=True):
         '''
         num_features: number of features,
         num_factors: number of hidden factors,
@@ -54,6 +55,7 @@ class PointFM(nn.Module):
         nn.init.constant_(self.biases.weight, 0.0)
 
         self.loss_type = loss_type
+        self.early_stop = early_stop
 
     def forward(self, features, feature_values):
         nonzero_embed = self.embeddings(features)
@@ -90,9 +92,11 @@ class PointFM(nn.Module):
         else:
             raise ValueError(f'Invalid loss type: {self.loss_type}')
 
+        last_loss = 0.
         for epoch in range(1, self.epochs + 1):
             self.train() # Enable dropout and batch_norm
 
+            current_loss = 0.
             # set process bar display
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch:03d}]')
@@ -113,13 +117,24 @@ class PointFM(nn.Module):
                 loss = criterion(prediction, labels)
                 loss += self.lamda * self.embeddings.weight.norm()
 
+                if torch.isnan(loss):
+                    raise ValueError(f'Loss=Nan or Infinity: current settings does not fit the recommender')
+
                 loss.backward()
                 optimizer.step()
 
                 pbar.set_postfix(loss=loss.item())
+                current_loss += loss.item()
 
             self.eval()
-        print('Finish Training Process......')
+            delta_loss = float(current_loss - last_loss)
+            if (abs(delta_loss) < 1e-5) and self.early_stop:
+                print('Satisfy early stop mechanism')
+                break
+            else:
+                last_loss = current_loss
 
     def predict(self, features, feature_values):
-        return self.forward(features, feature_values)
+        pred = self.forward(features, feature_values)
+
+        return pred.cpu()

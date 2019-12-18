@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-03 15:37:46
-@LastEditors: Yudi
-@LastEditTime: 2019-12-12 19:23:56
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-18 17:52:16
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -19,7 +19,8 @@ import torch.backends.cudnn as cudnn
 
 class PointMF(nn.Module):
     def __init__(self, user_num, item_num, factor_num=100, lamda=0.0,
-                 epochs=20, lr=0.01, wd=0.0001, gpuid='0', loss_type='CL', verbose=True):
+                 epochs=20, lr=0.01, wd=0.0001, gpuid='0', loss_type='CL', 
+                 early_stop=True):
         '''
         user_num: number of users;
 		item_num: number of items;
@@ -34,7 +35,6 @@ class PointMF(nn.Module):
         self.wd = wd
         self.lamda = lamda
         self.epochs = epochs
-        self.verbose = verbose
 
         self.embed_user = nn.Embedding(user_num, factor_num)
         self.embed_item = nn.Embedding(item_num, factor_num)
@@ -43,6 +43,7 @@ class PointMF(nn.Module):
         nn.init.normal_(self.embed_item.weight, std=0.01)
 
         self.loss_type = loss_type
+        self.early_stop = early_stop
 
     def forward(self, user, item):
         embed_user = self.embed_user(user)
@@ -67,9 +68,11 @@ class PointMF(nn.Module):
         else:
             raise ValueError(f'Invalid loss type: {self.loss_type}')
 
+        last_loss = 0.
         for epoch in range(1, self.epochs + 1):
             self.train()
 
+            current_loss = 0.
             # set process bar display
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch:03d}]')
@@ -88,13 +91,23 @@ class PointMF(nn.Module):
 
                 loss = criterion(prediction, label)
                 loss += self.lamda * (self.embed_item.weight.norm() +self.embed_user.weight.norm())
+
+                if torch.isnan(loss):
+                    raise ValueError(f'Loss=Nan or Infinity: current settings does not fit the recommender')
+
                 loss.backward()
                 optimizer.step()
 
                 pbar.set_postfix(loss=loss.item())
+                current_loss += loss.item()
 
             self.eval()
-        print('Finish Training Process......')
+            delta_loss = float(current_loss - last_loss)
+            if (abs(delta_loss) < 1e-5) and self.early_stop:
+                print('Satisfy early stop mechanism')
+                break
+            else:
+                last_loss = current_loss
 
     def predict(self, u, i):
         pred = self.forward(u, i).cpu()

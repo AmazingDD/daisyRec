@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-04 19:20:19
-@LastEditors: Yudi
-@LastEditTime: 2019-12-04 23:53:04
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-18 18:01:04
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -57,7 +57,8 @@ class Item2Vec(Bundler):
         return self.ovectors(v)
 
 class SGNS(nn.Module):
-    def __init__(self, embedding, item_num=20000, n_negs=20, weights=None, use_cuda=False):
+    def __init__(self, embedding, item_num=20000, n_negs=20, 
+                 weights=None, use_cuda=False, early_stop=True):
         super(SGNS, self).__init__()
         self.embedding = embedding
         self.item_num = item_num
@@ -69,6 +70,7 @@ class SGNS(nn.Module):
             self.weights = torch.FloatTensor(wf)
 
         self.use_cuda = use_cuda
+        self.early_stop = early_stop
 
     def forward(self, iitem, oitems):
         batch_size = iitem.size()[0]
@@ -94,15 +96,31 @@ class SGNS(nn.Module):
             self.cpu()    
 
         optimizer = optim.Adam(self.parameters())
+        last_loss = 0.
         for epoch in range(1, epochs + 1):
+            current_loss = 0.
+            # set process bar display
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch}]')
             for iitem, oitems in pbar:
                 loss = self.forward(iitem, oitems)
+
+                if torch.isnan(loss):
+                    raise ValueError(f'Loss=Nan or Infinity: current settings does not fit the recommender')
+
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+
                 pbar.set_postfix(loss=loss.item())
+                current_loss += loss.item()
+            
+            delta_loss = float(current_loss - last_loss)
+            if (abs(delta_loss) < 1e-5) and self.early_stop:
+                print('Satisfy early stop mechanism')
+                break
+            else:
+                last_loss = current_loss
 
         idx2vec = self.embedding.ivectors.weight.data.cpu().numpy()
 

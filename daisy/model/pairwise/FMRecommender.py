@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-06 23:04:24
-@LastEditors: Yudi
-@LastEditTime: 2019-12-12 19:14:43
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-18 17:19:30
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -18,7 +18,8 @@ import torch.backends.cudnn as cudnn
 
 class PairFM(nn.Module):
     def __init__(self, num_features, num_factors, batch_norm, drop_prob,
-                 epochs=20, lr=0.01, lamda=0.0, gpuid='0', loss_type='BPR', verbose=True):
+                 epochs=20, lr=0.01, lamda=0.0, gpuid='0', loss_type='BPR', 
+                 early_stop=True):
         super(PairFM, self).__init__()
 
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
@@ -31,6 +32,7 @@ class PairFM(nn.Module):
         self.epochs = epochs
         self.lr = lr
         self.lamda = lamda
+        self.early_stop = early_stop
 
         self.embeddings = nn.Embedding(num_features, num_factors)
         self.biases = nn.Embedding(num_features, 1)
@@ -85,9 +87,11 @@ class PairFM(nn.Module):
 
         optimizer = optim.SGD(self.parameters(), lr=self.lr)
 
+        last_loss = 0.
         for epoch in range(1, self.epochs + 1):
             self.train() # Enable dropout and batch_norm
 
+            current_loss = 0.
             # set process bar display
             pbar = tqdm(train_loader)
             pbar.set_description(f'[Epoch {epoch:03d}]')
@@ -119,12 +123,22 @@ class PairFM(nn.Module):
 
                 loss += self.lamda * self.embeddings.weight.norm()
 
+                if torch.isnan(loss):
+                    raise ValueError(f'Loss=Nan or Infinity: current settings does not fit the recommender')
+
                 loss.backward()
                 optimizer.step()
 
                 pbar.set_postfix(loss=loss.item())
+                current_loss += loss.item()
 
             self.eval()
+            delta_loss = float(current_loss - last_loss)
+            if (abs(delta_loss) < 1e-5) and self.early_stop:
+                print('Satisfy early stop mechanism')
+                break
+            else:
+                last_loss = current_loss
 
     def predict(self, feat, feat_value):
         pred, _ = self.forward(feat, feat_value, feat, feat_value)
