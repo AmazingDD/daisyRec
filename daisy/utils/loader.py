@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
-@LastEditors: Yudi
-@LastEditTime: 2019-12-17 17:24:58
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-18 14:31:56
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -573,3 +573,27 @@ class PermutedSubsampledCorpus(data.Dataset):
     def __getitem__(self, idx):
         iitem, oitems = self.dt[idx]
         return iitem, np.array(oitems)
+
+""" AE Specific Process """
+class AEData(data.Dataset):
+    def __init__(self, user_num, item_num, df):
+        super(AEData, self).__init__()
+        self.user_num = user_num
+        self.item_num = item_num
+
+        self.R = np.zeros((user_num, item_num))
+        self.mask_R = np.zeros((user_num, item_num))
+
+        for _, row in df.iterrows():
+            user, item, rating = int(row['user']), int(row['item']), row['rating']
+            self.R[user, item] = float(rating)
+            self.mask_R[user, item] = 1.
+
+    def __len__(self):
+        return self.user_num
+
+    def __getitem__(self, idx):
+        r = self.R[idx]
+        mask_r = self.mask_R[idx]
+
+        return mask_r, r
