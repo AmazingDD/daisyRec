@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-10 15:48:00
-@LastEditors: Yudi
-@LastEditTime: 2019-12-16 17:22:31
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-19 10:08:53
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -80,10 +80,6 @@ if __name__ == '__main__':
     # get ground truth
     test_ur = get_ur(test_set)
     total_train_ur = get_ur(train_set)
-
-    train_set_list, val_set_list, fn = split_validation(train_set, 
-                                                        args.val_method, 
-                                                        args.fold_num)
 
     # initial candidate item pool
     item_pool = set(range(item_num))
