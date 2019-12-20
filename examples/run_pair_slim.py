@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-10 18:49:52
-@LastEditors: Yudi
-@LastEditTime: 2019-12-16 17:20:43
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-20 22:55:50
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -93,8 +93,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     '''Test Process for Metrics Exporting'''
-    df, user_num, item_num = load_rate(args.dataset, args.prepro)
-    train_set, test_set = split_test(df, args.test_method, args.test_size)
+    # df, user_num, item_num = load_rate(args.dataset, args.prepro)
+    # train_set, test_set = split_test(df, args.test_method, args.test_size)
+
+    # temporary used for tuning test result
+    train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    train_set['rating'] = 1.0
+    test_set['rating'] = 1.0
+    df = pd.concat([train_set, test_set], ignore_index=True)
+    user_num = df['user'].nunique()
+    item_num = df['item'].nunique()
 
     # get ground truth
     test_ur = get_ur(test_set)

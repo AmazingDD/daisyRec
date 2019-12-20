@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-03 15:38:07
-@LastEditors: Yudi
-@LastEditTime: 2019-12-18 11:36:11
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-20 23:42:25
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -114,8 +114,17 @@ if __name__ == '__main__':
     f.write('Pre,Rec,HR,MAP,MRR,NDCG,num_ng,factors,lr,lamda' + '\n')
 
     '''Validation Process for Parameter Tuning'''
-    df, user_num, item_num = load_rate(args.dataset, args.prepro)
-    train_set, test_set = split_test(df, args.test_method, args.test_size)
+    # df, user_num, item_num = load_rate(args.dataset, args.prepro)
+    # train_set, test_set = split_test(df, args.test_method, args.test_size)
+
+    # temporary used for tuning test result
+    train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    train_set['rating'] = 1.0
+    test_set['rating'] = 1.0
+    df = pd.concat([train_set, test_set], ignore_index=True)
+    user_num = df['user'].nunique()
+    item_num = df['item'].nunique()
 
     # get ground truth
     test_ur = get_ur(test_set)

@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-07 00:59:27
-@LastEditors: Yudi
-@LastEditTime: 2019-12-18 11:19:12
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-20 23:40:06
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -123,8 +123,17 @@ if __name__ == '__main__':
     cat_cols=['user', 'item']
     num_cols=[]
 
-    df, user_num, item_num = load_rate(args.dataset, args.prepro)
-    train_set, test_set = split_test(df, args.test_method, args.test_size)
+    # df, user_num, item_num = load_rate(args.dataset, args.prepro)
+    # train_set, test_set = split_test(df, args.test_method, args.test_size)
+
+    # temporary used for tuning test result
+    train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    train_set['rating'] = 1.0
+    test_set['rating'] = 1.0
+    df = pd.concat([train_set, test_set], ignore_index=True)
+    user_num = df['user'].nunique()
+    item_num = df['item'].nunique()
 
     # convert features to mapping dictionary
     feat_idx_dict, num_features = build_feat_idx_dict(df, cat_cols, num_cols)
