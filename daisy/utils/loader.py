@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-21 13:13:48
+@LastEditTime : 2019-12-21 15:42:09
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -45,7 +45,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
     elif src == 'netflix':
         cnt = 0
         tmp_file = open(f'./data/{src}/training_data.csv', 'w')
-        tmp_file.write('user,item,rating,timestamp')
+        tmp_file.write('user,item,rating,timestamp' + '\n')
         for f in os.listdir(f'./data/{src}/training_set/'):
             cnt += 1
             if cnt % 5000 == 0:
@@ -55,7 +55,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
             item = contents[0].strip().split(':')[0]
             for val in contents[1:]:
                 user, rating, timestamp = val.strip().split(',')
-                tmp_file.write(','.join([user, item, rating, timestamp]))
+                tmp_file.write(','.join([user, item, rating, timestamp]) + '\n')
             txt_file.close()
 
         tmp_file.close()
