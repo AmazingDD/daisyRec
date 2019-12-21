@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-21 15:42:09
+@LastEditTime : 2019-12-22 00:39:53
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -244,9 +244,15 @@ def split_test(df, test_method='fo', test_size=.2):
         del train_set['rank_latest'], test_set['rank_latest']
 
     elif test_method == 'loo':
-        test_set = df.groupby(['user']).apply(pd.DataFrame.sample, n=1).reset_index(drop=True)
-        test_key = test_set[['user', 'item']].copy()
-        train_set = df.set_index(['user', 'item']).drop(pd.MultiIndex.from_frame(test_key)).reset_index().copy()
+        # # slow method
+        # test_set = df.groupby(['user']).apply(pd.DataFrame.sample, n=1).reset_index(drop=True)
+        # test_key = test_set[['user', 'item']].copy()
+        # train_set = df.set_index(['user', 'item']).drop(pd.MultiIndex.from_frame(test_key)).reset_index().copy()
+
+        # # quick method
+        test_index = df.groupby(['user']).apply(lambda grp: np.random.choice(grp.index))
+        test_set = df.loc[test_index, :].reset_index(drop=True).copy()
+        train_set = df[~df.index.isin(test_index)].reset_index(drop=True).copy()
 
     else:
         raise ValueError('Invalid data_split value, expect: loo, fo, tloo, tfo')
@@ -291,9 +297,13 @@ def split_validation(train_set, val_method='fo', fold_num=5, test_size=.1):
         val_set_list.append(train_set.iloc[split_idx:, :])
     elif val_method == 'loo':
         for _ in range(fold_num):
-            val_set = train_set.groupby(['user']).apply(pd.DataFrame.sample, n=1).reset_index(drop=True)
-            val_key = val_set[['user', 'item']].copy()
-            sub_train_set = train_set.set_index(['user', 'item']).drop(pd.MultiIndex.from_frame(val_key)).reset_index().copy()
+            # val_set = train_set.groupby(['user']).apply(pd.DataFrame.sample, n=1).reset_index(drop=True)
+            # val_key = val_set[['user', 'item']].copy()
+            # sub_train_set = train_set.set_index(['user', 'item']).drop(pd.MultiIndex.from_frame(val_key)).reset_index().copy()
+
+            val_index = train_set.groupby(['user']).apply(lambda grp: np.random.choice(grp.index))
+            val_set = train_set.loc[val_index, :].reset_index(drop=True).copy()
+            sub_train_set = train_set[~train_set.index.isin(val_index)].reset_index(drop=True).copy()
 
             train_set_list.append(sub_train_set)
             val_set_list.append(val_set)
