@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-21 13:06:41
+@LastEditTime : 2019-12-21 13:13:48
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -44,7 +44,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
 
     elif src == 'netflix':
         cnt = 0
-        tmp_file = open(f'./data/{src}/training_data.dat', 'w')
+        tmp_file = open(f'./data/{src}/training_data.csv', 'w')
         tmp_file.write('user,item,rating,timestamp')
         for f in os.listdir(f'./data/{src}/training_set/'):
             cnt += 1
@@ -60,7 +60,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
 
         tmp_file.close()
 
-        df = pd.read_csv(f'./data/{src}/training_data.dat', sep=',')
+        df = pd.read_csv(f'./data/{src}/training_data.csv')
         df['rating'] = df.rating.astype(float)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
 
