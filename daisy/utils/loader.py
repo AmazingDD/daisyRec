@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-21 00:14:01
+@LastEditTime : 2019-12-21 09:59:49
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -56,7 +56,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
                 user, rating, timestamp = val.strip().split(',')
                 tmp = pd.DataFrame([[user, item, rating, timestamp]], 
                                     columns=['user', 'item', 'rating', 'timestamp'])
-                df = df.append(tmp, ignore_index=True)
+                df = pd.concat([df, tmp], ignore_index=True)
             txt_file.close()
         df['rating'] = df.rating.astype(float)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
