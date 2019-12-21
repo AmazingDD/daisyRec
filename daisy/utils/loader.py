@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-21 09:59:49
+@LastEditTime : 2019-12-21 13:06:41
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -43,8 +43,9 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
         df = df.query('rating >= 4').reset_index(drop=True)
 
     elif src == 'netflix':
-        df = pd.DataFrame(columns=['user', 'item', 'rating', 'timestamp'])
         cnt = 0
+        tmp_file = open(f'./data/{src}/training_data.dat', 'w')
+        tmp_file.write('user,item,rating,timestamp')
         for f in os.listdir(f'./data/{src}/training_set/'):
             cnt += 1
             if cnt % 5000 == 0:
@@ -54,10 +55,12 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
             item = contents[0].strip().split(':')[0]
             for val in contents[1:]:
                 user, rating, timestamp = val.strip().split(',')
-                tmp = pd.DataFrame([[user, item, rating, timestamp]], 
-                                    columns=['user', 'item', 'rating', 'timestamp'])
-                df = pd.concat([df, tmp], ignore_index=True)
+                tmp_file.write(','.join([user, item, rating, timestamp]))
             txt_file.close()
+
+        tmp_file.close()
+
+        df = pd.read_csv(f'./data/{src}/training_data.dat', sep=',')
         df['rating'] = df.rating.astype(float)
         df['timestamp'] = pd.to_datetime(df['timestamp'])
 
