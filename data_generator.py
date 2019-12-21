@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-20 18:52:08
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-21 10:01:12
+@LastEditTime : 2019-12-21 11:05:35
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -34,6 +34,8 @@ for dataset in dataset_list:
             train_set.to_csv(f'./experiment_data/train_{dataset}_{prepro}_{test_method}.dat', index=False)
             test_set.to_csv(f'./experiment_data/test_{dataset}_{prepro}_{test_method}.dat', index=False)
 
-            del train_set, test_set, df
-            gc.collect()
+            
             print('Finish save train and test set......')
+
+        del train_set, test_set, df
+        gc.collect()
