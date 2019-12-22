@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-22 00:39:53
+@LastEditTime : 2019-12-22 14:02:32
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -93,6 +93,8 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
     elif src == 'amazon-book':
         df = pd.read_csv(f'./data/{src}/ratings_Books.csv', 
                         names=['user', 'item', 'rating', 'timestamp'], low_memory=False)
+        df = df[df['timestamp'].str.isnumeric()].copy()
+        df['timestamp'] = df['timestamp'].astype(int)
 
     elif src == 'amazon-music':
         df = pd.read_csv(f'./data/{src}/ratings_Digital_Music.csv', 
@@ -228,7 +230,7 @@ def split_test(df, test_method='fo', test_size=.2):
                         'loo': leave one out
     """
     if test_method == 'tfo':
-        df = df.sample(frac=1)
+        # df = df.sample(frac=1)
         df = df.sort_values(['timestamp']).reset_index(drop=True)
         split_idx = int(np.ceil(len(df) * (1 - test_size)))
         train_set, test_set = df.iloc[:split_idx, :].copy(), df.iloc[split_idx:, :].copy()
@@ -237,7 +239,7 @@ def split_test(df, test_method='fo', test_size=.2):
         train_set, test_set = train_test_split(df, test_size=test_size, random_state=2019)
 
     elif test_method == 'tloo':
-        df = df.sample(frac=1)
+        # df = df.sample(frac=1)
         df = df.sort_values(['timestamp']).reset_index(drop=True)
         df['rank_latest'] = df.groupby(['user'])['timestamp'].rank(method='first', ascending=False)
         train_set, test_set = df[df['rank_latest'] > 1].copy(), df[df['rank_latest'] == 1].copy()
