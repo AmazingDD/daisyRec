@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-20 23:39:03
+@LastEditTime : 2019-12-23 16:06:58
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -124,8 +124,10 @@ if __name__ == '__main__':
 
             # build recommender model
             model = KNNWithMeans(user_num, item_num, 
-                                maxk, args.mink, 
-                                sim_options={'name': sim_method, 'user_based': False})
+                                 maxk, args.mink, 
+                                 sim_options={'name': sim_method, 'user_based': False},
+                                 tune_or_not=True, 
+                                 serial=f'{args.dataset}-{args.prepro}-{args.val_method}-{fold}-{sim_method}')
             model.fit(train)
 
             # build candidates set

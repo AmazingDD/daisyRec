@@ -1,13 +1,15 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-03 12:20:08
-@LastEditors: Yudi
-@LastEditTime: 2019-12-03 13:28:21
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-23 15:50:44
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
+import os
 import heapq
+import pickle
 import numpy as np
 from six import iteritems
 from collections import defaultdict
@@ -68,14 +70,40 @@ class SymmetricAlgo(object):
 
 class KNNWithMeans(SymmetricAlgo):
     ''' KNN with means '''
-    def __init__(self, user_num, item_num, k=40, min_k=1, sim_options={}, verbose=True, **kwargs):
+    def __init__(self, user_num, item_num, k=40, min_k=1, sim_options={}, 
+                 verbose=True, tune_or_not=False, 
+                 serial='ml-100k-origin-loo-0-cosine', **kwargs):
+        if 'user_based' not in sim_options:
+            sim_options['user_based']=True
+
+        self.sim_base = 'user' if sim_options['user_based'] else 'item'
+
         SymmetricAlgo.__init__(self, user_num, item_num, sim_options=sim_options, **kwargs)
         self.k = k
         self.min_k = min_k
 
+        # only used when tuning
+        self.tune_or_not = tune_or_not
+        self.serial = serial
+
+        if not os.path.exists('./tmp/sim_matrix/'):
+            os.makedirs('./tmp/sim_matrix/')
+
     def fit(self, train_set):
         SymmetricAlgo.fit(self, train_set)
-        self.sim = self.compute_similarities()
+        if self.tune_or_not:
+            # if you want to tune
+            sim_file_path = f'./tmp/sim_matrix/{self.sim_base}_sim_mat_{self.serial}.pkl'
+            if os.path.exists(sim_file_path):
+                self.sim = pickle.load(open(sim_file_path, 'rb'))
+                print(f'Load similarity matrix, serial: {self.serial}')
+            else:
+                sim_mat = self.compute_similarities()
+                self.sim = sim_mat
+                pickle.dump(sim_mat, open(sim_file_path, 'wb'))
+        else:
+            # if you just run the result
+            self.sim = self.compute_similarities()
 
         self.means = np.zeros(self.n_x)
         for x, ratings in iteritems(self.xr):
