@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-07 00:59:27
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-20 22:54:37
+@LastEditTime : 2019-12-23 15:07:04
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -206,7 +206,7 @@ if __name__ == '__main__':
     
     # process topN list and store result for reporting KPI
     print('Save metric@k result to res folder...')
-    result_save_path = f'./res/{args.dataset}/'
+    result_save_path = f'./res/{args.dataset}/{args.prepro}/{args.test_method}/'
     if not os.path.exists(result_save_path):
         os.makedirs(result_save_path)
 
