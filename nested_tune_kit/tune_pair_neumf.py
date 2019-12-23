@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-23 22:15:58
+@LastEditTime : 2019-12-23 23:26:33
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -195,10 +195,9 @@ if __name__ == '__main__':
             model.fit(train_loader)
 
             # build candidates set
-            assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
             val_ucands = defaultdict(list)
             for k, v in val_ur.items():
-                sample_num = candidates_num - len(v)
+                sample_num = candidates_num - len(v) if len(v) < candidates_num else 0
                 sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
                 sample_num = min(len(sub_item_pool), sample_num)
                 samples = random.sample(sub_item_pool, sample_num)

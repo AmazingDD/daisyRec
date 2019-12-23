@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-20 23:13:20
+@LastEditTime : 2019-12-23 23:28:01
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -162,10 +162,9 @@ if __name__ == '__main__':
             model.build_user_vec(train_ur)
 
             # build candidates set
-            assert max([len(v) for v in val_ur.values()]) < candidates_num, 'Small candidates_num setting'
             val_ucands = defaultdict(list)
             for k, v in val_ur.items():
-                sample_num = candidates_num - len(v)
+                sample_num = candidates_num - len(v) if len(v) < candidates_num else 0
                 sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
                 sample_num = min(len(sub_item_pool), sample_num)
                 samples = random.sample(sub_item_pool, sample_num)

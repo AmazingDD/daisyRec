@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 15:38:07
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-23 15:09:26
+@LastEditTime : 2019-12-23 23:34:16
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -132,11 +132,9 @@ if __name__ == '__main__':
 
     print('Start Calculating Metrics......')
     # build candidates set
-    assert max([len(v) for v in test_ur.values()]) < candidates_num, 'Small candidates_num setting'
-
     test_ucands = defaultdict(list)
     for k, v in test_ur.items():
-        sample_num = candidates_num - len(v)
+        sample_num = candidates_num - len(v) if len(v) < candidates_num else 0
         sub_item_pool = item_pool - v - total_train_ur[k] # remove GT & interacted
         sample_num = min(len(sub_item_pool), sample_num)
         samples = random.sample(sub_item_pool, sample_num)
