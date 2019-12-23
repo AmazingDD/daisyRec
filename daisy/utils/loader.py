@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-22 14:02:32
+@LastEditTime : 2019-12-23 00:28:54
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -292,7 +292,7 @@ def split_validation(train_set, val_method='fo', fold_num=5, test_size=.1):
             train_set_list.append(train)
             val_set_list.append(validation)
     elif val_method == 'tfo':
-        train_set = train_set.sample(frac=1)
+        # train_set = train_set.sample(frac=1)
         train_set = train_set.sort_values(['timestamp']).reset_index(drop=True)
         split_idx = int(np.ceil(len(train_set) * (1 - test_size)))
         train_set_list.append(train_set.iloc[:split_idx, :])
@@ -310,7 +310,7 @@ def split_validation(train_set, val_method='fo', fold_num=5, test_size=.1):
             train_set_list.append(sub_train_set)
             val_set_list.append(val_set)
     elif val_method == 'tloo':
-        train_set = train_set.sample(frac=1)
+        # train_set = train_set.sample(frac=1)
         train_set = train_set.sort_values(['timestamp']).reset_index(drop=True)
 
         train_set['rank_latest'] = train_set.groupby(['user'])['timestamp'].rank(method='first', ascending=False)
