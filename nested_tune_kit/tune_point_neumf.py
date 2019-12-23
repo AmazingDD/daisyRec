@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-20 23:42:44
+@LastEditTime : 2019-12-23 22:14:01
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -113,9 +113,9 @@ if __name__ == '__main__':
         for p2 in [10, 20, 50, 100, 150, 200]:
             for p3 in range(1, 4):
                 for p4 in [0, 0.25, 0.5, 0.75]:
-                    for p5 in [1e-5, 1e-4, 1e-3, 0.01, 0.1, 1]:
+                    for p5 in [1e-5, 1e-4, 1e-3, 0.01, 0.1]:
                         for p6 in [64, 128, 256, 512, 1024]:
-                            for p7 in [1e-5, 1e-4, 1e-3, 0.01, 0.1, 1]:
+                            for p7 in [1e-5, 1e-4, 1e-3, 0.01, 0.1]:
                                 param_list.append((p1, p2, p3, p4, p5, p6, p7))
 
     tune_log_path = './tune_log/'

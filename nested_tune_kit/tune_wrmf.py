@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 14:52:58
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-20 23:45:49
+@LastEditTime : 2019-12-23 22:05:48
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     # TODO generate algo paramter settings for grid-search tuning
     param_list = []
-    for p1 in [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1]:
+    for p1 in [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]:
         for p2 in [1, 10, 20, 30, 40, 50]:
             for p3 in [10, 20, 50, 100, 150, 200]:
                 param_list.append((p1, p2, p3))

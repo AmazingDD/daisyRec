@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 15:48:00
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-20 23:45:21
+@LastEditTime : 2019-12-23 22:06:28
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     # TODO generate algo paramter settings for grid-search tuning
     param_list = []
     for p1 in [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]:
-        for p2 in [1e-5, 1e-4, 1e-3, 0.01, 0.1, 1, 10]:
+        for p2 in [1e-5, 1e-4, 1e-3, 0.01, 0.1]:
                 param_list.append((p1, p2))
 
     tune_log_path = './tune_log/'

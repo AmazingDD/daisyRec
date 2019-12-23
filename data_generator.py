@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-20 18:52:08
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-21 11:05:35
+@LastEditTime : 2019-12-23 18:38:36
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -11,14 +11,12 @@ import os
 import gc
 from daisy.utils.loader import load_rate, split_test
 
-# 'ml-100k', 'ml-1m', 'ml-10m', 'ml-20m', 'lastfm', 'bx', 'amazon-cloth'
+# 'ml-100k', 'ml-1m', 'ml-10m', 'ml-20m', 'lastfm', 'bx', 'amazon-cloth',
+# 'amazon-electronic', 'amazon-book', 'amazon-music', 'epinions', 'yelp', 'citeulike'
 
-dataset_list = ['amazon-electronic', 'amazon-book', 'amazon-music', 
-                'epinions', 'yelp', 'citeulike', 'netflix']
+dataset_list = ['netflix']
 
-                
-
-prepro_list = ['origin', '5core', '10core']
+prepro_list = ['5core', '10core'] # 'origin', 
 
 if not os.path.exists('./experiment_data/'):
     os.makedirs('./experiment_data/')
