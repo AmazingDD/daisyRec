@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 15:38:07
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-23 23:11:10
+@LastEditTime : 2019-12-24 09:52:43
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -241,5 +241,6 @@ if __name__ == '__main__':
         line = ','.join(fnl_metric) + f',{num_ng},{factors},{lr},{lamda}' + '\n'
 
         f.write(line)
+        f.flush()
 
     f.close()

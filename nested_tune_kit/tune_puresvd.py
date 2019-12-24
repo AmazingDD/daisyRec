@@ -177,5 +177,6 @@ if __name__ == '__main__':
         line = ','.join(fnl_metric) + f',{factors}' + '\n'
 
         f.write(line)
+        f.flush()
 
     f.close()

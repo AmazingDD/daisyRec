@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-23 23:28:01
+@LastEditTime : 2019-12-24 09:51:02
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -219,5 +219,6 @@ if __name__ == '__main__':
         line = ','.join(fnl_metric) + f',{p_window},{e_dim},{n_negs}' + '\n'
 
         f.write(line)
+        f.flush()
 
     f.close()

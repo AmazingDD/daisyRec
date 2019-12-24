@@ -273,5 +273,6 @@ if __name__ == '__main__':
         line = ','.join(fnl_metric) + f',{num_ng},{factor_num},{num_layers},{dropout},{lr},{batch_size},{lamda}' + '\n'
 
         f.write(line)
+        f.flush()
 
     f.close()
