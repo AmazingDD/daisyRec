@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-03 14:53:45
-@LastEditors: Yudi
-@LastEditTime: 2019-12-03 23:36:19
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-25 18:08:22
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -55,9 +55,13 @@ class WRMF(object):
 
         self.user_vec, self.item_vec = self.X, self.Y.T
 
+        # complete prediction matrix in fit process and save time for get rank list
+        pred_mat = self.user_vec.dot(self.item_vec)
+        self.pred_mat = pred_mat.A
+
     def predict(self, u, i):
-        prediction = self.user_vec[u, :].dot(self.item_vec[:, i])
-        return prediction.A[0, 0]
+        prediction = self.pred_mat[u, i]
+        return prediction
 
     def _convert_df(self, user_num, item_num, df):
         '''Process Data to make WRMF available'''
