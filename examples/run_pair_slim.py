@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 18:49:52
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-23 23:34:49
+@LastEditTime : 2019-12-25 20:15:28
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
     # process topN list and store result for reporting KPI
     print('Save metric@k result to res folder...')
-    result_save_path = f'./res/{args.dataset}/{args.prepro}/{args.test_method}/'
+    result_save_path = f'./res/{args.dataset}/'
     if not os.path.exists(result_save_path):
         os.makedirs(result_save_path)
 
@@ -187,4 +187,5 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}metric_result_pairslim_{args.loss_type}.csv', index=False)
+    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pairslim_{args.loss_type}.csv', 
+               index=False)
