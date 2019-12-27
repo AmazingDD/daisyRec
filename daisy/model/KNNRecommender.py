@@ -2,14 +2,13 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:20:08
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-23 15:50:44
+@LastEditTime : 2019-12-27 16:56:51
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
 import os
 import heapq
-import pickle
 import numpy as np
 from six import iteritems
 from collections import defaultdict
@@ -93,14 +92,14 @@ class KNNWithMeans(SymmetricAlgo):
         SymmetricAlgo.fit(self, train_set)
         if self.tune_or_not:
             # if you want to tune
-            sim_file_path = f'./tmp/sim_matrix/{self.sim_base}_sim_mat_{self.serial}.pkl'
+            sim_file_path = f'./tmp/sim_matrix/{self.sim_base}_sim_mat_{self.serial}.npy'
             if os.path.exists(sim_file_path):
-                self.sim = pickle.load(open(sim_file_path, 'rb'))
+                self.sim = np.load(sim_file_path)
                 print(f'Load similarity matrix, serial: {self.serial}')
             else:
                 sim_mat = self.compute_similarities()
                 self.sim = sim_mat
-                pickle.dump(sim_mat, open(sim_file_path, 'wb'))
+                np.save(sim_file_path, sim_mat)
         else:
             # if you just run the result
             self.sim = self.compute_similarities()
