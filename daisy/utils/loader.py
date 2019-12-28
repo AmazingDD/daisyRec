@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-23 00:28:54
+@LastEditTime : 2019-12-28 18:57:28
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -548,7 +548,8 @@ class BuildCorpus(object):
             for item in sent:
                 self.wc[item] = self.wc.get(item, 0) + 1
 
-        self.idx2item = [self.unk] + sorted(self.wc, key=self.wc.get, reverse=True)[:max_item_num - 1]
+        # self.idx2item = [self.unk] + sorted(self.wc, key=self.wc.get, reverse=True)[:max_item_num - 1]
+        self.idx2item = sorted(self.wc, key=self.wc.get, reverse=True)[:max_item_num]
         self.item2idx = {self.idx2item[idx]: idx for idx, _ in enumerate(self.idx2item)}
         self.vocab = set([item for item in self.item2idx])
         print('build done')

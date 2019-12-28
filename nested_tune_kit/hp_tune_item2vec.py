@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-28 14:59:50
+@LastEditTime : 2019-12-28 18:32:56
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -137,7 +137,7 @@ def opt_func(params):
         window = None
 
     # pre-build Corpus for all item
-    pre = BuildCorpus(df, window, item_num, args.unk)
+    pre = BuildCorpus(df, window, item_num + 1, args.unk)
     pre.build()
 
     # store metrics result for test set

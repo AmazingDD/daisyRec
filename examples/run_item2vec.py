@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-25 20:01:48
+@LastEditTime : 2019-12-28 18:33:09
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         window = args.window
 
     # pre-build Corpus for all item
-    pre = BuildCorpus(df, window, item_num, args.unk)
+    pre = BuildCorpus(df, window, item_num + 1, args.unk)
     pre.build()
 
     # get ground truth
