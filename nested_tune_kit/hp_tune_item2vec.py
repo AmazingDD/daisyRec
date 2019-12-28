@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-28 18:32:56
+@LastEditTime : 2019-12-28 19:03:16
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -126,7 +126,7 @@ candidates_num = args.cand_num
 space = {
     'window': hp.choice('window', [1, 2, 3, 4, 5]),
     'e_dim': hp.choice('e_dim', [10, 20, 50, 100]),
-    'n_negs': hp.randint('n_negs', 11)
+    'n_negs': hp.choice('n_negs', [1,2,3,4,5,6,7,8,9,10])
     }
 
 def opt_func(params):
