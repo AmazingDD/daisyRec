@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:20:08
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-27 16:56:51
+@LastEditTime : 2019-12-29 00:20:34
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -137,5 +137,7 @@ class KNNWithMeans(SymmetricAlgo):
         except ZeroDivisionError:
             pass  # return mean
 
-        details = {'actual_k': actual_k}
-        return est, details
+        # details = {'actual_k': actual_k}
+        # return est, details
+
+        return est

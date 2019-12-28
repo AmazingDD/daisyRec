@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-25 21:11:01
+@LastEditTime : 2019-12-29 00:04:28
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -109,7 +109,7 @@ if __name__ == '__main__':
     # get predict result
     preds = {}
     for u in tqdm(test_ucands.keys()):
-        pred_rates = [model.predict(u, i)[0] for i in test_ucands[u]]
+        pred_rates = [model.predict(u, i) for i in test_ucands[u]]
         rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
         top_n = np.array(test_ucands[u])[rec_idx]
         preds[u] = top_n
