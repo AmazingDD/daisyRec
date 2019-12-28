@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-27 21:15:14
+@LastEditTime : 2019-12-28 14:59:50
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -101,6 +101,10 @@ f.write('Pre,Rec,HR,MAP,MRR,NDCG,window,e_dim,n_negs' + '\n')
 # temporary used for tuning test result
 train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
 test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+if args.dataset in ['yelp']:
+    train_set['timestamp'] = pd.to_datetime(train_set['timestamp'])
+    test_set['timestamp'] = pd.to_datetime(test_set['timestamp'])
+
 train_set['rating'] = 1.0
 test_set['rating'] = 1.0
 df = pd.concat([train_set, test_set], ignore_index=True)

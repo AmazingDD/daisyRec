@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 22:38:37
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-27 18:37:34
+@LastEditTime : 2019-12-28 14:58:53
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -82,6 +82,10 @@ space = {'factors': hp.randint('factors', 100)}
 # temporary used for tuning test result
 train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
 test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+if args.dataset in ['yelp']:
+    train_set['timestamp'] = pd.to_datetime(train_set['timestamp'])
+    test_set['timestamp'] = pd.to_datetime(test_set['timestamp'])
+
 train_set['rating'] = 1.0
 test_set['rating'] = 1.0
 df = pd.concat([train_set, test_set], ignore_index=True)

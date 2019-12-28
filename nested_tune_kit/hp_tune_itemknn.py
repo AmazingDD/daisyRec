@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-27 21:01:45
+@LastEditTime : 2019-12-28 15:00:17
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -88,6 +88,10 @@ f.write('Pre,Rec,HR,MAP,MRR,NDCG,sim_method,maxk' + '\n')
 # temporary used for tuning test result
 train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
 test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+if args.dataset in ['yelp']:
+    train_set['timestamp'] = pd.to_datetime(train_set['timestamp'])
+    test_set['timestamp'] = pd.to_datetime(test_set['timestamp'])
+
 df = pd.concat([train_set, test_set], ignore_index=True)
 user_num = df['user'].nunique()
 item_num = df['item'].nunique()
