@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 15:48:00
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-28 15:03:47
+@LastEditTime : 2019-12-28 22:55:21
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -113,8 +113,8 @@ item_pool = set(range(item_num))
 candidates_num = args.cand_num
 
 space = {
-    'elastic': hp.choice('elastic', [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]),
-    'alpha': hp.choice('alpha', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1, 1, 10]),
+    'elastic': hp.choice('elastic', [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]),
+    'alpha': hp.choice('alpha', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]),
 }
 
 def opt_func(params):

@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-03 14:53:45
-@LastEditors: Yudi
-@LastEditTime: 2019-12-10 16:00:16
+@LastEditors  : Yudi
+@LastEditTime : 2019-12-28 22:46:49
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -42,8 +42,7 @@ class SLIM(object):
             A[user, item] = 1
         self.A = A # user-item matrix
 
-        print(f'Start calculate matrix W（alpha={self.alpha}',
-              ', lambda={self.lam_bda}, max_iter={self.max_iter}, tol={self.tol})')
+        print(f'Start calculate matrix W（alpha={self.alpha}, lambda={self.lam_bda}, max_iter={self.max_iter}, tol={self.tol})')
         self.W = self.__aggregation_coefficients()
 
         self.A_tilde = self.A.dot(self.W)

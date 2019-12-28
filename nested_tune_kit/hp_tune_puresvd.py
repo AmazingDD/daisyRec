@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 22:38:37
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-28 14:58:53
+@LastEditTime : 2019-12-28 22:30:32
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -73,7 +73,7 @@ f = open(tune_log_path + f'puresvd_{args.dataset}_{args.prepro}_{args.val_method
             encoding='utf-8')
 f.write('Pre,Rec,HR,MAP,MRR,NDCG,factors' + '\n')
 
-space = {'factors': hp.randint('factors', 100)}
+space = {'factors': hp.choice('factors', [10, 20, 50, 100])}
 
 '''Validation Process for Parameter Tuning'''
 # df, user_num, item_num = load_rate(args.dataset, args.prepro)
