@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 18:49:52
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-28 15:02:33
+@LastEditTime : 2019-12-29 14:23:19
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -141,7 +141,7 @@ space = {
 }
 
 def opt_func(params):
-    num_ng, lr, beta, lamda = params
+    num_ng, lr, beta, lamda = params['num_ng'], params['lr'], params['beta'], params['lamda']
     print(f'Parameter Settings: num_ng:{num_ng}, lr:{lr}, beta:{beta}, lamda:{lamda}')
 
     # store metrics result for final validation set
