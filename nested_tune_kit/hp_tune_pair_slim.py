@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 18:49:52
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-29 14:23:19
+@LastEditTime : 2019-12-29 14:41:56
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -135,7 +135,7 @@ candidates_num = args.cand_num
 
 space = {
     'num_ng': hp.choice('num_ng', [1,2,3,4,5,6,7,8,9,10]),
-    'lr': hp.choice('lr', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]),
+    'lr': hp.choice('lr', [1e-5, 1e-4, 1e-3, 1e-2]),
     'beta': hp.choice('beta', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]),
     'lamda': hp.choice('lamda', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
 }

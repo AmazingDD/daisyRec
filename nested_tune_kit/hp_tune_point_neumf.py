@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-28 15:03:08
+@LastEditTime : 2019-12-29 14:49:51
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -153,7 +153,7 @@ space = {
     'factor_num': hp.choice('factor_num', [10, 20, 50, 100]),
     'num_layers': hp.choice('num_layers', [1,2,3]),
     'dropout': hp.choice('dropout', [0, 0.25, 0.5, 0.75]),
-    'lr': hp.choice('lr', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1]),
+    'lr': hp.choice('lr', [1e-5, 1e-4, 1e-3, 1e-2]),
     'batch_size': hp.choice('batch_size', [64, 128, 256, 512, 1024]),
     'lamda': hp.choice('lamda', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
 }
