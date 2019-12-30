@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 12:21:41
+@LastEditTime : 2019-12-30 14:25:04
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -92,7 +92,7 @@ parser.add_argument('--lr',
                     help='learning rate')
 parser.add_argument('--epochs', 
                     type=int, 
-                    default=40, 
+                    default=50, 
                     help='training epochs')
 parser.add_argument('--batch_size', 
                     type=int, 
@@ -158,7 +158,7 @@ space = {
     'factor_num': hp.quniform('factor_num', 1, 100, 1),
     'num_layers': hp.quniform('num_layers', 1, 3, 1),
     'dropout': hp.uniform('dropout', 0, 1),
-    'lr': hp.loguniform('lr', np.log(1e-5), np.log(1e-1)),
+    'lr': hp.loguniform('lr', np.log(1e-4), np.log(1e-2)),
     'batch_size': hp.choice('batch_size', [64, 128, 256, 512]),
     'lamda': hp.loguniform('lamda', np.log(1e-5), np.log(1e-1))
 }

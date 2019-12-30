@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 12:10:30
+@LastEditTime : 2019-12-30 14:24:44
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -80,7 +80,7 @@ parser.add_argument('--factors',
                     help='predictive factors numbers in the model')
 parser.add_argument('--epochs', 
                     type=int, 
-                    default=40, 
+                    default=50, 
                     help='training epochs')
 parser.add_argument('--lr', 
                     type=float, 
@@ -88,7 +88,7 @@ parser.add_argument('--lr',
                     help='learning rate')
 parser.add_argument('--wd', 
                     type=float, 
-                    default=0.001, 
+                    default=0., 
                     help='model regularization rate')
 parser.add_argument('--lamda', 
                     type=float, 
@@ -145,7 +145,7 @@ candidates_num = args.cand_num
 space = {
     'num_ng': hp.quniform('num_ng', 1, 10, 1),
     'factors': hp.quniform('factors', 1, 100, 1),
-    'lr': hp.loguniform('lr', np.log(1e-5), np.log(1e-1)),
+    'lr': hp.loguniform('lr', np.log(1e-4), np.log(1e-2)),
     'lamda': hp.loguniform('lamda', np.log(1e-5), np.log(1e-1))
 }
 

@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-07 00:59:27
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 12:08:51
+@LastEditTime : 2019-12-30 14:24:31
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -91,7 +91,7 @@ parser.add_argument('--batch_size',
                     help='batch size for training')
 parser.add_argument('--epochs', 
                     type=int, 
-                    default=40, 
+                    default=50, 
                     help='training epochs')
 parser.add_argument('--lr', 
                     type=float, 
@@ -155,7 +155,7 @@ candidates_num = args.cand_num
 space = {
     'num_ng': hp.quniform('num_ng', 1, 10, 1),
     'hidden_factor': hp.quniform('hidden_factor', 1, 100, 1),
-    'lr': hp.loguniform('lr', np.log(1e-5), np.log(1e-1)),
+    'lr': hp.loguniform('lr', np.log(1e-4), np.log(1e-2)),
     'lamda': hp.loguniform('lamda', np.log(1e-5), np.log(1e-1))
 }
 

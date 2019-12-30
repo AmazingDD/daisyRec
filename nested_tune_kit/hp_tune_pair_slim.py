@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 18:49:52
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-29 23:43:45
+@LastEditTime : 2019-12-30 14:24:52
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -80,7 +80,7 @@ parser.add_argument('--batch_size',
                     help='batch size for training')
 parser.add_argument('--epochs', 
                     type=int, 
-                    default=40, 
+                    default=50, 
                     help='The number of iteration of the SGD procedure')
 parser.add_argument('--lr', 
                     type=float, 
@@ -140,7 +140,7 @@ candidates_num = args.cand_num
 
 space = {
     'num_ng': hp.quniform('num_ng', 1, 10, 1),
-    'lr': hp.loguniform('lr', np.log(1e-5), np.log(0.1)),
+    'lr': hp.loguniform('lr', np.log(1e-4), np.log(0.01)),
     'beta': hp.loguniform('beta', np.log(1e-5), np.log(0.1)),
     'lamda': hp.loguniform('lamda', np.log(1e-5), np.log(0.1))
 }
