@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 15:48:00
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 12:35:45
+@LastEditTime : 2019-12-30 22:41:27
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -119,7 +119,7 @@ candidates_num = args.cand_num
 
 space = {
     'elastic': hp.uniform('elastic', 0, 1),
-    'alpha': hp.loguniform('alpha', np.log(1e-5), np.log(0.1)),
+    'alpha': hp.loguniform('alpha', np.log(1e-4), np.log(0.01)),
 }
 
 metric_idx = {

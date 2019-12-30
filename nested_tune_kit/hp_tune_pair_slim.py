@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 18:49:52
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 14:24:52
+@LastEditTime : 2019-12-30 22:38:20
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -141,8 +141,8 @@ candidates_num = args.cand_num
 space = {
     'num_ng': hp.quniform('num_ng', 1, 10, 1),
     'lr': hp.loguniform('lr', np.log(1e-4), np.log(0.01)),
-    'beta': hp.loguniform('beta', np.log(1e-5), np.log(0.1)),
-    'lamda': hp.loguniform('lamda', np.log(1e-5), np.log(0.1))
+    'beta': hp.loguniform('beta', np.log(1e-4), np.log(0.01)),
+    'lamda': hp.loguniform('lamda', np.log(1e-4), np.log(0.01))
 }
 
 metric_idx = {

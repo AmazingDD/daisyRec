@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 14:24:44
+@LastEditTime : 2019-12-30 22:37:57
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -146,7 +146,7 @@ space = {
     'num_ng': hp.quniform('num_ng', 1, 10, 1),
     'factors': hp.quniform('factors', 1, 100, 1),
     'lr': hp.loguniform('lr', np.log(1e-4), np.log(1e-2)),
-    'lamda': hp.loguniform('lamda', np.log(1e-5), np.log(1e-1))
+    'lamda': hp.loguniform('lamda', np.log(1e-4), np.log(1e-2))
 }
 
 metric_idx = {

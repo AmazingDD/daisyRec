@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 16:14:00
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-18 17:58:11
+@LastEditTime : 2019-12-30 22:54:21
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -51,6 +51,11 @@ class PointSLiM(nn.Module):
 
     def forward(self, user, item):
         tensor_A = torch.from_numpy(self.A).to(torch.float32)
+        if torch.cuda.is_available():
+            tensor_A = tensor_A.cuda()
+        else:
+            tensor_A = tensor_A.cpu()
+
         ru = tensor_A[user]
         wi = self.W(item)
 
