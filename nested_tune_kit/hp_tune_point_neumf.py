@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-29 14:49:51
+@LastEditTime : 2019-12-30 12:21:41
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -27,6 +27,11 @@ def sigmoid(x):
     return 1/(1 + np.exp(-x))
 
 parser = argparse.ArgumentParser(description='Point-Wise MF recommender test')
+# tune settings
+parser.add_argument('--sc_met', 
+                    type=str, 
+                    default='ndcg', 
+                    help='use which metric to define hyperopt score')
 # common settings
 parser.add_argument('--dataset', 
                     type=str, 
@@ -38,11 +43,11 @@ parser.add_argument('--prepro',
                     help='dataset preprocess op.: origin/5core/10core')
 parser.add_argument('--topk', 
                     type=int, 
-                    default=50, 
+                    default=10, 
                     help='top number of recommend list')
 parser.add_argument('--test_method', 
                     type=str, 
-                    default='fo', 
+                    default='tfo', 
                     help='method for split test,options: loo/fo/tfo/tloo')
 parser.add_argument('--test_size', 
                     type=float, 
@@ -50,7 +55,7 @@ parser.add_argument('--test_size',
                     help='split ratio for test set')
 parser.add_argument('--val_method', 
                     type=str, 
-                    default='loo', 
+                    default='tfo', 
                     help='validation method, options: cv, tfo, loo, tloo')
 parser.add_argument('--fold_num', 
                     type=int, 
@@ -115,8 +120,8 @@ if not os.path.exists(tune_log_path):
     os.makedirs(tune_log_path)
 
 f = open(tune_log_path + f'{args.loss_type}-neumf_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
-            'w', 
-            encoding='utf-8')
+         'w', 
+         encoding='utf-8')
 f.write('Pre,Rec,HR,MAP,MRR,NDCG,num_ng,factors,layers,dropout,lr,batch_size,lamda' + '\n')
 
 '''Validation Process for Parameter Tuning'''
@@ -149,17 +154,26 @@ item_pool = set(range(item_num))
 candidates_num = args.cand_num
 
 space = {
-    'num_ng': hp.choice('num_ng', [1,2,3,4,5,6,7,8,9,10]),
-    'factor_num': hp.choice('factor_num', [10, 20, 50, 100]),
-    'num_layers': hp.choice('num_layers', [1,2,3]),
-    'dropout': hp.choice('dropout', [0, 0.25, 0.5, 0.75]),
-    'lr': hp.choice('lr', [1e-5, 1e-4, 1e-3, 1e-2]),
-    'batch_size': hp.choice('batch_size', [64, 128, 256, 512, 1024]),
-    'lamda': hp.choice('lamda', [1e-5, 1e-4, 1e-3, 1e-2, 1e-1])
+    'num_ng': hp.quniform('num_ng', 1, 10, 1),
+    'factor_num': hp.quniform('factor_num', 1, 100, 1),
+    'num_layers': hp.quniform('num_layers', 1, 3, 1),
+    'dropout': hp.uniform('dropout', 0, 1),
+    'lr': hp.loguniform('lr', np.log(1e-5), np.log(1e-1)),
+    'batch_size': hp.choice('batch_size', [64, 128, 256, 512]),
+    'lamda': hp.loguniform('lamda', np.log(1e-5), np.log(1e-1))
 }
 
-def opt_func(params):
-    num_ng, factor_num, num_layers = params['num_ng'], params['factor_num'], params['num_layers']
+metric_idx = {
+    'precision': 0,
+    'recall': 1,
+    'hr': 2,
+    'map': 3,
+    'mrr': 4, 
+    'ndcg': 5,
+}
+
+def opt_func(params, mi=args.sc_met, topk=args.topk):
+    num_ng, factor_num, num_layers = int(params['num_ng']), int(params['factor_num']), int(params['num_layers'])
     dropout, lr, batch_size, lamda = params['dropout'], params['lr'], params['batch_size'], params['lamda']
     print(f'Parameter Settings: num_ng:{num_ng},factors:{factor_num},layers:{num_layers},dropout:{dropout},lr:{lr},batch_size:{batch_size},lamda:{lamda}')
 
@@ -237,7 +251,7 @@ def opt_func(params):
                     item_i = item_i.cpu()
 
                 prediction = model.predict(user_u, item_i)
-                _, indices = torch.topk(prediction, args.topk)
+                _, indices = torch.topk(prediction, topk)
                 top_n = torch.take(torch.tensor(val_ucands[u]), indices).cpu().numpy()
 
             preds[u] = top_n
@@ -247,12 +261,12 @@ def opt_func(params):
             preds[u] = [1 if i in val_ur[u] else 0 for i in preds[u]]
 
         # calculate metrics for validation set
-        pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
-        rec_k = recall_at_k(preds, val_ur, args.topk)
+        pre_k = np.mean([precision_at_k(r, topk) for r in preds.values()])
+        rec_k = recall_at_k(preds, val_ur, topk)
         hr_k = hr_at_k(preds, val_ur)
         map_k = map_at_k(preds.values())
-        mrr_k = mrr_at_k(preds, args.topk)
-        ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
+        mrr_k = mrr_at_k(preds, topk)
+        ndcg_k = np.mean([ndcg_at_k(r, topk) for r in preds.values()])
 
         tmp_metric = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
         fnl_metric.append(tmp_metric)
@@ -260,14 +274,14 @@ def opt_func(params):
     # get final validation metrics result by average operation
     fnl_metric = np.array(fnl_metric).mean(axis=0)
     print('='*20, 'Metrics for All Validation', '='*20)
-    print(f'Precision@{args.topk}: {fnl_metric[0]:.4f}')
-    print(f'Recall@{args.topk}: {fnl_metric[1]:.4f}')
-    print(f'HR@{args.topk}: {fnl_metric[2]:.4f}')
-    print(f'MAP@{args.topk}: {fnl_metric[3]:.4f}')
-    print(f'MRR@{args.topk}: {fnl_metric[4]:.4f}')
-    print(f'NDCG@{args.topk}: {fnl_metric[5]:.4f}')
+    print(f'Precision@{topk}: {fnl_metric[0]:.4f}')
+    print(f'Recall@{topk}: {fnl_metric[1]:.4f}')
+    print(f'HR@{topk}: {fnl_metric[2]:.4f}')
+    print(f'MAP@{topk}: {fnl_metric[3]:.4f}')
+    print(f'MRR@{topk}: {fnl_metric[4]:.4f}')
+    print(f'NDCG@{topk}: {fnl_metric[5]:.4f}')
 
-    score = np.mean(sigmoid(fnl_metric))
+    score = fnl_metric[metric_idx[mi]]
 
     # record all tuning result and settings
     fnl_metric = [f'{mt:.4f}' for mt in fnl_metric]
