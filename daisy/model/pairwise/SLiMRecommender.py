@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 16:14:00
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 22:54:03
+@LastEditTime : 2019-12-31 11:33:54
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -118,7 +118,11 @@ class PairSLiM(nn.Module):
 
             # reset W element >= 0 and diag(W) = 0
             self.W.weight.data.clamp_(0)
-            self.W.weight.data.copy_(self.W.weight.data * (1 - torch.eye(self.item_num,self.item_num))) 
+            if torch.cuda.is_available():
+                tmp_eye = torch.eye(self.item_num, self.item_num).cuda()
+            else:
+                tmp_eye = torch.eye(self.item_num, self.item_num).cpu()
+            self.W.weight.data.copy_(self.W.weight.data * (1 - tmp_eye))
 
             delta_loss = float(current_loss - last_loss)
             if (abs(delta_loss) < 1e-5) and self.early_stop:
