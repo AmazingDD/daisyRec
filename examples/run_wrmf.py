@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 14:52:58
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-25 21:11:46
+@LastEditTime : 2019-12-31 14:53:47
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -125,22 +125,6 @@ if __name__ == '__main__':
     # convert rank list to binary-interaction
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
-    
-    # calculate metrics for test set
-    pre_k = np.mean([precision_at_k(r, args.topk) for r in preds.values()])
-    rec_k = recall_at_k(preds, test_ur, args.topk)
-    hr_k = hr_at_k(preds, test_ur)
-    map_k = map_at_k(preds.values())
-    mrr_k = mrr_at_k(preds, args.topk)
-    ndcg_k = np.mean([ndcg_at_k(r, args.topk) for r in preds.values()])
-
-    print(f'Precision@{args.topk}: {pre_k:.4f}')
-    print(f'Recall@{args.topk}: {rec_k:.4f}')
-    print(f'HR@{args.topk}: {hr_k:.4f}')
-    print(f'MAP@{args.topk}: {map_k:.4f}')
-    print(f'MRR@{args.topk}: {mrr_k:.4f}')
-    print(f'NDCG@{args.topk}: {ndcg_k:.4f}')
-    print('='* 20, ' Done ', '='*20)
 
     # process topN list and store result for reporting KPI
     print('Save metric@k result to res folder...')
@@ -151,6 +135,8 @@ if __name__ == '__main__':
     res = pd.DataFrame({'metric@K': ['pre', 'rec', 'hr', 'map', 'mrr', 'ndcg']})
 
     for k in [1, 5, 10, 20, 30, 50]:
+        if k > args.topk:
+            continue
         tmp_preds = preds.copy()        
         tmp_preds = {key: rank_list[:k] for key, rank_list in tmp_preds.items()}
 
@@ -161,6 +147,15 @@ if __name__ == '__main__':
         mrr_k = mrr_at_k(tmp_preds, k)
         ndcg_k = np.mean([ndcg_at_k(r, k) for r in tmp_preds.values()])
 
+        if k == 10:
+            print(f'Precision@{k}: {pre_k:.4f}')
+            print(f'Recall@{k}: {rec_k:.4f}')
+            print(f'HR@{k}: {hr_k:.4f}')
+            print(f'MAP@{k}: {map_k:.4f}')
+            print(f'MRR@{k}: {mrr_k:.4f}')
+            print(f'NDCG@{k}: {ndcg_k:.4f}')
+
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
     res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_wrmf.csv', index=False)
+    print('='* 20, ' Done ', '='*20)
