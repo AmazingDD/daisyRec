@@ -128,7 +128,7 @@ class PointSLiM(nn.Module):
                 last_loss = current_loss
 
         # get prediction rating matrix
-        self.A_tilde = self.A.dot(self.W.weight.data.numpy())
+        self.A_tilde = self.A.dot(self.W.weight.data.cpu().numpy())
 
     def predict(self, u, i):
         return self.A_tilde[u, i]

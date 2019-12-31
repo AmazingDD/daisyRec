@@ -206,6 +206,5 @@ def opt_func(params, mi=args.sc_met, topk=args.topk):
 
 if __name__ == '__main__':
     best = fmin(opt_func, space, algo=tpe.suggest, max_evals=30)
-    print(best)
 
     f.close()

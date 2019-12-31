@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 22:37:57
+@LastEditTime : 2019-12-31 12:13:17
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -260,6 +260,5 @@ def opt_func(params, mi=args.sc_met, topk=args.topk):
 
 if __name__ == '__main__':
     best = fmin(opt_func, space, algo=tpe.suggest, max_evals=30)
-    print(best)
 
     f.close()

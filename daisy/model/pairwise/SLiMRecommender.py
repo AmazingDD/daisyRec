@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 16:14:00
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-31 11:33:54
+@LastEditTime : 2019-12-31 12:12:39
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -132,7 +132,7 @@ class PairSLiM(nn.Module):
                 last_loss = current_loss
 
         # get prediction rating matrix
-        self.A_tilde = self.A.dot(self.W.weight.data.numpy())
+        self.A_tilde = self.A.dot(self.W.weight.data.cpu().numpy())
 
     def predict(self, u, i):
         return self.A_tilde[u, i]
