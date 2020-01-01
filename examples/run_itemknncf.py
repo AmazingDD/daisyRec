@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-03 12:30:14
+@Date: 2020-01-01 17:53:27
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-01 17:46:39
+@LastEditTime : 2020-01-01 18:43:43
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -15,7 +15,7 @@ import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 
-from daisy.model.KNNRecommender import KNNWithMeans
+from daisy.model.KNNCFRecommender import ItemKNNCF
 from daisy.utils.loader import load_rate, split_test, get_ur
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
@@ -91,9 +91,10 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # build recommender model
-    model = KNNWithMeans(user_num, item_num, 
-                         args.maxk, args.mink, 
-                         sim_options={'name': args.sim_method, 'user_based': False})
+    model = ItemKNNCF(user_num, item_num, 
+                      maxk=args.maxk, 
+                      min_k=args.mink, 
+                      similarity=args.sim_method)
     model.fit(train_set)
 
     print('Start Calculating Metrics......')
@@ -149,5 +150,5 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_itemknn.csv', index=False)
+    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_itemknncf.csv', index=False)
     print('='* 20, ' Done ', '='*20)

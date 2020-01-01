@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-02 13:22:54
-@LastEditors: Yudi
-@LastEditTime: 2019-12-14 18:34:42
+@LastEditors  : Yudi
+@LastEditTime : 2020-01-01 17:31:23
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -57,6 +57,11 @@ extensions = [
     Extension(
         name='daisy.model.matrix_factorization', 
         sources=['daisy/model/matrix_factorization' + ext], 
+        include_dirs=[np.get_include()]
+    ),
+    Extension(
+        name='daisy.model.simlib_cython', 
+        sources=['daisy/model/simlib_cython' + ext], 
         include_dirs=[np.get_include()]
     ),
 ]

@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-19 09:55:31
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-19 09:58:30
+@LastEditTime : 2020-01-01 17:55:04
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -24,6 +24,7 @@ from .MostPopRecommender import MostPop
 from .PureSVDRecommender import PureSVD
 from .SLiMRecommender import SLIM
 from .WRMFRecommender import WRMF
+from .KNNCFRecommender import ItemKNNCF
 
 from .matrix_factorization import SVDpp
 from .matrix_factorization import SVD
