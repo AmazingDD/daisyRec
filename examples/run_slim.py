@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 15:48:00
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-31 14:52:05
+@LastEditTime : 2020-01-01 13:37:08
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -63,11 +63,11 @@ if __name__ == '__main__':
                         type=float, 
                         default=0.0001, 
                         help='learning threshold')
-    parser.add_argument('--elastic', 
+    parser.add_argument('--alpha', 
                         type=float, 
                         default=0.02, 
                         help='elastic net parameter')
-    parser.add_argument('--alpha', 
+    parser.add_argument('--elastic', 
                         type=float, 
                         default=0.5, 
                         help='ratio if lasso result, 0 for ridge-regression, 1 for lasso-regression')
@@ -95,8 +95,9 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # build recommender model
-    model = SLIM(user_num, item_num, alpha=args.alpha, lam_bda=args.elastic, 
-                 max_iter=args.epochs, tol=args.tol)
+    # model = SLIM(user_num, item_num, alpha=args.alpha, lam_bda=args.elastic, 
+    #              max_iter=args.epochs, tol=args.tol)
+    model = SLIM(user_num, item_num, l1_ratio=args.elastic, alpha=args.alpha)
     model.fit(train_set)
 
     print('Start Calculating Metrics......')

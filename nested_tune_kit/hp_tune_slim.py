@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 15:48:00
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-30 22:41:27
+@LastEditTime : 2020-01-01 13:35:37
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -147,8 +147,9 @@ def opt_func(params, mi=args.sc_met, topk=args.topk):
         val_ur = get_ur(validation)
 
         # build recommender model
-        model = SLIM(user_num, item_num, alpha=alpha, lam_bda=elastic, 
-                    max_iter=args.epochs, tol=args.tol)
+        # model = SLIM(user_num, item_num, alpha=alpha, lam_bda=elastic, 
+        #             max_iter=args.epochs, tol=args.tol)
+        model = SLIM(user_num, item_num, l1_ratio=elastic, alpha=alpha)
         model.fit(train)
 
         # build candidates set
