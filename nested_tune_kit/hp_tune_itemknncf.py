@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-02 11:48:35
+@LastEditTime : 2020-01-02 13:59:40
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -15,6 +15,7 @@ import pandas as pd
 from tqdm import tqdm
 from collections import defaultdict
 from hyperopt import hp, tpe, fmin
+from concurrent.futures import ThreadPoolExecutor
 
 from daisy.model.KNNCFRecommender import ItemKNNCF
 from daisy.utils.loader import load_rate, split_test, split_validation, get_ur
@@ -161,12 +162,27 @@ def opt_func(params, mi=args.sc_met, topk=args.topk):
             val_ucands[k] = list(v | set(samples))
 
         # get predict result
+        # preds = {}
+        # for u in tqdm(val_ucands.keys()):
+        #     pred_rates = [model.predict(u, i) for i in val_ucands[u]]
+        #     rec_idx = np.argsort(pred_rates)[::-1][:topk]
+        #     top_n = np.array(val_ucands[u])[rec_idx]
+        #     preds[u] = top_n
+        cores = 32
+        pool = ThreadPoolExecutor(cores)
+
         preds = {}
-        for u in tqdm(val_ucands.keys()):
+        ct = 0
+        def func(u):
             pred_rates = [model.predict(u, i) for i in val_ucands[u]]
             rec_idx = np.argsort(pred_rates)[::-1][:topk]
             top_n = np.array(val_ucands[u])[rec_idx]
             preds[u] = top_n
+            return 1
+
+        for u in tqdm(val_ucands.keys()):
+            c_r = pool.submit(func, u)
+            ct += c_r.result()
 
         # convert rank list to binary-interaction
         for u in preds.keys():
