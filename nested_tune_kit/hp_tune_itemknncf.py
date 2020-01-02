@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-03 12:30:14
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-01 19:22:08
+@LastEditTime : 2020-01-02 11:48:35
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -146,7 +146,9 @@ def opt_func(params, mi=args.sc_met, topk=args.topk):
         model = ItemKNNCF(user_num, item_num, 
                           maxk=args.maxk, 
                           min_k=args.mink, 
-                          similarity=args.sim_method)
+                          similarity=args.sim_method,
+                          tune_or_not=True,
+                          serial=f'{args.dataset}-{args.prepro}-{args.val_method}-{fold}-{sim_method}')
         model.fit(train)
 
         # build candidates set

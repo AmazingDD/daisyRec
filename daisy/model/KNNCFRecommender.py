@@ -2,11 +2,12 @@
 @Author: Yu Di
 @Date: 2020-01-01 15:35:53
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-01 19:20:24
+@LastEditTime : 2020-01-02 11:52:24
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
 '''
+import os
 import heapq
 import numpy as np
 import scipy.sparse as sp
@@ -91,7 +92,8 @@ class Compute_Similarity:
 class ItemKNNCF(object):
     """ ItemKNN recommender"""
     def __init__(self, user_num, item_num, maxk=40, shrink=100, 
-                 similarity='cosine', min_k=1, normalize=True):
+                 similarity='cosine', min_k=1, normalize=True,
+                 tune_or_not=False, serial='ml-100k-origin-loo-0-cosine'):
         self.user_num = user_num
         self.item_num = item_num
 
@@ -102,6 +104,12 @@ class ItemKNNCF(object):
         self.similarity = similarity
 
         self.RECOMMENDER_NAME = "ItemKNNCFRecommender"
+
+        self.tune_or_not = tune_or_not
+        self.serial = serial
+
+        if not os.path.exists('./tmp/sim_matrix/'):
+            os.makedirs('./tmp/sim_matrix/')
 
     def fit(self, train_set):
         self.yr = defaultdict(list)
@@ -116,13 +124,30 @@ class ItemKNNCF(object):
             print("{}: Detected {} ({:.2f} %) cold items.".format(
                 self.RECOMMENDER_NAME, cold_items_mask.sum(), cold_items_mask.sum()/len(cold_items_mask)*100))
 
-        similarity = Compute_Similarity(train, 
-                                        shrink=self.shrink, 
-                                        topK=100,
-                                        normalize=self.normalize, 
-                                        similarity = self.similarity)
-        
-        self.W_sparse = similarity.compute_similarity()
+        if self.tune_or_not:
+            # if you want to tune
+            sim_file_path = f'./tmp/sim_matrix/item_sim_mat_{self.serial}.npz'
+            if os.path.exists(sim_file_path):
+                self.W_sparse = sp.load_npz(sim_file_path)
+                print(f'Load similarity matrix, serial: {self.serial}')
+            else:
+                similarity = Compute_Similarity(train, 
+                                                shrink=self.shrink, 
+                                                topK=100,
+                                                normalize=self.normalize, 
+                                                similarity = self.similarity)
+            
+                self.W_sparse = similarity.compute_similarity()
+                sp.save_npz(sim_file_path, self.W_sparse)
+        else:
+            similarity = Compute_Similarity(train, 
+                                            shrink=self.shrink, 
+                                            topK=100,
+                                            normalize=self.normalize, 
+                                            similarity = self.similarity)
+            
+            self.W_sparse = similarity.compute_similarity()
+            
         self.W_sparse = self.W_sparse.tolil()
 
     def predict(self, u, i):
