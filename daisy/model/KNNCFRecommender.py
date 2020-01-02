@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2020-01-01 15:35:53
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-02 11:52:24
+@LastEditTime : 2020-01-02 17:03:16
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -124,57 +124,22 @@ class ItemKNNCF(object):
             print("{}: Detected {} ({:.2f} %) cold items.".format(
                 self.RECOMMENDER_NAME, cold_items_mask.sum(), cold_items_mask.sum()/len(cold_items_mask)*100))
 
-        if self.tune_or_not:
-            # if you want to tune
-            sim_file_path = f'./tmp/sim_matrix/item_sim_mat_{self.serial}.npz'
-            if os.path.exists(sim_file_path):
-                self.W_sparse = sp.load_npz(sim_file_path)
-                print(f'Load similarity matrix, serial: {self.serial}')
-            else:
-                similarity = Compute_Similarity(train, 
-                                                shrink=self.shrink, 
-                                                topK=100,
-                                                normalize=self.normalize, 
-                                                similarity = self.similarity)
-            
-                self.W_sparse = similarity.compute_similarity()
-                sp.save_npz(sim_file_path, self.W_sparse)
-        else:
-            similarity = Compute_Similarity(train, 
-                                            shrink=self.shrink, 
-                                            topK=100,
-                                            normalize=self.normalize, 
-                                            similarity = self.similarity)
-            
-            self.W_sparse = similarity.compute_similarity()
-            
-        self.W_sparse = self.W_sparse.tolil()
+        similarity = Compute_Similarity(train, 
+                                        shrink=self.shrink, 
+                                        topK=self.k,
+                                        normalize=self.normalize, 
+                                        similarity = self.similarity)
+        
+        W_sparse = similarity.compute_similarity()
+        W_sparse = W_sparse.tocsc()
+
+        self.pred_mat = train.dot(W_sparse).tolil()
 
     def predict(self, u, i):
         if u >= self.user_num or i >= self.item_num:
             raise ValueError('User and/or item is unkown.')
-        
-        neighbors = [(j, self.W_sparse[i, j], r) for (j, r) in self.yr[u]]
-        k_neighbors = heapq.nlargest(self.k, neighbors, key=lambda t: t[1])
 
-        est = 0.
-
-        sum_sim = sum_ratings = actual_k = 0
-        for (nb, sim, r) in k_neighbors:
-            if sim > 0:
-                sum_sim += sim
-                sum_ratings += sim * r
-                actual_k += 1
-
-        if actual_k < self.min_k:
-            sum_ratings = 0
-
-        try:
-            est += sum_ratings / sum_sim
-        except ZeroDivisionError:
-            pass  # return mean
-
-        return est
+        return self.pred_mat[u, i]
 
     def _convert_df(self, user_num, item_num, df):
         '''Process Data to make WRMF available'''
