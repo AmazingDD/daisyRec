@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-31 12:13:30
+@LastEditTime : 2020-01-04 14:22:04
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -189,7 +189,7 @@ def opt_func(params, mi=args.sc_met, topk=args.topk):
         val_ur = get_ur(validation)
 
         # start negative sampling
-        train_sampled = negative_sampling(train, num_ng)
+        train_sampled = negative_sampling(user_num, item_num, train, num_ng)
         # format training data
         train_dataset = PointMFData(train_sampled)
         train_loader = data.DataLoader(train_dataset, batch_size=batch_size, 

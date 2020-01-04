@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-31 14:50:06
+@LastEditTime : 2020-01-04 14:25:05
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # start negative sampling
-    train_sampled = negative_sampling(train_set, args.num_ng)
+    train_sampled = negative_sampling(user_num, item_num, train_set, args.num_ng)
     # format training data
     train_dataset = PointMFData(train_sampled)
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 

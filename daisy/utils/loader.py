@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-28 18:57:28
+@LastEditTime : 2020-01-04 14:22:45
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -197,28 +197,28 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
     else:
         raise ValueError('Invalid dataset preprocess type, origin/5core/10core expected')
 
-def negative_sampling(ratings, num_ng=4, neg_label_val=0.):
-    prime_df = ratings.copy()
-    item_pool = set(ratings.item.unique())
+def negative_sampling(user_num, item_num, df, num_ng=4, neg_label_val=0.):
+    pair_pos = sp.dok_matrix((user_num, item_num), dtype=np.float32)
+    for _, row in df.iterrows():
+        pair_pos[int(row['user']), int(row['item'])] = 1.0
 
-    interact_status = ratings.groupby('user')['item'].apply(set).reset_index()
-    interact_status.rename(columns={'item': 'inter_items'}, inplace=True)
-    interact_status['neg_items'] = interact_status['inter_items'].apply(lambda x: item_pool - x)
-    interact_status['neg_samples'] = interact_status['neg_items'].apply(lambda x: random.sample(x, num_ng))
-    
     neg_df = []
-    for _, row in interact_status[['user', 'neg_samples']].iterrows():
+    for _, row in df.iterrows():
         u = int(row['user'])
-        for i in row['neg_samples']:
-            neg_df.append([u, int(i), neg_label_val, 1])
+        i = int(row['item'])
+        r = row['rating']
+        neg_df.append([u, i, r, 1])
+        for _ in range(num_ng):
+            j = np.random.randint(item_num)
+            while (u, j) in pair_pos:
+                j = np.random.randint(item_num)
+            j = int(j)
+            neg_df.append([u, j, neg_label_val, 1])
+
     neg_df = pd.DataFrame(neg_df, columns=['user', 'item', 'rating', 'timestamp'])
+    print('Finish negative sampling......')
 
-    df_sampled = pd.concat([prime_df, neg_df], ignore_index=True)
-
-    del interact_status, prime_df, neg_df
-    gc.collect()
-
-    return df_sampled
+    return neg_df
 
 def split_test(df, test_method='fo', test_size=.2):
     """

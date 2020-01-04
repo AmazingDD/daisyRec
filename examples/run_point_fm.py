@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 15:35:52
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-31 14:48:28
+@LastEditTime : 2020-01-04 14:23:43
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # start negative sampling
-    train_sampled = negative_sampling(train_set, args.num_ng, 0.)
+    train_sampled = negative_sampling(user_num, item_num, train_set, args.num_ng, 0.)
 
     # format training data
     train_dataset = PointFMData(train_sampled, feat_idx_dict, cat_cols, num_cols)
