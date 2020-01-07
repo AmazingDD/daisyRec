@@ -2,10 +2,10 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-31 14:43:33
+@LastEditTime : 2020-01-07 21:09:28
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
-@Description: 
+@Description: item2vec will not run in this experiment, but its implementation is special so I preserve it
 '''
 import os
 import random
