@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2020-01-07 20:26:56
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-07 20:36:49
+@LastEditTime : 2020-01-07 23:10:22
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: only test for ml-1m 5core tfo validation
@@ -19,7 +19,7 @@ from hyperopt import hp, tpe, fmin
 import torch
 import torch.utils.data as data
 
-from daisy.model.pairwise.BiasMFRecommender import BiasMF
+from daisy.model.pairwise.BiasMFRecommender import PairFMV2
 from daisy.utils.loader import load_rate, split_test, split_validation, get_ur, PairMFData
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
@@ -142,8 +142,8 @@ for fold in range(fn):
                                 shuffle=True, num_workers=4)
 
     # build recommender model
-    model = BiasMF(user_num, item_num, args.factors, args.lamda, 
-                   args.epochs, args.lr, args.gpu, args.loss_type)
+    model = PairFMV2(user_num, item_num, args.factors, args.lamda, 
+                     args.epochs, args.lr, args.gpu, args.loss_type)
     model.fit(train_loader)
 
     # build candidates set

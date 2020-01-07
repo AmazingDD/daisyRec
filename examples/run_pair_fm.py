@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-07 00:59:27
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-07 21:50:37
+@LastEditTime : 2020-01-07 22:51:42
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -18,9 +18,9 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pairwise.FMRecommender import PairFM
-from daisy.utils.loader import load_rate, split_test, get_ur
-from daisy.utils.loader import build_feat_idx_dict, PairFMData
+# from daisy.model.pairwise.FMRecommender import PairFM
+from daisy.model.pairwise.BiasMFRecommender import PairFMV2
+from daisy.utils.loader import load_rate, split_test, get_ur, PairMFData
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 
@@ -29,15 +29,15 @@ if __name__ == '__main__':
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
-                        default='ml-100k', 
+                        default='ml-1m', 
                         help='select dataset')
     parser.add_argument('--prepro', 
                         type=str, 
-                        default='origin', 
+                        default='5core', 
                         help='dataset preprocess op.: origin/5core/10core')
     parser.add_argument('--topk', 
                         type=int, 
-                        default=50, 
+                        default=10, 
                         help='top number of recommend list')
     parser.add_argument('--test_method', 
                         type=str, 
@@ -66,34 +66,32 @@ if __name__ == '__main__':
                         help='loss function type')
     parser.add_argument('--num_ng', 
                         type=int, 
-                        default=4, 
-                        help='negative sampling number')
-    parser.add_argument('--batch_norm', 
-                        default=True, 
-                        help='use batch_norm or not')
-    parser.add_argument('--dropout',
-                        default='[0., 0.2]', 
-                        help='dropout rate for FM and MLP')
-    parser.add_argument('--hidden_factor', 
+                        default=5, 
+                        help='sample negative items for training')
+    parser.add_argument('--factors', 
                         type=int, 
-                        default=64, 
+                        default=84, 
                         help='predictive factors numbers in the model')
-    parser.add_argument('--batch_size', 
-                        type=int, 
-                        default=2048, 
-                        help='batch size for training')
     parser.add_argument('--epochs', 
                         type=int, 
                         default=50, 
                         help='training epochs')
     parser.add_argument('--lr', 
                         type=float, 
-                        default=0.001,  # can be to large
+                        default=0.000101715132312389, 
                         help='learning rate')
+    parser.add_argument('--wd', 
+                        type=float, 
+                        default=0., 
+                        help='model regularization rate')
     parser.add_argument('--lamda', 
                         type=float, 
-                        default=0.001, 
-                        help='regularizer for bilinear layers')
+                        default=0.00617422578452824, 
+                        help='regularization weight')
+    parser.add_argument('--batch_size', 
+                        type=int, 
+                        default=512, 
+                        help='batch size for training')
     parser.add_argument('--gpu', 
                         type=str, 
                         default='0', 
@@ -101,24 +99,20 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     '''Test Process for Metrics Exporting'''
-    # state column name for certain data type
-    cat_cols=['user', 'item']
-    num_cols=[]
-
     # df, user_num, item_num = load_rate(args.dataset, args.prepro)
     # train_set, test_set = split_test(df, args.test_method, args.test_size)
 
     # temporary used for tuning test result
     train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
     test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    if args.dataset in ['yelp']:
+        train_set['timestamp'] = pd.to_datetime(train_set['timestamp'])
+        test_set['timestamp'] = pd.to_datetime(test_set['timestamp'])
     train_set['rating'] = 1.0
     test_set['rating'] = 1.0
     df = pd.concat([train_set, test_set], ignore_index=True)
     user_num = df['user'].nunique()
     item_num = df['item'].nunique()
-
-    # convert features to mapping dictionary
-    feat_idx_dict, num_features = build_feat_idx_dict(df, cat_cols, num_cols)
 
     # get ground truth
     test_ur = get_ur(test_set)
@@ -131,14 +125,13 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # format training data
-    train_dataset = PairFMData(train_set, feat_idx_dict, item_num, args.num_ng, True)
-    print('Finish construct FM torch-dataset......')
-    train_loader = data.DataLoader(train_dataset, drop_last=True, batch_size=args.batch_size, 
+    train_dataset = PairMFData(train_set, user_num, item_num, args.num_ng)
+    train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                    shuffle=True, num_workers=4)
 
     # build recommender model
-    model = PairFM(num_features, args.hidden_factor, args.batch_norm, eval(args.dropout), 
-                   args.epochs, args.lr, args.lamda, args.gpu, args.loss_type)
+    model = PairFMV2(user_num, item_num, args.factors, args.lamda, 
+                     args.epochs, args.lr, args.gpu, args.loss_type)
     model.fit(train_loader)
     
     print('Start Calculating Metrics......')
@@ -162,21 +155,21 @@ if __name__ == '__main__':
                             'item': test_ucands[u], 
                             'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
                             })
-        tmp_dataset = PairFMData(tmp, feat_idx_dict, item_num, 0, False)
+        tmp_dataset = PairMFData(tmp, user_num, item_num, 0, False)
         tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
                                      shuffle=False, num_workers=0)
 
         # get top-N list with torch method 
-        for feat_i, feat_val_i, feat_j, feat_val_j, _ in tmp_loader:
+        for items in tmp_loader:
+            user_u, item_i = items[0], items[1]
             if torch.cuda.is_available():
-                feat_i = feat_i.cuda()
-                feat_val_i = feat_val_i.cuda()
+                user_u = user_u.cuda()
+                item_i = item_i.cuda()
             else:
-                feat_i = feat_i.cpu()
-                feat_val_i = feat_val_i.cpu()
+                user_u = user_u.cpu()
+                item_i = item_i.cpu()
 
-            prediction = model.predict(feat_i, feat_val_i)
-            prediction = prediction.clamp(min=-1.0, max=1.0)
+            prediction = model.predict(user_u, item_i)
             _, indices = torch.topk(prediction, args.topk)
             top_n = torch.take(torch.tensor(test_ucands[u]), indices).cpu().numpy()
 

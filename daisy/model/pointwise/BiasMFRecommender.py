@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2020-01-07 19:59:47
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-07 21:27:20
+@LastEditTime : 2020-01-07 22:37:39
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: BiasMF, here it is a downgrade of FM if only user and item ID available
@@ -17,7 +17,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
-class BiasMF(nn.Module):
+class PairFMV2(nn.Module):
     def __init__(self, user_num, item_num, factor_num=84, lamda=0.006174225785,
                  epochs=20, lr=0.0001017151323, gpuid='0', loss_type='SL', early_stop=True):
         '''
@@ -25,7 +25,7 @@ class BiasMF(nn.Module):
 		item_num: number of items;
 		factor_num: number of predictive factors.
         '''
-        super(BiasMF, self).__init__()
+        super(PairFMV2, self).__init__()
 
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
         cudnn.benchmark = True
