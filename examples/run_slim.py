@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 15:48:00
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-01 13:37:08
+@LastEditTime : 2020-01-07 21:53:49
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -36,7 +36,7 @@ if __name__ == '__main__':
                         help='top number of recommend list')
     parser.add_argument('--test_method', 
                         type=str, 
-                        default='fo', 
+                        default='tfo', 
                         help='method for split test,options: loo/fo/tfo/tloo')
     parser.add_argument('--test_size', 
                         type=float, 
@@ -44,7 +44,7 @@ if __name__ == '__main__':
                         help='split ratio for test set')
     parser.add_argument('--val_method', 
                         type=str, 
-                        default='loo', 
+                        default='tfo', 
                         help='validation method, options: cv, tfo, loo, tloo')
     parser.add_argument('--fold_num', 
                         type=int, 
@@ -55,14 +55,6 @@ if __name__ == '__main__':
                         default=1000, 
                         help='No. of candidates item for predict')
     # algo settings
-    parser.add_argument('--epochs', 
-                        type=int, 
-                        default=1000, 
-                        help='No. of learning iteration')
-    parser.add_argument('--tol', 
-                        type=float, 
-                        default=0.0001, 
-                        help='learning threshold')
     parser.add_argument('--alpha', 
                         type=float, 
                         default=0.02, 

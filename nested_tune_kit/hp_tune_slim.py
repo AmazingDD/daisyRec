@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-10 15:48:00
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-01 13:35:37
+@LastEditTime : 2020-01-07 21:55:43
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -63,19 +63,11 @@ parser.add_argument('--cand_num',
                     default=1000, 
                     help='No. of candidates item for predict')
 # algo settings
-parser.add_argument('--epochs', 
-                    type=int, 
-                    default=1000, 
-                    help='No. of learning iteration')
-parser.add_argument('--tol', 
-                    type=float, 
-                    default=0.0001, 
-                    help='learning threshold')
-parser.add_argument('--elastic', 
+parser.add_argument('--alpha', 
                     type=float, 
                     default=0.02, 
                     help='elastic net parameter')
-parser.add_argument('--alpha', 
+parser.add_argument('--elastic', 
                     type=float, 
                     default=0.5, 
                     help='ratio if lasso result, 0 for ridge-regression, 1 for lasso-regression')

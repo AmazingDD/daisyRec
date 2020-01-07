@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 21:52:18
 @LastEditors  : Yudi
-@LastEditTime : 2019-12-31 14:42:13
+@LastEditTime : 2020-01-07 21:49:16
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
                         help='top number of recommend list')
     parser.add_argument('--test_method', 
                         type=str, 
-                        default='fo', 
+                        default='tfo', 
                         help='method for split test,options: loo/fo/tfo/tloo')
     parser.add_argument('--test_size', 
                         type=float, 
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                         help='split ratio for test set')
     parser.add_argument('--val_method', 
                         type=str, 
-                        default='cv', 
+                        default='tfo', 
                         help='validation method, options: cv, tfo, loo, tloo')
     parser.add_argument('--fold_num', 
                         type=int, 
