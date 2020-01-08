@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-07 23:05:55
+@LastEditTime : 2020-01-08 10:11:44
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -108,7 +108,7 @@ tune_log_path = './tune_log/'
 if not os.path.exists(tune_log_path):
     os.makedirs(tune_log_path)
 
-f = open(tune_log_path + f'{args.loss_type}-mf_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
+f = open(tune_log_path + f'{args.loss_type}-fm_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
          'w', 
          encoding='utf-8')
 f.write('Pre,Rec,HR,MAP,MRR,NDCG,num_ng,factors,lr,lamda' + '\n')
