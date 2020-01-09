@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-04 14:22:04
+@LastEditTime : 2020-01-09 18:13:34
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -154,7 +154,7 @@ item_pool = set(range(item_num))
 candidates_num = args.cand_num
 
 space = {
-    'num_ng': hp.quniform('num_ng', 1, 10, 1),
+    'num_ng': hp.quniform('num_ng', 1, 5, 1),
     'factor_num': hp.quniform('factor_num', 1, 100, 1),
     'num_layers': hp.quniform('num_layers', 1, 3, 1),
     'dropout': hp.uniform('dropout', 0, 1),
