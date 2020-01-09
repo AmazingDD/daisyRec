@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-09 18:13:34
+@LastEditTime : 2020-01-09 18:18:04
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -153,15 +153,26 @@ train_set_list, val_set_list, fn = split_validation(train_set,
 item_pool = set(range(item_num))
 candidates_num = args.cand_num
 
-space = {
-    'num_ng': hp.quniform('num_ng', 1, 5, 1),
-    'factor_num': hp.quniform('factor_num', 1, 100, 1),
-    'num_layers': hp.quniform('num_layers', 1, 3, 1),
-    'dropout': hp.uniform('dropout', 0, 1),
-    'lr': hp.loguniform('lr', np.log(1e-4), np.log(1e-2)),
-    'batch_size': hp.choice('batch_size', [64, 128, 256, 512]),
-    'lamda': hp.loguniform('lamda', np.log(1e-4), np.log(1e-2))
-}
+if args.dataset in ['yelp', 'amazon-electronic']:
+    space = {
+        'num_ng': hp.quniform('num_ng', 1, 5, 1),
+        'factor_num': hp.quniform('factor_num', 1, 100, 1),
+        'num_layers': hp.quniform('num_layers', 1, 3, 1),
+        'dropout': hp.uniform('dropout', 0, 1),
+        'lr': hp.loguniform('lr', np.log(1e-4), np.log(1e-2)),
+        'batch_size': hp.choice('batch_size', [256, 512, 1024]),
+        'lamda': hp.loguniform('lamda', np.log(1e-4), np.log(1e-2))
+    }
+else:
+    space = {
+        'num_ng': hp.quniform('num_ng', 1, 5, 1),
+        'factor_num': hp.quniform('factor_num', 1, 100, 1),
+        'num_layers': hp.quniform('num_layers', 1, 3, 1),
+        'dropout': hp.uniform('dropout', 0, 1),
+        'lr': hp.loguniform('lr', np.log(1e-4), np.log(1e-2)),
+        'batch_size': hp.choice('batch_size', [64, 128, 256, 512]),
+        'lamda': hp.loguniform('lamda', np.log(1e-4), np.log(1e-2))
+    }
 
 metric_idx = {
     'precision': 0,
