@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-11 16:27:46
+@LastEditTime : 2020-01-11 17:28:41
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: item2vec will not run in this experiment, but its implementation is special so I preserve it
@@ -191,5 +191,5 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_item2vec.csv', index=False)
+    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_item2vec_{args.sample_method}.csv', index=False)
     print('='* 20, ' Done ', '='*20)

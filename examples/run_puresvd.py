@@ -151,6 +151,6 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_puresvd.csv', 
+    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_puresvd_{args.sample_method}.csv', 
                index=False)
     print('='* 20, ' Done ', '='*20)

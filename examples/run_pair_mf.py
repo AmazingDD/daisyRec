@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-11 17:01:08
+@LastEditTime : 2020-01-11 17:29:34
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -210,6 +210,6 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pairmf_{args.loss_type}.csv', 
+    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pairmf_{args.loss_type}_{args.sample_method}.csv', 
                index=False)
     print('='* 20, ' Done ', '='*20)
