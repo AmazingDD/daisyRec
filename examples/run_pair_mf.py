@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-07 22:47:30
+@LastEditTime : 2020-01-11 17:01:08
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -57,6 +57,10 @@ if __name__ == '__main__':
                         type=int, 
                         default=1000, 
                         help='No. of candidates item for predict')
+    parser.add_argument('--sample_method', 
+                        type=str, 
+                        default='uniform', 
+                        help='negative sampling method, options: uniform, item-ascd, item-desc')
     # algo settings
     parser.add_argument('--loss_type', 
                         type=str, 
@@ -123,7 +127,7 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # format training data
-    train_dataset = PairMFData(train_set, user_num, item_num, args.num_ng)
+    train_dataset = PairMFData(train_set, user_num, item_num, args.num_ng, sample_method=args.sample_method)
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
                                    shuffle=True, num_workers=4)
     # build recommender model

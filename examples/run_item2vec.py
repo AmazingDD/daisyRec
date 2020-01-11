@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-04 21:25:49
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-07 22:55:39
+@LastEditTime : 2020-01-11 16:27:46
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: item2vec will not run in this experiment, but its implementation is special so I preserve it
@@ -69,6 +69,10 @@ if __name__ == '__main__':
                         type=int, 
                         default=1000, 
                         help='No. of candidates item for predict')
+    parser.add_argument('--sample_method', 
+                        type=str, 
+                        default='uniform', 
+                        help='negative sampling method, options: uniform, item-ascd, item-desc')
     # algo settings
     parser.add_argument('--unk', type=str, default='<UNK>', help='UNK token')
     parser.add_argument('--window', type=int, default=5, help="window size")

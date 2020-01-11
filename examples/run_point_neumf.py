@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-07 22:47:43
+@LastEditTime : 2020-01-11 17:15:26
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -24,7 +24,7 @@ from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, 
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Point-Wise MF recommender test')
+    parser = argparse.ArgumentParser(description='Point-Wise NeuMF recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -58,6 +58,10 @@ if __name__ == '__main__':
                         type=int, 
                         default=1000, 
                         help='No. of candidates item for predict')
+    parser.add_argument('--sample_method', 
+                        type=str, 
+                        default='uniform', 
+                        help='negative sampling method, options: uniform, item-ascd, item-desc')
     # algo settings
     parser.add_argument('--num_ng', 
                         type=int, 
@@ -135,7 +139,8 @@ if __name__ == '__main__':
     print('='*50, '\n')
     # retrain model by the whole train set
     # start negative sampling
-    train_sampled = negative_sampling(user_num, item_num, train_set, args.num_ng)
+    train_sampled = negative_sampling(user_num, item_num, train_set, 
+                                      args.num_ng, sample_method=args.sample_method)
     # format training data
     train_dataset = PointMFData(train_sampled)
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 

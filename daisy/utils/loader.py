@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 13:15:44
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-04 14:22:45
+@LastEditTime : 2020-01-11 17:09:55
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: This module contains data loader for experiments
@@ -197,7 +197,26 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
     else:
         raise ValueError('Invalid dataset preprocess type, origin/5core/10core expected')
 
-def negative_sampling(user_num, item_num, df, num_ng=4, neg_label_val=0.):
+def negative_sampling(user_num, item_num, df, num_ng=4, neg_label_val=0., sample_method='uniform'):
+    """
+    :param user_num: # of users
+    :param item_num: # of items
+    :param df: dataframe for sampling
+    :param num_ng: # of nagative sampling per sample
+    :param neg_label_val: target value for negative samples
+    :param sample_method: 'uniform' discrete uniform 
+                          'item-desc' descending item popularity, high popularity means high probability to choose
+                          'item-ascd' ascending item popularity, low popularity means high probability to choose
+    """
+    assert sample_method in ['uniform', 'item-ascd', 'item-desc'], f'Invalid sampling method: {sample_method}'
+    neg_sample_pool = list(range(item_num))
+    if sample_method != 'uniform':
+        popularity_item_list = df['item'].value_counts().index.tolist()
+        if sample_method == 'item-desc':
+            neg_sample_pool = popularity_item_list
+        elif sample_method == 'item-ascd':
+            neg_sample_pool = popularity_item_list[::-1]
+
     pair_pos = sp.dok_matrix((user_num, item_num), dtype=np.float32)
     for _, row in df.iterrows():
         pair_pos[int(row['user']), int(row['item'])] = 1.0
@@ -209,9 +228,18 @@ def negative_sampling(user_num, item_num, df, num_ng=4, neg_label_val=0.):
         r = row['rating']
         neg_df.append([u, i, r, 1])
         for _ in range(num_ng):
-            j = np.random.randint(item_num)
-            while (u, j) in pair_pos:
+            if sample_method == 'uniform':
                 j = np.random.randint(item_num)
+                while (u, j) in pair_pos:
+                    j = np.random.randint(item_num)
+            # since item-desc, item-ascd both use neg_sample_pool to sample negative item
+            elif sample_method in ['item-desc', 'item-ascd']:
+                idx = 0
+                j = int(neg_sample_pool[idx])
+                while (u, j) in pair_pos:
+                    idx += 1
+                    j = int(neg_sample_pool[idx])
+
             j = int(j)
             neg_df.append([u, j, neg_label_val, 1])
 
@@ -420,7 +448,27 @@ class PointFMData(data.Dataset):
         return features, feature_values, labels
 
 class PairFMData(data.Dataset):
-    def __init__(self, sampled_df, feat_idx_dict, item_num, num_ng, is_training=None):
+    def __init__(self, sampled_df, feat_idx_dict, item_num, num_ng, 
+                 is_training=True, sample_method='uniform'):
+        """
+        :param prime sampled_df: dataframe used for sampling
+        :param feat_idx_dict: feature index dictionary
+        :param item_num: # of item
+        :param num_ng: # of negative samples
+        :param is_training: whether sampled data used for training
+        :param sample_method: 'uniform' discrete uniform 
+                              'item-desc' descending item popularity, high popularity means high probability to choose
+                              'item-ascd' ascending item popularity, low popularity means high probability to choose
+        """
+        assert sample_method in ['uniform', 'item-ascd', 'item-desc'], f'Invalid sampling method: {sample_method}'
+        neg_sample_pool = list(range(item_num))
+        if sample_method != 'uniform':
+            popularity_item_list = sampled_df['item'].value_counts().index.tolist()
+            if sample_method == 'item-desc':
+                neg_sample_pool = popularity_item_list
+            elif sample_method == 'item-ascd':
+                neg_sample_pool = popularity_item_list[::-1]
+
         self.features = []
         self.feature_values = []
         self.labels = []
@@ -437,25 +485,39 @@ class PairFMData(data.Dataset):
             if is_training:
                 # negative samplings
                 for _ in range(num_ng):
-                    j = np.random.randint(item_num)
-                    while (u, j) in pair_pos:
+                    if sample_method == 'uniform':
                         j = np.random.randint(item_num)
+                        while (u, j) in pair_pos:
+                            j = np.random.randint(item_num)
+                    elif sample_method in ['item-desc', 'item-ascd']:
+                        idx = 0
+                        j = int(neg_sample_pool[idx])
+                        while (u, j) in pair_pos:
+                            idx += 1
+                            j = int(neg_sample_pool[idx])
+                    r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
+                    # TODO if you get a more detail feature dataframe, you need to optimize this part
+                    self.features.append([np.array([u + feat_idx_dict['user'], 
+                                                    i + feat_idx_dict['item']], dtype=np.int64), 
+                                          np.array([u + feat_idx_dict['user'], 
+                                                    j + feat_idx_dict['item']], dtype=np.int64)])
+                    self.feature_values.append([np.array([1, 1], dtype=np.float32), 
+                                                np.array([1, 1], dtype=np.float32)])
+
+                    self.labels.append(np.array(r))
+                    
             else:
                 j = i
-            r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
+                r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
+                # TODO if you get a more detail feature dataframe, you need to optimize this part
+                self.features.append([np.array([u + feat_idx_dict['user'], 
+                                                i + feat_idx_dict['item']], dtype=np.int64), 
+                                     np.array([u + feat_idx_dict['user'], 
+                                               j + feat_idx_dict['item']], dtype=np.int64)])
+                self.feature_values.append([np.array([1, 1], dtype=np.float32), 
+                                            np.array([1, 1], dtype=np.float32)])
+                self.labels.append(np.array(r))
 
-
-            # if you get a more detail feature dataframe, you need to optimize this part
-            self.features.append([np.array([u + feat_idx_dict['user'], 
-                                            i + feat_idx_dict['item']], dtype=np.int64), 
-                                np.array([u + feat_idx_dict['user'], 
-                                            j + feat_idx_dict['item']], dtype=np.int64)])
-            self.feature_values.append([np.array([1, 1], dtype=np.float32), 
-                                        np.array([1, 1], dtype=np.float32)])
-
-            self.labels.append(np.array(r))
-
-        
     def __len__(self):
         return len(self.features)
 
@@ -476,7 +538,26 @@ class PairFMData(data.Dataset):
 
 
 class PairMFData(data.Dataset):
-    def __init__(self, sampled_df, user_num, item_num, num_ng, is_training=True):
+    def __init__(self, sampled_df, user_num, item_num, num_ng, is_training=True, sample_method='uniform'):
+        """
+        :param sampled_df: prime dataframe used for sampling
+        :param user_num: # of user
+        :param item_num: # of item
+        :param num_ng: # of negative samples
+        :param is_training: whether sampled data used for training
+        :param sample_method: 'uniform' discrete uniform 
+                              'item-desc' descending item popularity, high popularity means high probability to choose
+                              'item-ascd' ascending item popularity, low popularity means high probability to choose
+        """
+        assert sample_method in ['uniform', 'item-ascd', 'item-desc'], f'Invalid sampling method: {sample_method}'
+        neg_sample_pool = list(range(item_num))
+        if sample_method != 'uniform':
+            popularity_item_list = sampled_df['item'].value_counts().index.tolist()
+            if sample_method == 'item-desc':
+                neg_sample_pool = popularity_item_list
+            elif sample_method == 'item-ascd':
+                neg_sample_pool = popularity_item_list[::-1]
+
         super(PairMFData, self).__init__()
         self.is_training = is_training
         self.num_ng = num_ng
@@ -494,9 +575,16 @@ class PairMFData(data.Dataset):
             if is_training:
                 # negative samplings
                 for _ in range(num_ng):
-                    j = np.random.randint(item_num)
-                    while (u, j) in pair_pos:
+                    if sample_method == 'uniform':
                         j = np.random.randint(item_num)
+                        while (u, j) in pair_pos:
+                            j = np.random.randint(item_num)
+                    elif sample_method in ['item-ascd', 'item-desc']:
+                        idx = 0
+                        j = int(neg_sample_pool[idx])
+                        while (u, j) in pair_pos:
+                            idx += 1
+                            j = int(neg_sample_pool[idx])
                     j = int(j)
                     r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
                     self.features_fill.append([u, i, j, r])

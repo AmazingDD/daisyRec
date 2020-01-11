@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-02 21:52:18
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-07 22:47:05
+@LastEditTime : 2020-01-11 16:28:03
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -59,6 +59,10 @@ if __name__ == '__main__':
     parser.add_argument('--cand_num', 
                         type=int, 
                         default=1000, help='No. of candidates item for predict')
+    parser.add_argument('--sample_method', 
+                        type=str, 
+                        default='uniform', 
+                        help='negative sampling method, options: uniform, item-ascd, item-desc')
     # algo settings
     parser.add_argument('--pop_n', 
                         type=int, 
