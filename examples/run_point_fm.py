@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
-@Date: 2019-12-09 14:42:14
+@Date: 2020-01-11 17:34:52
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-11 18:58:02
+@LastEditTime : 2020-01-11 18:39:59
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -18,13 +18,12 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pointwise.NeuMFRecommender import PointNeuMF
-from daisy.utils.loader import load_rate, split_test, get_ur, negative_sampling, PointMFData
+from daisy.model.pointwise.BiasMFRecommender import PointFMV2
+from daisy.utils.loader import load_rate, split_test, get_ur, PointMFData, negative_sampling
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
-
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Point-Wise NeuMF recommender test')
+    parser = argparse.ArgumentParser(description='Point-Wise FM recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -32,11 +31,11 @@ if __name__ == '__main__':
                         help='select dataset')
     parser.add_argument('--prepro', 
                         type=str, 
-                        default='origin', 
+                        default='5core', 
                         help='dataset preprocess op.: origin/5core/10core')
     parser.add_argument('--topk', 
                         type=int, 
-                        default=50, 
+                        default=10, 
                         help='top number of recommend list')
     parser.add_argument('--test_method', 
                         type=str, 
@@ -63,49 +62,38 @@ if __name__ == '__main__':
                         default='uniform', 
                         help='negative sampling method, options: uniform, item-ascd, item-desc')
     # algo settings
-    parser.add_argument('--num_ng', 
-                        type=int, 
-                        default=4, 
-                        help='negative sampling number')
-    parser.add_argument('--factor_num', 
-                        type=int, 
-                        default=32, 
-                        help='predictive factors numbers in the model')
-    parser.add_argument('--num_layers', 
-                        type=int, 
-                        default=3, 
-                        help='number of layers in MLP model')
-    parser.add_argument('--model_name', 
-                        type=str, 
-                        default='NeuMF-end', 
-                        help='target model name, if NeuMF-pre plz run MLP and GMF before')
-    parser.add_argument('--dropout', 
-                        type=float, 
-                        default=0.0, 
-                        help='dropout rate')
-    parser.add_argument('--lr', 
-                        type=float, 
-                        default=0.001, 
-                        help='learning rate')
-    parser.add_argument('--epochs', 
-                        type=int, 
-                        default=50, 
-                        help='training epochs')
-    parser.add_argument('--batch_size', 
-                        type=int, 
-                        default=256, 
-                        help='batch size for training')
-    parser.add_argument('--lamda', 
-                        type=float, 
-                        default=0.0, 
-                        help='regularizer weight')
-    parser.add_argument('--out', 
-                        default=True, 
-                        help='save model or not')
     parser.add_argument('--loss_type', 
                         type=str, 
                         default='CL', 
                         help='loss function type')
+    parser.add_argument('--num_ng', 
+                        type=int, 
+                        default=5, 
+                        help='sample negative items for training')
+    parser.add_argument('--factors', 
+                        type=int, 
+                        default=84, 
+                        help='predictive factors numbers in the model')
+    parser.add_argument('--epochs', 
+                        type=int, 
+                        default=50, 
+                        help='training epochs')
+    parser.add_argument('--lr', 
+                        type=float, 
+                        default=0.000101715132312389, 
+                        help='learning rate')
+    parser.add_argument('--wd', 
+                        type=float, 
+                        default=0., 
+                        help='model regularization rate')
+    parser.add_argument('--lamda', 
+                        type=float, 
+                        default=0.00617422578452824, 
+                        help='regularization weight')
+    parser.add_argument('--batch_size', 
+                        type=int, 
+                        default=512, 
+                        help='batch size for training')
     parser.add_argument('--gpu', 
                         type=str, 
                         default='0', 
@@ -144,28 +132,11 @@ if __name__ == '__main__':
     # format training data
     train_dataset = PointMFData(train_sampled)
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
-                                    shuffle=True, num_workers=4)
-
-    # whether load pre-train model
-    model_name = args.model_name
-    assert model_name in ['MLP', 'GMF', 'NeuMF-end', 'NeuMF-pre']
-    GMF_model_path = f'./tmp/{args.dataset}/{args.loss_type}/GMF.pt'
-    MLP_model_path = f'./tmp/{args.dataset}/{args.loss_type}/MLP.pt'
-    NeuMF_model_path = f'./tmp/{args.dataset}/{args.loss_type}/NeuMF.pt'
-
-    if model_name == 'NeuMF-pre':
-        assert os.path.exists(GMF_model_path), 'lack of GMF model'    
-        assert os.path.exists(MLP_model_path), 'lack of MLP model'
-        GMF_model = torch.load(GMF_model_path)
-        MLP_model = torch.load(MLP_model_path)
-    else:
-        GMF_model = None
-        MLP_model = None
+                                   shuffle=True, num_workers=4)
 
     # build recommender model
-    model = PointNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
-                       args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, 
-                       args.gpu, args.loss_type)
+    model = PointFMV2(user_num, item_num, args.factors, args.lamda, 
+                      args.epochs, args.lr, args.gpu, args.loss_type)
     model.fit(train_loader)
 
     print('Start Calculating Metrics......')
@@ -212,12 +183,6 @@ if __name__ == '__main__':
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
 
-    # whether save pre-trained model if necessary
-    if args.out:
-        if not os.path.exists(f'./tmp/{args.dataset}/{args.loss_type}/'):
-            os.makedirs(f'./tmp/{args.dataset}/{args.loss_type}/')
-        torch.save(model, f'./tmp/{args.dataset}/{args.loss_type}/{args.model_name.split("-")[0]}.pt')
-
     # process topN list and store result for reporting KPI
     print('Save metric@k result to res folder...')
     result_save_path = f'./res/{args.dataset}/'
@@ -249,6 +214,6 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pointneumf_{args.loss_type}_{args.sample_method}.csv', 
+    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pointfm_{args.loss_type}_{args.sample_method}.csv', 
                index=False)
     print('='* 20, ' Done ', '='*20)

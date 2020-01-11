@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-05 10:41:50
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-11 17:29:34
+@LastEditTime : 2020-01-11 18:51:08
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
                         help='learning rate')
     parser.add_argument('--wd', 
                         type=float, 
-                        default=0.001, 
+                        default=0., 
                         help='model regularization rate')
     parser.add_argument('--lamda', 
                         type=float, 
@@ -92,7 +92,7 @@ if __name__ == '__main__':
                         help='regularization weight')
     parser.add_argument('--batch_size', 
                         type=int, 
-                        default=4096, 
+                        default=512, 
                         help='batch size for training')
     parser.add_argument('--gpu', 
                         type=str, 

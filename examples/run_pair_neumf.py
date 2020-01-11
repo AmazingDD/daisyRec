@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-11 18:58:02
+@LastEditTime : 2020-01-11 19:10:51
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -18,13 +18,13 @@ from collections import defaultdict
 import torch
 import torch.utils.data as data
 
-from daisy.model.pointwise.NeuMFRecommender import PointNeuMF
-from daisy.utils.loader import load_rate, split_test, get_ur, negative_sampling, PointMFData
+from daisy.model.pairwise.NeuMFRecommender import PairNeuMF
+from daisy.utils.loader import load_rate, split_test, get_ur, PairMFData
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Point-Wise NeuMF recommender test')
+    parser = argparse.ArgumentParser(description='Pair-Wise NeuMF recommender test')
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
                         help='training epochs')
     parser.add_argument('--batch_size', 
                         type=int, 
-                        default=256, 
+                        default=512, 
                         help='batch size for training')
     parser.add_argument('--lamda', 
                         type=float, 
@@ -104,7 +104,7 @@ if __name__ == '__main__':
                         help='save model or not')
     parser.add_argument('--loss_type', 
                         type=str, 
-                        default='CL', 
+                        default='BPR', 
                         help='loss function type')
     parser.add_argument('--gpu', 
                         type=str, 
@@ -138,13 +138,10 @@ if __name__ == '__main__':
 
     print('='*50, '\n')
     # retrain model by the whole train set
-    # start negative sampling
-    train_sampled = negative_sampling(user_num, item_num, train_set, 
-                                      args.num_ng, sample_method=args.sample_method)
     # format training data
-    train_dataset = PointMFData(train_sampled)
+    train_dataset = PairMFData(train_set, user_num, item_num, args.num_ng, sample_method=args.sample_method)
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
-                                    shuffle=True, num_workers=4)
+                                   shuffle=True, num_workers=4)
 
     # whether load pre-train model
     model_name = args.model_name
@@ -163,9 +160,9 @@ if __name__ == '__main__':
         MLP_model = None
 
     # build recommender model
-    model = PointNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
-                       args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, 
-                       args.gpu, args.loss_type)
+    model = PairNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
+                      args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, 
+                      args.gpu, args.loss_type)
     model.fit(train_loader)
 
     print('Start Calculating Metrics......')
@@ -183,18 +180,20 @@ if __name__ == '__main__':
     print('Generate recommend list...')
     print('')
     preds = {}
+
     for u in tqdm(test_ucands.keys()):
-        # build a test MF dataset for certain user u
+        # build a test MF dataset for certain user u to accelerate
         tmp = pd.DataFrame({'user': [u for _ in test_ucands[u]], 
                             'item': test_ucands[u], 
                             'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
-                            })
-        tmp_dataset = PointMFData(tmp)
+                        })
+        tmp_dataset = PairMFData(tmp, user_num, item_num, 0, False)
         tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
-                                        shuffle=False, num_workers=0)
+                                     shuffle=False, num_workers=0)
 
         # get top-N list with torch method 
-        for user_u, item_i, _ in tmp_loader:
+        for items in tmp_loader:
+            user_u, item_i = items[0], items[1]
             if torch.cuda.is_available():
                 user_u = user_u.cuda()
                 item_i = item_i.cuda()
@@ -249,6 +248,6 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pointneumf_{args.loss_type}_{args.sample_method}.csv', 
+    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pairneumf_{args.loss_type}_{args.sample_method}.csv', 
                index=False)
     print('='* 20, ' Done ', '='*20)
