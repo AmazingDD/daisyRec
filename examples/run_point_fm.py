@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2020-01-11 17:34:52
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-11 18:39:59
+@LastEditTime : 2020-01-13 12:40:04
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
                         help='dataset preprocess op.: origin/5core/10core')
     parser.add_argument('--topk', 
                         type=int, 
-                        default=10, 
+                        default=50, 
                         help='top number of recommend list')
     parser.add_argument('--test_method', 
                         type=str, 
