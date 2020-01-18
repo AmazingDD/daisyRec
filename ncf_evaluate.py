@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2020-01-15 09:14:56
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-17 10:22:09
+@LastEditTime : 2020-01-18 19:24:01
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -35,7 +35,7 @@ def ndcg_at_k(r, k):
         return 0.
     return dcg_at_k(r, k) / idcg
 
-def metrics(model, test_loader, top_k, test_ur):
+def point_metrics(model, test_loader, top_k, test_ur):
 	NDCG = []
 
 	for user, item, _ in tqdm(test_loader):
@@ -47,6 +47,37 @@ def metrics(model, test_loader, top_k, test_ur):
 			item = item.cpu()
 
 		predictions = model(user, item)
+		_, indices = torch.topk(predictions, top_k)
+		recommends = torch.take(
+				item, indices).cpu().numpy().tolist()
+
+		u = set(user.cpu().numpy())
+		assert 1<= len(u) < 2, 'candidates number error'
+		u = list(u)[0]
+
+		gt_items = list(test_ur[u])
+
+		r = [1 if i in gt_items else 0 for i in recommends]
+
+		# NDCG.append(ndcg(gt_items, recommends))
+		NDCG.append(ndcg_at_k(r, top_k))
+
+	# return np.mean(NDCG)
+	return NDCG
+
+def pair_metrics(model, test_loader, top_k, test_ur):
+	NDCG = []
+
+	for items in tqdm(test_loader):
+		user, item = items[0], items[1]
+		if torch.cuda.is_available():
+			user = user.cuda()
+			item = item.cuda()
+		else:
+			user = user.cpu()
+			item = item.cpu()
+
+		predictions, _ = model(user, item, item)
 		_, indices = torch.topk(predictions, top_k)
 		recommends = torch.take(
 				item, indices).cpu().numpy().tolist()

@@ -110,3 +110,7 @@ class NCF(nn.Module):
 
 		prediction = self.predict_layer(concat)
 		return prediction.view(-1)
+
+	def predict(self, u, i):
+		pred = self.forward(u, i).cpu()
+		return pred

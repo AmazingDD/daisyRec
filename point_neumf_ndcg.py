@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2019-12-09 14:42:14
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-17 12:34:15
+@LastEditTime : 2020-01-18 17:01:57
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -22,8 +22,8 @@ import torch.optim as optim
 import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
-from ncf_model import NCF
-from ncf_evaluate import metrics
+from point_ncf_model import NCF
+from ncf_evaluate import point_metrics
 
 from daisy.utils.loader import load_rate, split_test, get_ur, negative_sampling, PointMFData
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
@@ -53,11 +53,11 @@ if __name__ == '__main__':
     # common settings
     parser.add_argument('--dataset', 
                         type=str, 
-                        default='ml-1m', 
+                        default='lastfm', 
                         help='select dataset')
     parser.add_argument('--prepro', 
                         type=str, 
-                        default='origin', 
+                        default='10core', 
                         help='dataset preprocess op.: origin/5core/10core')
     parser.add_argument('--topk', 
                         type=int, 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     # algo settings
     parser.add_argument('--num_ng', 
                         type=int, 
-                        default=4, 
+                        default=2, 
                         help='negative sampling number')
     parser.add_argument('--factor_num', 
                         type=int, 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
                         help='predictive factors numbers in the model')
     parser.add_argument('--num_layers', 
                         type=int, 
-                        default=3, 
+                        default=2, 
                         help='number of layers in MLP model')
     parser.add_argument('--model_name', 
                         type=str, 
@@ -106,11 +106,11 @@ if __name__ == '__main__':
                         help='target model name, if NeuMF-pre plz run MLP and GMF before')
     parser.add_argument('--dropout', 
                         type=float, 
-                        default=0.0, 
+                        default=0.560823, 
                         help='dropout rate')
     parser.add_argument('--lr', 
                         type=float, 
-                        default=0.001, 
+                        default=0.0035872, 
                         help='learning rate')
     parser.add_argument('--epochs', 
                         type=int, 
@@ -118,11 +118,11 @@ if __name__ == '__main__':
                         help='training epochs')
     parser.add_argument('--batch_size', 
                         type=int, 
-                        default=256, 
+                        default=512, 
                         help='batch size for training')
     parser.add_argument('--lamda', 
                         type=float, 
-                        default=0.0, 
+                        default=0.00113932, 
                         help='regularizer weight')
     parser.add_argument('--out', 
                         default=True, 
@@ -215,7 +215,7 @@ if __name__ == '__main__':
         test_ucands[k] = list(v | set(samples))
         assert len(test_ucands[k]) == args.cand_num, print(len(test_ucands[k]))
 
-    count, best_ndcg, best_model = 0, 0, None
+    count, best_ndcg = 0, 0
     for epoch in range(args.epochs):
         model.train() # Enable dropout (if have).
         start_time = time.time()
@@ -247,18 +247,20 @@ if __name__ == '__main__':
         test_dataset = NCFData(tmp_data)
         test_loader = data.DataLoader(test_dataset, batch_size=args.cand_num, shuffle=False, num_workers=0)
 
-        NDCG = metrics(model, test_loader, args.topk, test_ur)
+        NDCG = point_metrics(model, test_loader, args.topk, test_ur)
         elapsed_time = time.time() - start_time
         print("The time elapse of epoch {:03d}".format(epoch) + " is: " + time.strftime("%H: %M: %S", time.gmtime(elapsed_time)))
         print("NDCG: {:.3f}".format(np.mean(NDCG)))
 
         if np.mean(NDCG) > best_ndcg:
             best_ndcg, best_epoch = np.mean(NDCG), epoch
-            best_model = model
+            # best_model = model
+            torch.save(model, f'best_{args.dataset}_{args.prepro}_{args.test_method}_{args.loss_type}_{args.sample_method}.pt')
 
     print("End. Best epoch {:03d}: NDCG = {:.3f}".format(best_epoch, best_ndcg))
 
     # get predict result with best model
+    best_model = torch.load(f'best_{args.dataset}_{args.prepro}_{args.test_method}_{args.loss_type}_{args.sample_method}.pt')
     print('')
     print('Generate recommend list...')
     print('')
