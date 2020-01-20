@@ -2,7 +2,7 @@
 @Author: Yu Di
 @Date: 2020-01-18 17:00:43
 @LastEditors  : Yudi
-@LastEditTime : 2020-01-18 19:23:07
+@LastEditTime : 2020-01-20 11:54:22
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: 
@@ -206,8 +206,12 @@ if __name__ == '__main__':
         sample_num = candidates_num - len(v) if len(v) < candidates_num else 0
         sub_item_pool = item_pool - v - total_train_ur[k] # remove GT & interacted
         sample_num = min(len(sub_item_pool), sample_num)
-        samples = random.sample(sub_item_pool, sample_num)
-        test_ucands[k] = list(v | set(samples))
+        if sample_num == 0:
+            samples = random.sample(v, candidates_num)
+            test_ucands[k] = list(set(samples))
+        else:
+            samples = random.sample(sub_item_pool, sample_num)
+            test_ucands[k] = list(v | set(samples))
         assert len(test_ucands[k]) == args.cand_num, print(len(test_ucands[k]))
 
     count, best_ndcg = 0, 0
