@@ -1,8 +1,8 @@
 '''
 @Author: Yu Di
 @Date: 2019-12-02 22:40:23
-@LastEditors: Yudi
-@LastEditTime: 2019-12-13 17:04:52
+@LastEditors  : Yudi
+@LastEditTime : 2020-01-20 16:27:25
 @Company: Cardinal Operation
 @Email: yudi@shanshu.ai
 @Description: metrics for evaluating recommend list
@@ -117,3 +117,40 @@ def hr_at_k(rs, test_ur):
             uhr += 1
     
     return uhr / len(rs)
+
+def auc_at_k(rs):
+    uauc = 0.
+    for user in rs.keys():
+        label_all = rs[user]
+
+        pos_num = len(list(filter(lambda x: x == 1, label_all)))
+        neg_num = len(label_all) - pos_num
+
+        pos_rank_num = 0
+        for j in range(len(pred_all)):
+            if label_all[j] == 1:
+                pos_rank_num += j + 1
+
+        auc = (pos_rank_num - pos_num * (pos_num + 1) / 2) / (pos_num * neg_num)
+
+        uauc += auc
+
+    return uauc / len(rs)
+
+def f1_at_k(rs, test_ur):
+    uf1 = 0.
+    for user in rs.keys():
+        r = rs[user]
+        r = np.asarray(r) != 0
+        # start calculate precision
+        prec_k = sum(r) / len(r)
+        # start calculate recall
+        if len(test_ur[user]) == 0:
+            raise KeyError(f'Invalid User Index: {user}')
+        rec_k = sum(r) / len(test_ur[user])
+        # start calculate f1-score
+        f1_k = 2 * prec_k * rec_k / (rec_k + prec_k)
+
+        uf1 += f1_k
+
+    return uf1 / len(rs)
