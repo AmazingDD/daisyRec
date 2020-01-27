@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-09 14:42:14
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-20 11:53:50
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import os
 import time
 import random
@@ -22,12 +13,11 @@ import torch.optim as optim
 import torch.utils.data as data
 import torch.backends.cudnn as cudnn
 
-from point_ncf_model import NCF
-from ncf_evaluate import point_metrics
+from pair_ncf_model import NCF
+from ncf_evaluate import pair_metrics
 
-from daisy.utils.loader import load_rate, split_test, get_ur, negative_sampling, PointMFData
+from daisy.utils.loader import load_rate, split_test, get_ur, PairMFData
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, mrr_at_k, ndcg_at_k
-
 
 class NCFData(data.Dataset):
     def __init__(self, features):
@@ -42,11 +32,11 @@ class NCFData(data.Dataset):
         labels = self.labels
 
         user = features[idx][0]
-        item = features[idx][1]
+        item_i = features[idx][1]
+        item_j = features[idx][2]
         label = labels[idx]
 
-        return user, item ,label
-
+        return user, item_i, item_j ,label
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Point-Wise NeuMF recommender test')
@@ -129,7 +119,7 @@ if __name__ == '__main__':
                         help='save model or not')
     parser.add_argument('--loss_type', 
                         type=str, 
-                        default='CL', 
+                        default='BPR', 
                         help='loss function type')
     parser.add_argument('--gpu', 
                         type=str, 
@@ -139,6 +129,9 @@ if __name__ == '__main__':
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     cudnn.benchmark = True
+
+    if not os.path.exists('./tmp/'):
+        os.makedirs('./tmp/')
 
     '''Test Process for Metrics Exporting'''
     # df, user_num, item_num = load_rate(args.dataset, args.prepro)
@@ -166,13 +159,10 @@ if __name__ == '__main__':
 
     print('='*50, '\n')
     # retrain model by the whole train set
-    # start negative sampling
-    train_sampled = negative_sampling(user_num, item_num, train_set, 
-                                      args.num_ng, sample_method=args.sample_method)
     # format training data
-    train_dataset = PointMFData(train_sampled)
+    train_dataset = PairMFData(train_set, user_num, item_num, args.num_ng, sample_method=args.sample_method)
     train_loader = data.DataLoader(train_dataset, batch_size=args.batch_size, 
-                                    shuffle=True, num_workers=4)
+                                   shuffle=True, num_workers=4)
 
     # whether load pre-train model
     model_name = args.model_name
@@ -197,12 +187,11 @@ if __name__ == '__main__':
         model.cuda()
     else:
         model.cpu()
-    loss_function = nn.BCEWithLogitsLoss()
 
     if args.model_name == 'NeuMF-pre':
-	    optimizer = optim.SGD(model.parameters(), lr=args.lr)
+        optimizer = optim.SGD(model.parameters(), lr=args.lr)
     else:
-	    optimizer = optim.Adam(model.parameters(), lr=args.lr)
+        optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
     print('Start Calculating Metrics......')
     # build candidates set
@@ -224,19 +213,26 @@ if __name__ == '__main__':
         model.train() # Enable dropout (if have).
         start_time = time.time()
 
-        for user, item, label in tqdm(train_loader):
+        for user, item_i, item_j, label in tqdm(train_loader):
             if torch.cuda.is_available():
                 user = user.cuda()
-                item = item.cuda()
-                label = label.float().cuda()
+                item_i = item_i.cuda()
+                item_j = item_j.cuda()
+                label = label.cuda()
             else:
                 user = user.cpu()
-                item = item.cpu()
-                label = label.float().cpu()
+                item_i = item_i.cpu()
+                item_j = item_j.cpu()
+                label = label.cpu()
 
             model.zero_grad()
-            prediction = model(user, item)
-            loss = loss_function(prediction, label)
+            pred_i, pred_j = model(user, item_i, item_j)
+
+            if args.loss_type == 'BPR':
+                loss = -(pred_i - pred_j).sigmoid().log().sum()
+            elif args.loss_type == 'HL':
+                loss = torch.clamp(1 - (pred_i - pred_j) * label, min=0).sum()
+
             loss.backward()
             optimizer.step()
             count += 1
@@ -247,24 +243,23 @@ if __name__ == '__main__':
         tmp_data = []
         for u in test_ucands.keys():
             for i in test_ucands[u]:
-                tmp_data.append([u, i])
+                tmp_data.append([u, i, i])
         test_dataset = NCFData(tmp_data)
         test_loader = data.DataLoader(test_dataset, batch_size=args.cand_num, shuffle=False, num_workers=0)
 
-        NDCG = point_metrics(model, test_loader, args.topk, test_ur)
+        NDCG = pair_metrics(model, test_loader, args.topk, test_ur)
         elapsed_time = time.time() - start_time
         print("The time elapse of epoch {:03d}".format(epoch) + " is: " + time.strftime("%H: %M: %S", time.gmtime(elapsed_time)))
         print("NDCG: {:.3f}".format(np.mean(NDCG)))
 
         if np.mean(NDCG) > best_ndcg:
             best_ndcg, best_epoch = np.mean(NDCG), epoch
-            # best_model = model
-            torch.save(model, f'best_{args.dataset}_{args.prepro}_{args.test_method}_{args.loss_type}_{args.sample_method}.pt')
+            torch.save(model, f'./tmp/best_{args.dataset}_{args.prepro}_{args.test_method}_{args.loss_type}_{args.sample_method}.pt')
 
     print("End. Best epoch {:03d}: NDCG = {:.3f}".format(best_epoch, best_ndcg))
 
     # get predict result with best model
-    best_model = torch.load(f'best_{args.dataset}_{args.prepro}_{args.test_method}_{args.loss_type}_{args.sample_method}.pt')
+    best_model = torch.load(f'./tmp/best_{args.dataset}_{args.prepro}_{args.test_method}_{args.loss_type}_{args.sample_method}.pt')
     print('')
     print('Generate recommend list...')
     print('')
@@ -275,12 +270,13 @@ if __name__ == '__main__':
                             'item': test_ucands[u], 
                             'rating': [0. for _ in test_ucands[u]], # fake label, make nonsense
                             })
-        tmp_dataset = PointMFData(tmp)
+        tmp_dataset = PairMFData(tmp, user_num, item_num, 0, False)
         tmp_loader = data.DataLoader(tmp_dataset, batch_size=candidates_num, 
-                                        shuffle=False, num_workers=0)
+                                     shuffle=False, num_workers=0)
 
         # get top-N list with torch method 
-        for user_u, item_i, _ in tmp_loader:
+        for items in tmp_loader:
+            user_u, item_i = items[0], items[1]
             if torch.cuda.is_available():
                 user_u = user_u.cuda()
                 item_i = item_i.cuda()
@@ -297,12 +293,6 @@ if __name__ == '__main__':
     # convert rank list to binary-interaction
     for u in preds.keys():
         preds[u] = [1 if i in test_ur[u] else 0 for i in preds[u]]
-
-    # whether save pre-trained model if necessary
-    if args.out:
-        if not os.path.exists(f'./tmp/{args.dataset}/{args.loss_type}/'):
-            os.makedirs(f'./tmp/{args.dataset}/{args.loss_type}/')
-        torch.save(model, f'./tmp/{args.dataset}/{args.loss_type}/{args.model_name.split("-")[0]}.pt')
 
     # process topN list and store result for reporting KPI
     print('Save metric@k result to res folder...')
@@ -335,6 +325,6 @@ if __name__ == '__main__':
 
         res[k] = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
 
-    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pointneumf_{args.loss_type}_{args.sample_method}.csv', 
+    res.to_csv(f'{result_save_path}{args.prepro}_{args.test_method}_pairneumf{args.loss_type}_{args.sample_method}.csv', 
                index=False)
     print('='* 20, ' Done ', '='*20)

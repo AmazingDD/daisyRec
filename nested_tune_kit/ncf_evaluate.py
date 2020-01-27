@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2020-01-15 09:14:56
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-18 19:24:01
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import numpy as np
 import torch
 from tqdm import tqdm

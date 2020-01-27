@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-03 14:53:45
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-01 13:42:24
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 # import numpy as np
 # import pandas as pd
 # from concurrent.futures import ProcessPoolExecutor

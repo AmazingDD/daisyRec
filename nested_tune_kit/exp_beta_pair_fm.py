@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2020-01-07 20:26:56
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-07 23:10:22
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: only test for ml-1m 5core tfo validation
-'''
 import os
 import random
 import argparse

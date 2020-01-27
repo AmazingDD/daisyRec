@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-20 18:52:08
-@LastEditors  : Yudi
-@LastEditTime : 2019-12-23 18:38:36
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import os
 import gc
 from daisy.utils.loader import load_rate, split_test

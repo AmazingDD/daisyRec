@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2020-01-18 12:44:51
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-18 16:49:03
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import torch
 import torch.nn as nn
 import torch.nn.functional as F 

@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-02 13:22:54
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-01 17:31:23
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 from setuptools import Extension, setup, find_packages, dist
 from codecs import open
 from os import path
@@ -75,10 +66,10 @@ else:
 setup(
     name='scikit-daisy',
     version=__version__,
-    author='Di. Yu',
-    author_email='yudi_mars@126.com',
+    author='',
+    author_email='',
     maintainer='amazingDD',
-    maintainer_email='1172392977@qq.com',
+    maintainer_email='',
     license='Apache License',
     packages=['daisy'],
     platforms=['all'],

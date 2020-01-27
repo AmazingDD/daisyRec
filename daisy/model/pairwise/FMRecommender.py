@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-06 23:04:24
-@LastEditors  : Yudi
-@LastEditTime : 2019-12-18 17:19:30
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import os
 from tqdm import tqdm
 

@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-03 15:37:46
-@LastEditors  : Yudi
-@LastEditTime : 2019-12-18 17:52:16
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import os
 import numpy as np
 import pandas as pd

@@ -50,25 +50,22 @@ Make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 - WRMF
 - PureSVD
 - Item2Vec
-<!-- - BiasMF
+- BiasMF
 - RSVD2
-- SVD++ -->
-<!-- - AutoEncoder -->
+- SVD++
+- AutoEncoder
 
 #### _Point-wise with cross-entropy-loss(CL)/square-loss(SL)_ 
 
 - MF
 - FM
-- SLiM
 - NeuMF
 
 #### _Pair-wise with bpr-loss(BPR)/hinge-loss(HL)_
 
 - MF
 - FM
-- SLiM
 - NeuMF
-
 
 ## Examples to run:
 
@@ -87,26 +84,27 @@ python run_itemknn.py --help
 
 ---
 
-## Benchmarks
+## Dependencies
 
-Here are the 6 metrics: 
+- torch (>=1.1.0)
+- Numpy (>=1.18.0)
+- Pandas (>=0.24.0)
+- scikit-learn (>=0.21.3)
 
-- Pre(Precision)
-- Rec(Recall)
-- HR(Hit Rate)
-- MAP(Mean Average Precision)
-- MRR(Mean Reciprocal Rank)
-- NDCG(Normalized Discounted Cumulative Gain)
+## Metrics
 
-obtained by various algorithms with the best parameter settings.
-
-<!-- insert KPI report here -->
-
-The results above are reproducible.
+- Pre (Precision)
+- Rec (Recall)
+- HR (Hit Rate)
+- MAP (Mean Average Precision)
+- MRR (Mean Reciprocal Rank)
+- NDCG (Normalized Discounted Cumulative Gain)
+- F1 (F1-Score)
+- AUC (Area Under Curve)
 
 ---
 
-## Cite
+<!-- ## Cite
 
 Here is a Bibtex entry if you ever need to cite **Daisy** in a research paper (please keep us posted, we would love to know if Daisy was helpful to you)
 
@@ -117,7 +115,7 @@ title =    {},
 howpublished = {\url{}},
 year = {2020}
 }
-```
+``` -->
 
 ## Development Status
 

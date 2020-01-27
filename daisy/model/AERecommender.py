@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-18 13:47:50
-@LastEditors  : Yudi
-@LastEditTime : 2019-12-18 13:48:24
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: auto-encoder recommender, also known as Item-AutoRec
-'''
 import os
 import numpy as np
 import pandas as pd

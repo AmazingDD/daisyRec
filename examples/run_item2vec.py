@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-04 21:25:49
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-20 14:33:35
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: item2vec will not run in this experiment, but its implementation is special so I preserve it
-'''
 import os
 import random
 import argparse

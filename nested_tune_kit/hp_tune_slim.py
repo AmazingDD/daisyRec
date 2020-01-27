@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-10 15:48:00
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-07 21:55:43
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import os
 import random
 import argparse

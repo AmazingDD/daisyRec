@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-02 13:15:44
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-11 17:09:55
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: This module contains data loader for experiments
-'''
 import os
 import gc
 import json

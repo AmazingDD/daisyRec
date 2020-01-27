@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2020-01-01 15:35:53
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-02 17:03:16
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import os
 import heapq
 import numpy as np
@@ -108,8 +99,8 @@ class ItemKNNCF(object):
         self.tune_or_not = tune_or_not
         self.serial = serial
 
-        if not os.path.exists('./tmp/sim_matrix/'):
-            os.makedirs('./tmp/sim_matrix/')
+        if not os.path.exists('./tmp/itemknncf/sim_matrix/'):
+            os.makedirs('./tmp/itemknncf/sim_matrix/')
 
     def fit(self, train_set):
         self.yr = defaultdict(list)
@@ -142,7 +133,64 @@ class ItemKNNCF(object):
         return self.pred_mat[u, i]
 
     def _convert_df(self, user_num, item_num, df):
-        '''Process Data to make WRMF available'''
+        '''Process Data to make ItemKNN available'''
+        ratings = list(df['rating'])
+        rows = list(df['user'])
+        cols = list(df['item'])
+
+        mat = sp.csc_matrix((ratings, (rows, cols)), shape=(user_num, item_num))
+
+        return mat
+
+class UserKNNCF(object):
+    """ UserKNN recommender"""
+    def __init__(self, user_num, item_num, maxk=40, shrink=100, 
+                 similarity='cosine', min_k=1, normalize=True, 
+                 tune_or_not=False, serial='ml-100k-origin-loo-0-cosine'):
+        self.user_num = user_num
+        self.item_num = item_num
+
+        self.k = maxk
+        self.min_k = min_k
+        self.shrink = shrink
+        self.normalize = normalize
+        self.similarity = similarity
+
+        self.RECOMMENDER_NAME = "UserKNNCFRecommender"
+
+        self.tune_or_not = tune_or_not
+        self.serial = serial
+
+        if not os.path.exists('./tmp/userknncf/sim_matrix/'):
+            os.makedirs('./tmp/userknncf/sim_matrix/')
+
+    def fit(self, train_set):
+        train = self._convert_df(self.user_num, self.item_num, train_set)
+
+        cold_user_mask = np.ediff1d(train.tocsc().indptr) == 0
+        if cold_user_mask.any():
+            print("{}: Detected {} ({:.2f} %) cold users.".format(
+                self.RECOMMENDER_NAME, cold_user_mask.sum(), cold_user_mask.sum()/len(cold_user_mask)*100))
+
+        similarity = Compute_Similarity(train.T, 
+                                        shrink=self.shrink, 
+                                        topK=self.k,
+                                        normalize=self.normalize, 
+                                        similarity = self.similarity)
+
+        W_sparse = similarity.compute_similarity()
+        W_sparse = W_sparse.tocsc()
+
+        self.pred_mat = W_sparse.dot(train).tolil()
+
+    def predict(self, u, i):
+        if u >= self.user_num or i >= self.item_num:
+            raise ValueError('User and/or item is unkown.')
+
+        return self.pred_mat[u, i]
+
+    def _convert_df(self, user_num, item_num, df):
+        '''Process Data to make UserKNN available'''
         ratings = list(df['rating'])
         rows = list(df['user'])
         cols = list(df['item'])

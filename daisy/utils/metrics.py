@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-02 22:40:23
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-20 16:27:25
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: metrics for evaluating recommend list
-'''
 import numpy as np
 
 def precision_at_k(r, k):

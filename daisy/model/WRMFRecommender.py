@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-03 14:53:45
-@LastEditors  : Yudi
-@LastEditTime : 2019-12-25 18:08:22
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp

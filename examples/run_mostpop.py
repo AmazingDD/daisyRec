@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2019-12-02 21:52:18
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-11 17:29:07
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: 
-'''
 import os
 import logging
 import logging.config

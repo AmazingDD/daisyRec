@@ -1,12 +1,3 @@
-'''
-@Author: Yu Di
-@Date: 2020-01-07 19:59:47
-@LastEditors  : Yudi
-@LastEditTime : 2020-01-07 22:37:23
-@Company: Cardinal Operation
-@Email: yudi@shanshu.ai
-@Description: BiasMF, here it is a downgrade of FM if only user and item ID available
-'''
 import os
 import numpy as np
 import pandas as pd
