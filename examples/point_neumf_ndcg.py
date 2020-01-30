@@ -126,6 +126,10 @@ if __name__ == '__main__':
                         type=str, 
                         default='0', 
                         help='gpu card ID')
+    parser.add_argument('--loss_back', 
+                        type=str, 
+                        default='sum', 
+                        help='back forward method')
     args = parser.parse_args()
 
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
@@ -191,7 +195,7 @@ if __name__ == '__main__':
         model.cuda()
     else:
         model.cpu()
-    loss_function = nn.BCEWithLogitsLoss()
+    loss_function = nn.BCEWithLogitsLoss(reduction=args.loss_back)
 
     if args.model_name == 'NeuMF-pre':
 	    optimizer = optim.SGD(model.parameters(), lr=args.lr)
