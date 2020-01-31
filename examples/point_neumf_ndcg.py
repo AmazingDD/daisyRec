@@ -235,6 +235,9 @@ if __name__ == '__main__':
             model.zero_grad()
             prediction = model(user, item)
             loss = loss_function(prediction, label)
+            loss += args.lamda * (model.embed_item_GMF.weight.norm() + model.embed_user_GMF.weight.norm())
+            loss += args.lamda * (model.embed_item_MLP.weight.norm() + model.embed_user_MLP.weight.norm())
+            
             loss.backward()
             optimizer.step()
             count += 1

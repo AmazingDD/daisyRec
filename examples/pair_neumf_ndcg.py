@@ -233,6 +233,9 @@ if __name__ == '__main__':
             elif args.loss_type == 'HL':
                 loss = torch.clamp(1 - (pred_i - pred_j) * label, min=0).sum()
 
+            loss += args.lamda * (model.embed_item_GMF.weight.norm() + model.embed_user_GMF.weight.norm())
+            loss += args.lamda * (model.embed_item_MLP.weight.norm() + model.embed_user_MLP.weight.norm())
+
             loss.backward()
             optimizer.step()
             count += 1
