@@ -1,4 +1,5 @@
 import os
+import time
 import random
 import argparse
 import numpy as np
@@ -60,6 +61,9 @@ if __name__ == '__main__':
                         help='ratio if lasso result, 0 for ridge-regression, 1 for lasso-regression')
     args = parser.parse_args()
 
+    # store running time
+    time_log = open('time_log.txt', 'a')
+
     '''Test Process for Metrics Exporting'''
     # df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=False)
     # train_set, test_set = split_test(df, args.test_method, args.test_size)
@@ -83,12 +87,19 @@ if __name__ == '__main__':
     candidates_num = args.cand_num
 
     print('='*50, '\n')
+
+    s_time = time.time()
+
     # retrain model by the whole train set
     # build recommender model
     # model = SLIM(user_num, item_num, alpha=args.alpha, lam_bda=args.elastic, 
     #              max_iter=args.epochs, tol=args.tol)
     model = SLIM(user_num, item_num, l1_ratio=args.elastic, alpha=args.alpha)
     model.fit(train_set)
+
+    elapsed_time = time.time() - s_time
+    time_log.write(f'{args.dataset}_{args.prepro}_{args.test_method}_slim_{args.sample_method},{elapsed_time:.4f}' + '\n')
+    time_log.close()
 
     print('Start Calculating Metrics......')
     # build candidates set

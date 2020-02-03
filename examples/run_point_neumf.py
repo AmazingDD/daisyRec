@@ -1,4 +1,5 @@
 import os
+import time
 import random
 import argparse
 import numpy as np
@@ -103,6 +104,8 @@ if __name__ == '__main__':
                         help='gpu card ID')
     args = parser.parse_args()
 
+    time_log = open('time_log.txt', 'a')
+
     '''Test Process for Metrics Exporting'''
     # df, user_num, item_num = load_rate(args.dataset, args.prepro)
     # train_set, test_set = split_test(df, args.test_method, args.test_size)
@@ -153,11 +156,17 @@ if __name__ == '__main__':
         GMF_model = None
         MLP_model = None
 
+    s_time = time.time()
+
     # build recommender model
     model = PointNeuMF(user_num, item_num, args.factor_num, args.num_layers, args.dropout, 
                        args.lr, args.epochs, args.lamda, args.model_name, GMF_model, MLP_model, 
                        args.gpu, args.loss_type)
     model.fit(train_loader)
+
+    elapsed_time = time.time() - s_time
+    time_log.write(f'{args.dataset}_{args.prepro}_{args.test_method}_pointneumf_{args.loss_type}_{args.sample_method},{elapsed_time:.4f}' + '\n')
+    time_log.close()
 
     print('Start Calculating Metrics......')
     # build candidates set

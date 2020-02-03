@@ -132,6 +132,9 @@ if __name__ == '__main__':
                         help='back forward method')
     args = parser.parse_args()
 
+    # store running time
+    time_log = open('time_log.txt', 'a')
+
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
     cudnn.benchmark = True
 
@@ -217,6 +220,7 @@ if __name__ == '__main__':
             test_ucands[k] = list(v | set(samples))
         assert len(test_ucands[k]) == args.cand_num, print(len(test_ucands[k]))
 
+    s_time = time.time()
     count, best_ndcg = 0, 0
     for epoch in range(args.epochs):
         model.train() # Enable dropout (if have).
@@ -263,6 +267,10 @@ if __name__ == '__main__':
             torch.save(model, f'./tmp/best_{args.dataset}_{args.prepro}_{args.test_method}_{args.loss_type}_{args.sample_method}.pt')
 
     print("End. Best epoch {:03d}: NDCG = {:.3f}".format(best_epoch, best_ndcg))
+
+    elapsed_time = time.time() - s_time
+    time_log.write(f'{args.dataset}_{args.prepro}_{args.test_method}_pointneumf_{args.loss_type}_{args.sample_method},{elapsed_time:.4f}' + '\n')
+    time_log.close()
 
     # get predict result with best model
     best_model = torch.load(f'./tmp/best_{args.dataset}_{args.prepro}_{args.test_method}_{args.loss_type}_{args.sample_method}.pt')
