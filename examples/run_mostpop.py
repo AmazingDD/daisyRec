@@ -1,4 +1,5 @@
 import os
+import time
 import logging
 import logging.config
 import argparse
@@ -61,6 +62,8 @@ if __name__ == '__main__':
                         help='Initial selected number of Most-popular')
     args = parser.parse_args()
 
+    time_log = open('time_log.txt', 'a')
+
     '''Test Process for Metrics Exporting'''
     # df, user_num, item_num = load_rate(args.dataset, args.prepro)
     # train_set, test_set = split_test(df, args.test_method, args.test_size)
@@ -80,12 +83,20 @@ if __name__ == '__main__':
     total_train_ur = get_ur(train_set)
     
     print('='*50, '\n')
+
+    s_time = time.time()
+
     print('Start Calculating Metrics......')
     # get predict result
     # retrain model by the whole train set
     # build recommender model
     model = MostPop(args.pop_n)
     model.fit(train_set)
+
+    elapsed_time = time.time() - s_time
+    time_log.write(f'{args.dataset}_{args.prepro}_{args.test_method}_mostpop_{args.sample_method},{elapsed_time:.4f}' + '\n')
+    time_log.close()
+
     preds = model.predict(test_ur, total_train_ur, args.topk)
 
     # convert rank list to binary-interaction
