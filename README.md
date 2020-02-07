@@ -54,6 +54,8 @@ Make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 - RSVD2
 - SVD++
 - AutoEncoder
+- NFM
+- DeepFM
 
 #### _Point-wise with cross-entropy-loss(CL)/square-loss(SL)_ 
 
