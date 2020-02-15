@@ -1,5 +1,6 @@
 import os
 import gc
+import re
 import json
 import random
 import numpy as np
@@ -11,7 +12,7 @@ import torch.utils.data as data
 from collections import defaultdict
 from sklearn.model_selection import KFold, train_test_split
 
-def load_rate(src='ml-100k', prepro='origin', binary=True):
+def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
     # which dataset will use
     if src == 'ml-100k':
         df = pd.read_csv(f'./data/{src}/u.data', sep='\t', header=None, 
@@ -127,66 +128,45 @@ def load_rate(src='ml-100k', prepro='origin', binary=True):
     else:
         raise ValueError('Invalid Dataset Error')
 
+    # set rating >= threshold as positive samples
+    if pos_threshold is not None:
+        df = df.query(f'rating >= {pos_threshold}').reset_index(drop=True)
+
     # reset rating to interaction, here just treat all rating as 1
     if binary:
         df['rating'] = 1.0
 
     # which type of pre-dataset will use
     if prepro == 'origin':
-        # encoding user_id and item_id
-        df['user'] = pd.Categorical(df['user']).codes
-        df['item'] = pd.Categorical(df['item']).codes
+        pass
 
-        user_num = df['user'].nunique()
-        item_num = df['item'].nunique()
+    elif prepro.endswith('core'):
+        pattern = re.compile(r'\d+')
+        core_num = int(pattern.findall(prepro)[0])
 
-        print(f'Finish loading [{src}]-[{prepro}] dataset')
-        return df, user_num, item_num
-
-    elif prepro == '5core':
         tmp1 = df.groupby(['user'], as_index=False)['item'].count()
         tmp1.rename(columns={'item': 'cnt_item'}, inplace=True)
         tmp2 = df.groupby(['item'], as_index=False)['user'].count()
         tmp2.rename(columns={'user': 'cnt_user'}, inplace=True)
         df = df.merge(tmp1, on=['user']).merge(tmp2, on=['item'])
-        df = df.query('cnt_item >= 5 and cnt_user >= 5').reset_index(drop=True).copy()
+        df = df.query(f'cnt_item >= {core_num} and cnt_user >= {core_num}').reset_index(drop=True).copy()
         df.drop(['cnt_item', 'cnt_user'], axis=1, inplace=True)
         del tmp1, tmp2
         gc.collect()
-
-        # encoding user_id and item_id
-        df['user'] = pd.Categorical(df['user']).codes
-        df['item'] = pd.Categorical(df['item']).codes
-
-        user_num = df['user'].nunique()
-        item_num = df['item'].nunique()
-
-        print(f'Finish loading [{src}]-[{prepro}] dataset')
-        return df, user_num, item_num
-
-    elif prepro == '10core':
-        tmp1 = df.groupby(['user'], as_index=False)['item'].count()
-        tmp1.rename(columns={'item': 'cnt_item'}, inplace=True)
-        tmp2 = df.groupby(['item'], as_index=False)['user'].count()
-        tmp2.rename(columns={'user': 'cnt_user'}, inplace=True)
-        df = df.merge(tmp1, on=['user']).merge(tmp2, on=['item'])
-        df = df.query('cnt_item >= 10 and cnt_user >= 10').reset_index(drop=True).copy()
-        df.drop(['cnt_item', 'cnt_user'], axis=1, inplace=True)
-        del tmp1, tmp2
-        gc.collect()
-
-        # encoding user_id and item_id
-        df['user'] = pd.Categorical(df['user']).codes
-        df['item'] = pd.Categorical(df['item']).codes
-
-        user_num = df['user'].nunique()
-        item_num = df['item'].nunique()
-        
-        print(f'Finish loading [{src}]-[{prepro}] dataset')
-        return df, user_num, item_num
 
     else:
-        raise ValueError('Invalid dataset preprocess type, origin/5core/10core expected')
+        raise ValueError('Invalid dataset preprocess type, origin/Ncore (N is int number) expected')
+
+    # encoding user_id and item_id
+    df['user'] = pd.Categorical(df['user']).codes
+    df['item'] = pd.Categorical(df['item']).codes
+
+    user_num = df['user'].nunique()
+    item_num = df['item'].nunique()
+
+    print(f'Finish loading [{src}]-[{prepro}] dataset')
+
+    return df, user_num, item_num
 
 def negative_sampling(user_num, item_num, df, num_ng=4, neg_label_val=0., sample_method='uniform'):
     """
@@ -247,7 +227,11 @@ def split_test(df, test_method='fo', test_size=.2):
                         'tfo': split by ratio with timesstamp
                         'tloo': leave one out with timestamp
                         'loo': leave one out
+                        TODO 'ufo': split by ratio in user level
     """
+    if test_method == 'ufo':
+        pass
+
     if test_method == 'tfo':
         # df = df.sample(frac=1)
         df = df.sort_values(['timestamp']).reset_index(drop=True)
@@ -280,15 +264,15 @@ def split_test(df, test_method='fo', test_size=.2):
 
     return train_set, test_set
 
-def split_validation(train_set, val_method='fo', fold_num=5, test_size=.1):
+def split_validation(train_set, val_method='fo', fold_num=5, val_size=.1):
     """
     Parameter
     ---------
     :param train_set: train set waiting for split validation
     :param val_method: way to split validation
                        'cv': combine with fold_num => fold_num-CV
-                       'fo': combine with fold_num & test_size => fold_num-Split by ratio(9:1)
-                       'tfo': Split by ratio with timestamp, combine with test_size => 1-Split by ratio(9:1)
+                       'fo': combine with fold_num & val_size => fold_num-Split by ratio(9:1)
+                       'tfo': Split by ratio with timestamp, combine with val_size => 1-Split by ratio(9:1)
                        'tloo': Leave one out with timestamp => 1-Leave one out
                        'loo': combine with fold_num => fold_num-Leave one out
     """
@@ -307,13 +291,13 @@ def split_validation(train_set, val_method='fo', fold_num=5, test_size=.1):
             val_set_list.append(train_set.iloc[val_index, :])
     if val_method == 'fo':
         for _ in range(fold_num):
-            train, validation = train_test_split(train_set, test_size=test_size)
+            train, validation = train_test_split(train_set, test_size=val_size)
             train_set_list.append(train)
             val_set_list.append(validation)
     elif val_method == 'tfo':
         # train_set = train_set.sample(frac=1)
         train_set = train_set.sort_values(['timestamp']).reset_index(drop=True)
-        split_idx = int(np.ceil(len(train_set) * (1 - test_size)))
+        split_idx = int(np.ceil(len(train_set) * (1 - val_size)))
         train_set_list.append(train_set.iloc[:split_idx, :])
         val_set_list.append(train_set.iloc[split_idx:, :])
     elif val_method == 'loo':

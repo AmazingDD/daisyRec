@@ -234,7 +234,7 @@ if __name__ == '__main__':
             if args.loss_type == 'BPR':
                 loss = -(pred_i - pred_j).sigmoid().log().sum()
             elif args.loss_type == 'HL':
-                loss = torch.clamp(1 - (pred_i - pred_j) * label, min=0).sum()
+                loss = torch.clamp(1 - (pred_i - pred_j).sigmoid() * label, min=0).sum()
 
             loss += args.lamda * (model.embed_item_GMF.weight.norm() + model.embed_user_GMF.weight.norm())
             loss += args.lamda * (model.embed_item_MLP.weight.norm() + model.embed_user_MLP.weight.norm())

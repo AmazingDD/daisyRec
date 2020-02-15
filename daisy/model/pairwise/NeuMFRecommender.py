@@ -164,7 +164,7 @@ class PairNeuMF(nn.Module):
                 if self.loss_type == 'BPR':
                     loss = -(pred_i - pred_j).sigmoid().log().sum()
                 elif self.loss_type == 'HL':
-                    loss = torch.clamp(1 - (pred_i - pred_j) * label, min=0).sum()
+                    loss = torch.clamp(1 - (pred_i - pred_j).sigmoid() * label, min=0).sum()
                 else:
                     raise ValueError(f'Invalid loss type: {self.loss_type}')
 
