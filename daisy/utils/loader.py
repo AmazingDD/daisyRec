@@ -10,7 +10,7 @@ import scipy.sparse as sp
 import torch.utils.data as data
 
 from collections import defaultdict
-from sklearn.model_selection import KFold, train_test_split
+from sklearn.model_selection import KFold, train_test_split, GroupShuffleSplit
 
 def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
     # which dataset will use
@@ -230,7 +230,11 @@ def split_test(df, test_method='fo', test_size=.2):
                         TODO 'ufo': split by ratio in user level
     """
     if test_method == 'ufo':
-        pass
+        driver_ids = df['user']
+        _, driver_indices = np.unique(np.array(driver_ids), return_inverse=True)
+        gss = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=2020)
+        for train_idx, test_idx in gss.split(df, groups=driver_indices):
+            train_set, test_set = df.loc[train_idx, :].copy(), df.loc[test_idx, :].copy()
 
     if test_method == 'tfo':
         # df = df.sample(frac=1)
@@ -256,15 +260,17 @@ def split_test(df, test_method='fo', test_size=.2):
 
         # # quick method
         test_index = df.groupby(['user']).apply(lambda grp: np.random.choice(grp.index))
-        test_set = df.loc[test_index, :].reset_index(drop=True).copy()
-        train_set = df[~df.index.isin(test_index)].reset_index(drop=True).copy()
+        test_set = df.loc[test_index, :].copy()
+        train_set = df[~df.index.isin(test_index)].copy()
 
     else:
         raise ValueError('Invalid data_split value, expect: loo, fo, tloo, tfo')
 
+    train_set, test_set = train_set.reset_index(drop=True), test_set.reset_index(drop=True)
+
     return train_set, test_set
 
-def split_validation(train_set, val_method='fo', fold_num=5, val_size=.1):
+def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
     """
     Parameter
     ---------
@@ -275,20 +281,28 @@ def split_validation(train_set, val_method='fo', fold_num=5, val_size=.1):
                        'tfo': Split by ratio with timestamp, combine with val_size => 1-Split by ratio(9:1)
                        'tloo': Leave one out with timestamp => 1-Leave one out
                        'loo': combine with fold_num => fold_num-Leave one out
+                       'ufo': split by ratio in user level with K-fold
     """
     if val_method in ['tloo', 'tfo']:
         cnt = 1
-    elif val_method in ['cv', 'loo', 'fo']:
+    elif val_method in ['cv', 'loo', 'fo', 'ufo']:
         cnt = fold_num
     else:
         raise ValueError('Invalid val_method value, expect: cv, loo, tloo, tfo')
     
     train_set_list, val_set_list = [], []
+    if val_method == 'ufo':
+        driver_ids = train_set['user']
+        _, driver_indices = np.unique(np.array(driver_ids), return_inverse=True)
+        gss = GroupShuffleSplit(n_splits=fold_num, test_size=val_size, random_state=2020)
+        for train_idx, val_idx in gss.split(train_set, groups=driver_indices):
+            train_set_list.append(train_set.loc[train_idx, :])
+            val_set_list.append(train_set.loc[val_idx, :])
     if val_method == 'cv':
         kf = KFold(n_splits=fold_num, shuffle=False, random_state=2019)
         for train_index, val_index in kf.split(train_set):
-            train_set_list.append(train_set.iloc[train_index, :])
-            val_set_list.append(train_set.iloc[val_index, :])
+            train_set_list.append(train_set.loc[train_index, :])
+            val_set_list.append(train_set.loc[val_index, :])
     if val_method == 'fo':
         for _ in range(fold_num):
             train, validation = train_test_split(train_set, test_size=val_size)
