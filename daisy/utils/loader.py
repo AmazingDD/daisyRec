@@ -168,57 +168,6 @@ def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
 
     return df, user_num, item_num
 
-def negative_sampling(user_num, item_num, df, num_ng=4, neg_label_val=0., sample_method='uniform'):
-    """
-    :param user_num: # of users
-    :param item_num: # of items
-    :param df: dataframe for sampling
-    :param num_ng: # of nagative sampling per sample
-    :param neg_label_val: target value for negative samples
-    :param sample_method: 'uniform' discrete uniform 
-                          'item-desc' descending item popularity, high popularity means high probability to choose
-                          'item-ascd' ascending item popularity, low popularity means high probability to choose
-    """
-    assert sample_method in ['uniform', 'item-ascd', 'item-desc'], f'Invalid sampling method: {sample_method}'
-    neg_sample_pool = list(range(item_num))
-    if sample_method != 'uniform':
-        popularity_item_list = df['item'].value_counts().index.tolist()
-        if sample_method == 'item-desc':
-            neg_sample_pool = popularity_item_list
-        elif sample_method == 'item-ascd':
-            neg_sample_pool = popularity_item_list[::-1]
-
-    pair_pos = sp.dok_matrix((user_num, item_num), dtype=np.float32)
-    for _, row in df.iterrows():
-        pair_pos[int(row['user']), int(row['item'])] = 1.0
-
-    neg_df = []
-    for _, row in df.iterrows():
-        u = int(row['user'])
-        i = int(row['item'])
-        r = row['rating']
-        neg_df.append([u, i, r, 1])
-        for _ in range(num_ng):
-            if sample_method == 'uniform':
-                j = np.random.randint(item_num)
-                while (u, j) in pair_pos:
-                    j = np.random.randint(item_num)
-            # since item-desc, item-ascd both use neg_sample_pool to sample negative item
-            elif sample_method in ['item-desc', 'item-ascd']:
-                idx = 0
-                j = int(neg_sample_pool[idx])
-                while (u, j) in pair_pos:
-                    idx += 1
-                    j = int(neg_sample_pool[idx])
-
-            j = int(j)
-            neg_df.append([u, j, neg_label_val, 1])
-
-    neg_df = pd.DataFrame(neg_df, columns=['user', 'item', 'rating', 'timestamp'])
-    print('Finish negative sampling......')
-
-    return neg_df
-
 def split_test(df, test_method='fo', test_size=.2):
     """
     :param df: raw data waiting for test set splitting
@@ -377,14 +326,93 @@ def build_feat_idx_dict(df:pd.DataFrame,
 
     return feat_idx_dict, cnt
 
-class PointMFData(data.Dataset):
-    def __init__(self, sampled_df):
-        super(PointMFData, self).__init__()
+class Sampler(object):
+    def __init__(self, user_num, item_num, num_ng=4, sample_method='item-desc', sample_ratio=0):
+        """
+        :param num_ng: # of nagative sampling per sample
+        :param neg_label_val: target value for negative samples
+        :param sample_method: 'uniform' discrete uniform 
+                          'item-desc' descending item popularity, high popularity means high probability to choose
+                          'item-ascd' ascending item popularity, low popularity means high probability to choose
+        """
+        self.user_num = user_num
+        self.item_num = item_num
+        self.num_ng = num_ng
+        self.sample_method = sample_method
+        self.sample_ratio = sample_ratio
+
+        assert sample_method in ['uniform', 'item-ascd', 'item-desc'], f'Invalid sampling method: {sample_method}'
+        assert 0 <= sample_ratio <= 1, 'Invalid sample ratio value'
+
+    def transform(self, sampled_df, is_training=True):
+        if not is_training:
+            neg_set = []
+            for _, row in sampled_df.iterrows():
+                u = int(row['user'])
+                i = int(row['item'])
+                r = row['rating']
+                js = []
+                neg_set.append([u, i, r, js])
+            
+            return neg_set
+
+        user_num = self.user_num
+        item_num = self.item_num
+        pair_pos = sp.dok_matrix((user_num, item_num), dtype=np.float32)
+        for _, row in sampled_df.iterrows():
+            pair_pos[int(row['user']), int(row['item'])] = 1.0
+
+        neg_sample_pool = list(range(item_num))
+        popularity_item_list = sampled_df['item'].value_counts().index.tolist()
+        if self.sample_method == 'item-desc':
+            neg_sample_pool = popularity_item_list
+        elif self.sample_method == 'item-ascd':
+            neg_sample_pool = popularity_item_list[::-1]
+        
+        neg_set = []
+        uni_num = int(self.num_ng * (1 - self.sample_ratio))
+        ex_num = self.num_ng - uni_num
+        for _, row in sampled_df.iterrows():
+            u = int(row['user'])
+            i = int(row['item'])
+            r = row['rating']
+
+            js = []
+            for _ in range(uni_num):
+                j = np.random.randint(item_num)
+                while (u, j) in pair_pos:
+                    j = np.random.randint(item_num)
+                js.append(j)
+            for _ in range(ex_num):
+                if self.sample_method in ['item-desc', 'item-ascd']:
+                    idx = 0
+                    j = int(neg_sample_pool[idx])
+                    while (u, j) in pair_pos:
+                        idx += 1
+                        j = int(neg_sample_pool[idx])
+                    js.append(j)
+                else:
+                    # maybe add other sample methods in future
+                    pass
+            neg_set.append([u, i, r, js])
+
+        print(f'Finish negative samplings, sample number is {len(neg_set) * self.num_ng}......')
+
+        return neg_set
+
+class PointData(data.Dataset):
+    def __init__(self, neg_set, is_training=True, neg_label_val=0.):
+        super(PointData, self).__init__()
         self.features_fill = []
         self.labels_fill = []
-        for _, row in sampled_df.iterrows():
-            self.features_fill.append([int(row['user']), int(row['item'])])
-            self.labels_fill.append(row['rating'])
+        for u, i, r, js in neg_set:
+            self.features_fill.append([int(u), int(i)])
+            self.labels_fill.append(r)
+            
+            if is_training:
+                for j in js:
+                    self.features_fill.append([int(u), int(j)])
+                    self.labels_fill.append(neg_label_val)
         self.labels_fill = np.array(self.labels_fill, dtype=np.float32)
 
     def __len__(self):
@@ -400,192 +428,21 @@ class PointMFData(data.Dataset):
 
         return user, item, label
 
-class PointFMData(data.Dataset):
-    def __init__(self, sampled_df, feat_idx_dict, 
-                 cat_cols, num_cols, loss_type='square_loss'):
-        super(PointFMData, self).__init__()
-
-        self.labels = []
-        self.features = []
-        self.feature_values = []
-
-        assert loss_type in ['square_loss', 'log_loss'], 'Invalid loss type'
-        for _, row in sampled_df.iterrows():
-            feat, feat_value = [], []
-            for col in cat_cols:
-                feat.append(feat_idx_dict[col] + row[col])
-                feat_value.append(1)
-            for col in num_cols:
-                feat.append(feat_idx_dict[col])
-                feat_value.append(row[col])
-            self.features.append(np.array(feat, dtype=np.int64))
-            self.feature_values.append(np.array(feat_value, dtype=np.float32))
-
-            if loss_type == 'square_loss':
-                self.labels.append(np.float32(row['rating']))
-            else: # log_loss
-                label = 1 if float(row['rating']) > 0 else 0
-                self.labels.append(label)
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, idx):
-        labels = self.labels[idx]
-        features = self.features[idx]
-        feature_values = self.feature_values[idx]
-        return features, feature_values, labels
-
-class PairFMData(data.Dataset):
-    def __init__(self, sampled_df, feat_idx_dict, item_num, num_ng, 
-                 is_training=True, sample_method='uniform'):
-        """
-        :param prime sampled_df: dataframe used for sampling
-        :param feat_idx_dict: feature index dictionary
-        :param item_num: # of item
-        :param num_ng: # of negative samples
-        :param is_training: whether sampled data used for training
-        :param sample_method: 'uniform' discrete uniform 
-                              'item-desc' descending item popularity, high popularity means high probability to choose
-                              'item-ascd' ascending item popularity, low popularity means high probability to choose
-        """
-        assert sample_method in ['uniform', 'item-ascd', 'item-desc'], f'Invalid sampling method: {sample_method}'
-        neg_sample_pool = list(range(item_num))
-        if sample_method != 'uniform':
-            popularity_item_list = sampled_df['item'].value_counts().index.tolist()
-            if sample_method == 'item-desc':
-                neg_sample_pool = popularity_item_list
-            elif sample_method == 'item-ascd':
-                neg_sample_pool = popularity_item_list[::-1]
-
-        self.features = []
-        self.feature_values = []
-        self.labels = []
-
-        if is_training:
-            pair_pos = set()
-            for _, row in sampled_df.iterrows():
-                pair_pos.add((int(row['user']), int(row['item'])))
-            print('Finish build positive matrix......')
-
-        # construct whole data with negative sampling
-        for _, row in sampled_df.iterrows():
-            u, i = int(row['user']), int(row['item'])
-            if is_training:
-                # negative samplings
-                for _ in range(num_ng):
-                    if sample_method == 'uniform':
-                        j = np.random.randint(item_num)
-                        while (u, j) in pair_pos:
-                            j = np.random.randint(item_num)
-                    elif sample_method in ['item-desc', 'item-ascd']:
-                        idx = 0
-                        j = int(neg_sample_pool[idx])
-                        while (u, j) in pair_pos:
-                            idx += 1
-                            j = int(neg_sample_pool[idx])
-                    r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
-                    # TODO if you get a more detail feature dataframe, you need to optimize this part
-                    self.features.append([np.array([u + feat_idx_dict['user'], 
-                                                    i + feat_idx_dict['item']], dtype=np.int64), 
-                                          np.array([u + feat_idx_dict['user'], 
-                                                    j + feat_idx_dict['item']], dtype=np.int64)])
-                    self.feature_values.append([np.array([1, 1], dtype=np.float32), 
-                                                np.array([1, 1], dtype=np.float32)])
-
-                    self.labels.append(np.array(r))
-                    
-            else:
-                j = i
-                r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
-                # TODO if you get a more detail feature dataframe, you need to optimize this part
-                self.features.append([np.array([u + feat_idx_dict['user'], 
-                                                i + feat_idx_dict['item']], dtype=np.int64), 
-                                     np.array([u + feat_idx_dict['user'], 
-                                               j + feat_idx_dict['item']], dtype=np.int64)])
-                self.feature_values.append([np.array([1, 1], dtype=np.float32), 
-                                            np.array([1, 1], dtype=np.float32)])
-                self.labels.append(np.array(r))
-
-    def __len__(self):
-        return len(self.features)
-
-    def __getitem__(self, idx):
-        features = self.features
-        feature_values = self.feature_values
-        labels = self.labels
-
-        features_i = features[idx][0]
-        features_j = features[idx][1]
-
-        feature_values_i = feature_values[idx][0]
-        feature_values_j = feature_values[idx][1]
-
-        labels = labels[idx]
-
-        return features_i, feature_values_i, features_j, feature_values_j, labels
-
-
-class PairMFData(data.Dataset):
-    def __init__(self, sampled_df, user_num, item_num, num_ng, is_training=True, sample_method='uniform'):
-        """
-        :param sampled_df: prime dataframe used for sampling
-        :param user_num: # of user
-        :param item_num: # of item
-        :param num_ng: # of negative samples
-        :param is_training: whether sampled data used for training
-        :param sample_method: 'uniform' discrete uniform 
-                              'item-desc' descending item popularity, high popularity means high probability to choose
-                              'item-ascd' ascending item popularity, low popularity means high probability to choose
-        """
-        assert sample_method in ['uniform', 'item-ascd', 'item-desc'], f'Invalid sampling method: {sample_method}'
-        neg_sample_pool = list(range(item_num))
-        if sample_method != 'uniform':
-            popularity_item_list = sampled_df['item'].value_counts().index.tolist()
-            if sample_method == 'item-desc':
-                neg_sample_pool = popularity_item_list
-            elif sample_method == 'item-ascd':
-                neg_sample_pool = popularity_item_list[::-1]
-
-        super(PairMFData, self).__init__()
-        self.is_training = is_training
-        self.num_ng = num_ng
-        self.sample_num = len(sampled_df)
+class PairData(data.Dataset):
+    def __init__(self, neg_set, is_training=True, neg_label_val=0.):
+        super(PairData, self).__init__()
         self.features_fill = []
 
-        if is_training:
-            pair_pos = sp.dok_matrix((user_num, item_num), dtype=np.float32)
-            for _, row in sampled_df.iterrows():
-                pair_pos[int(row['user']), int(row['item'])] = 1.0
-            print('Finish build positive matrix......')
-
-        for _, row in sampled_df.iterrows():
-            u, i = int(row['user']), int(row['item'])
+        for u, i, r, js in neg_set:
+            u, i, r = int(u), int(i), np.float32(1)
             if is_training:
-                # negative samplings
-                for _ in range(num_ng):
-                    if sample_method == 'uniform':
-                        j = np.random.randint(item_num)
-                        while (u, j) in pair_pos:
-                            j = np.random.randint(item_num)
-                    elif sample_method in ['item-ascd', 'item-desc']:
-                        idx = 0
-                        j = int(neg_sample_pool[idx])
-                        while (u, j) in pair_pos:
-                            idx += 1
-                            j = int(neg_sample_pool[idx])
-                    j = int(j)
-                    r = np.float32(1)  # guarantee r_{ui} >_u r_{uj}
+                for j in js:
                     self.features_fill.append([u, i, j, r])
             else:
-                r = np.float32(1)
                 self.features_fill.append([u, i, i, r])
 
-        if is_training:
-            print(f'Finish negative samplings, sample number is {len(self.features_fill)}......')
-    
     def __len__(self):
-        return self.num_ng * self.sample_num if self.is_training else self.sample_num
+        return len(self.features_fill)
 
     def __getitem__(self, idx):
         features = self.features_fill
@@ -596,8 +453,70 @@ class PairMFData(data.Dataset):
 
         return user, item_i, item_j, label
 
-""" Item2Vec Specific Process """
+class UAEData(data.Dataset):  # user-level auto-encoder data generator
+    def __init__(self, user_num, item_num, train_set, test_set):
+        super(UAEData, self).__init__()
+        self.user_num = user_num
+        self.item_num = item_num
+
+        self.R = sp.dok_matrix((user_num, item_num), dtype=np.float32)  # true label
+        self.mask_R = sp.dok_matrix((user_num, item_num), dtype=np.float32) # only concern interaction known
+        self.user_idx = np.array(range(user_num))
+
+        for _, row in train_set.iterrows():
+            user, item = int(row['user']), int(row['item'])
+            self.R[user, item] = 1.
+            self.mask_R[user, item] = 1.
+
+        for _, row in test_set.iterrows():
+            user, item = int(row['user']), int(row['item'])
+            self.R[user, item] = 1.
+
+    def __len__(self):
+        return self.user_num
+
+    def __getitem__(self, idx):
+        u = self.user_idx[idx]
+        ur = self.R[idx].A
+        mask_ur = self.mask_R[idx].A
+
+        return u, ur, mask_ur
+
+class IAEData(data.Dataset):  # item-level auto-encoder data generator
+    def __init__(self, user_num, item_num, train_set, test_set):
+        super(IAEData, self).__init__()
+        self.user_num = user_num
+        self.item_num = item_num
+        
+        self.R = sp.dok_matrix((item_num, user_num), dtype=np.float32)  # true label
+        self.mask_R = sp.dok_matrix((item_num, user_num), dtype=np.float32) # only concern interaction known
+        self.item_idx = np.array(range(item_num))
+
+        for _, row in train_set.iterrows():
+            user, item = int(row['user']), int(row['item'])
+            self.R[item, user] = 1.
+            self.mask_R[item, user] = 1.
+
+        for _, row in test_set.iterrows():
+            user, item = int(row['user']), int(row['item'])
+            self.R[item, user] = 1.
+
+    def __len__(self):
+        return self.item_num
+
+    def __getitem__(self, idx):
+        i = self.item_idx[idx]
+        ir = self.R[idx].A
+        mask_ir = self.mask_R[idx].A
+
+        return i, ir, mask_ir
+
+##############################################################################
 class BuildCorpus(object):
+    """ 
+    Item2Vec Specific Process 
+    building item-corpus by dataframe
+    """
     def __init__(self, corpus_df, window=None, max_item_num=20000, unk='<UNK>'):
         # if window is None, means no timestamp, then set max series length as window size
         bad_window = corpus_df.groupby('user')['item'].count().max()
@@ -667,26 +586,27 @@ class PermutedSubsampledCorpus(data.Dataset):
         iitem, oitems = self.dt[idx]
         return iitem, np.array(oitems)
 
-""" AE Specific Process """
-class AEData(data.Dataset):
-    def __init__(self, user_num, item_num, df):
-        super(AEData, self).__init__()
-        self.user_num = user_num
-        self.item_num = item_num
+def get_weights(wc, idx2item, ss_t, whether_weights):
+    wf = np.array([wc[item] for item in idx2item])
+    wf = wf / wf.sum()
+    ws = 1 - np.sqrt(ss_t / wf)
+    ws = np.clip(ws, 0, 1)
+    vocab_size = len(idx2item)
+    weights = wf if whether_weights else None
 
-        self.R = np.zeros((user_num, item_num))
-        self.mask_R = np.zeros((user_num, item_num))
+    return vocab_size, weights
 
-        for _, row in df.iterrows():
-            user, item, rating = int(row['user']), int(row['item']), row['rating']
-            self.R[user, item] = float(rating)
-            self.mask_R[user, item] = 1.
+def Item2VecData(train_set, test_set, window, item_num, batch_size, ss_t=1e-5, unk='<UNK>', weights=None):
+    df = pd.concat([train_set, test_set], ignore_index=True)
+    pre = BuildCorpus(df, window, item_num + 1, unk)
+    pre.build()
 
-    def __len__(self):
-        return self.user_num
+    dt = pre.convert(train_set)
+    vocab_size, weights = get_weights(pre.wc, pre.idx2item, ss_t, weights)
+    data_set = PermutedSubsampledCorpus(dt)  
+    data_loader = data.DataLoader(data_set, batch_size=batch_size, shuffle=True) 
 
-    def __getitem__(self, idx):
-        r = self.R[idx]
-        mask_r = self.mask_R[idx]
+    return data_loader, vocab_size, pre.item2idx
 
-        return mask_r, r
+##############################################################################
+

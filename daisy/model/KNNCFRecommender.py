@@ -5,7 +5,7 @@ import scipy.sparse as sp
 from enum import Enum
 from collections import defaultdict
 
-from daisy.model.simlib_python import Compute_Similarity_Python
+from daisy.model.lib.simlib_python import Compute_Similarity_Python
 
 class SimilarityFunction(Enum):
     COSINE = "cosine"
@@ -55,14 +55,10 @@ class Compute_Similarity:
             else:
                 use_implementation = "cython"
 
-
-
-
-
         if use_implementation == "cython":
 
             try:
-                from daisy.model.simlib_cython import Compute_Similarity_Cython
+                from daisy.model.lib.simlib_cython import Compute_Similarity_Cython
                 self.compute_similarity_object = Compute_Similarity_Cython(dataMatrix, **args)
 
             except ImportError:
@@ -83,13 +79,12 @@ class Compute_Similarity:
 class ItemKNNCF(object):
     """ ItemKNN recommender"""
     def __init__(self, user_num, item_num, maxk=40, shrink=100, 
-                 similarity='cosine', min_k=1, normalize=True,
+                 similarity='cosine', normalize=True,
                  tune_or_not=False, serial='ml-100k-origin-loo-0-cosine'):
         self.user_num = user_num
         self.item_num = item_num
 
         self.k = maxk
-        self.min_k = min_k
         self.shrink = shrink
         self.normalize = normalize
         self.similarity = similarity
@@ -145,13 +140,12 @@ class ItemKNNCF(object):
 class UserKNNCF(object):
     """ UserKNN recommender"""
     def __init__(self, user_num, item_num, maxk=40, shrink=100, 
-                 similarity='cosine', min_k=1, normalize=True, 
+                 similarity='cosine', normalize=True, 
                  tune_or_not=False, serial='ml-100k-origin-loo-0-cosine'):
         self.user_num = user_num
         self.item_num = item_num
 
         self.k = maxk
-        self.min_k = min_k
         self.shrink = shrink
         self.normalize = normalize
         self.similarity = similarity

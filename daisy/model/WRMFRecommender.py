@@ -6,22 +6,29 @@ from tqdm import tqdm
 from scipy.sparse.linalg import spsolve
 
 class WRMF(object):
-    def __init__(self, user_num, item_num, df, lambda_val=0.1, alpha=40, 
-                 iterations=10, factor_num=20, seed=2019):
+    def __init__(self, 
+                 user_num, 
+                 item_num, 
+                 df, 
+                 factors=20,
+                 epochs=10, 
+                 alpha=40,
+                 reg_2=0.1,  
+                 seed=2019):
         train_set = self._convert_df(user_num, item_num, df)
 
-        self.epochs = iterations
+        self.epochs = epochs
         self.rstate = np.random.RandomState(seed)
         self.C = alpha * train_set
         self.user_num, self.item_num = user_num, item_num
 
         self.X = sp.csr_matrix(self.rstate.normal(scale=0.01, 
-                                                  size=(user_num, factor_num)))
+                                                  size=(user_num, factors)))
         self.Y = sp.csr_matrix(self.rstate.normal(scale=0.01, 
-                                                  size=(item_num, factor_num)))
+                                                  size=(item_num, factors)))
         self.X_eye = sp.eye(user_num)
         self.Y_eye = sp.eye(item_num)
-        self.lambda_eye = lambda_val * sp.eye(factor_num)
+        self.lambda_eye = reg_2 * sp.eye(factors)
 
     def fit(self):
         for _ in tqdm(range(self.epochs)):
