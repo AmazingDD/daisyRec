@@ -6,6 +6,8 @@ __pycache__/
 /data/netflix/
 *.zip
 
+time_log.txt
+
 # C extensions
 *.so
 
