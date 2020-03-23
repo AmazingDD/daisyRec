@@ -1,3 +1,9 @@
-pandas>=0.24.2
-numpy
-Cython
+numpy==1.18.0
+pandas==0.25.1
+scipy==1.2.1
+Cython==0.29.14
+scikit-learn==0.21.3
+tqdm==4.31.1
+torch==1.1.0
+networkx==2.2
+hyperopt
