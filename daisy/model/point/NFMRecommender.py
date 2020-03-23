@@ -30,6 +30,8 @@ class PointNFM(nn.Module):
 		batch_norm: bool type, whether to use batch norm or not,
 		q: the dropout rate for FM and MLP,
 		"""
+        super(PointNFM, self).__init__()
+
         self.factors = factors
         self.act_function = act_function
         self.num_layers = num_layers

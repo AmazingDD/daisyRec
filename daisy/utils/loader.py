@@ -326,6 +326,28 @@ def build_feat_idx_dict(df:pd.DataFrame,
 
     return feat_idx_dict, cnt
 
+def convert_npy_mat(user_num, item_num, df):
+    mat = np.zeros((user_num, item_num))
+    for _, row in df.iterrows():
+        u, i, r = row['user'], row['item'], row['rating']
+        mat[int(u), int(i)] = float(r)
+    return mat
+
+def build_candidates_set(test_ur, train_ur, item_pool, candidates_num):
+    test_ucands = defaultdict(list)
+    for k, v in test_ur.items():
+        sample_num = candidates_num - len(v) if len(v) < candidates_num else 0
+        sub_item_pool = item_pool - v - train_ur[k] # remove GT & interacted
+        sample_num = min(len(sub_item_pool), sample_num)
+        if sample_num == 0:
+            samples = random.sample(v, candidates_num)
+            test_ucands[k] = list(set(samples))
+        else:
+            samples = random.sample(sub_item_pool, sample_num)
+            test_ucands[k] = list(v | set(samples))
+    
+    return test_ucands
+
 class Sampler(object):
     def __init__(self, user_num, item_num, num_ng=4, sample_method='item-desc', sample_ratio=0):
         """
@@ -392,8 +414,11 @@ class Sampler(object):
                         j = int(neg_sample_pool[idx])
                     js.append(j)
                 else:
-                    # maybe add other sample methods in future
-                    pass
+                    # maybe add other sample methods in future, uniform as default
+                    j = np.random.randint(item_num)
+                    while (u, j) in pair_pos:
+                        j = np.random.randint(item_num)
+                    js.append(j)
             neg_set.append([u, i, r, js])
 
         print(f'Finish negative samplings, sample number is {len(neg_set) * self.num_ng}......')
@@ -477,8 +502,8 @@ class UAEData(data.Dataset):  # user-level auto-encoder data generator
 
     def __getitem__(self, idx):
         u = self.user_idx[idx]
-        ur = self.R[idx].A
-        mask_ur = self.mask_R[idx].A
+        ur = self.R[idx].A.squeeze()
+        mask_ur = self.mask_R[idx].A.squeeze()
 
         return u, ur, mask_ur
 
@@ -506,8 +531,8 @@ class IAEData(data.Dataset):  # item-level auto-encoder data generator
 
     def __getitem__(self, idx):
         i = self.item_idx[idx]
-        ir = self.R[idx].A
-        mask_ir = self.mask_R[idx].A
+        ir = self.R[idx].A.squeeze()
+        mask_ir = self.mask_R[idx].A.squeeze()
 
         return i, ir, mask_ir
 

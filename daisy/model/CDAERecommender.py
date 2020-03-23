@@ -9,7 +9,7 @@ import torch.backends.cudnn as cudnn
 class CDAE(nn.Module):
     def __init__(self, 
                  rating_mat,
-                 factors=50, 
+                 factors=20, 
                  act_activation='relu', 
                  out_activation='sigmoid', 
                  epochs=10,
@@ -20,7 +20,7 @@ class CDAE(nn.Module):
                  loss_type='CL',
                  gpuid='0',
                  early_stop=True):
-
+        super(CDAE, self).__init__()
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
         cudnn.benchmark = True
 
@@ -32,6 +32,7 @@ class CDAE(nn.Module):
         self.reg_1 = reg_1
         self.reg_2 = reg_2
         self.early_stop = early_stop
+        self.epochs = epochs
         self.lr = lr
         self.loss_type=loss_type
         self.h_item = nn.Linear(item_num, factors)
@@ -108,6 +109,7 @@ class CDAE(nn.Module):
                 mask_ur = mask_ur.float()
 
                 pred = self.forward(user, mask_ur)
+
                 loss = criterion(pred * mask_ur, ur * mask_ur)  # only concern loss with known interaction
                 # l1-regularization
                 loss += self.reg_1 * (self.h_user.weight.norm(p=1) + self.h_item.weight.norm(p=1))
@@ -129,7 +131,6 @@ class CDAE(nn.Module):
             else:
                 last_loss = current_loss
 
-        # TODO pre-predict
         x_user = torch.tensor(list(range(self.user_num)))
         x_items = torch.tensor(self.rating_mat).float()
         self.prediction = self.forward(x_user, x_items)

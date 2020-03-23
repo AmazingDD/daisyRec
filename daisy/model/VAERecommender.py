@@ -13,6 +13,7 @@ class VAE(nn.Module):
                  rating_mat,
                  q_dims=None,
                  q=0.5,
+                 epochs=10,
                  lr=1e-3,
                  reg_1=0.,
                  reg_2=0.,
@@ -21,6 +22,7 @@ class VAE(nn.Module):
                  early_stop=True):
         super(VAE, self).__init__()
 
+        self.epochs = epochs
         self.lr = lr
         self.reg_1 = reg_1
         self.reg_2 = reg_2
@@ -175,9 +177,8 @@ class VAE(nn.Module):
             else:
                 last_loss = current_loss
 
-        # TODO pre-predict
         x_items = torch.tensor(self.rating_mat).float()
-        self.prediction = self.forward(x_items)
+        self.prediction = self.forward(x_items)[0]
         self.prediction.clamp_(min=0, max=5)
         self.prediction = self.prediction.detach().numpy()
         
