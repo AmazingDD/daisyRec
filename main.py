@@ -127,7 +127,7 @@ if __name__ == '__main__':
     parser.add_argument('--no_batch_norm', 
                         action='store_false', 
                         default=True, 
-                        help='whether do batch normalization in interio layers')
+                        help='whether do batch normalization in interior layers')
     args = parser.parse_args()
 
     # store running time in time_log file
