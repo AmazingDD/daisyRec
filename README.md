@@ -32,6 +32,7 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 
 ## TODO list
 
+- [X] DeepFM algorithm module
 - [ ] NGCF algorithm module
 - [ ] weight initialization interface
 
