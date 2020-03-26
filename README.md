@@ -41,7 +41,7 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper (please keep us posted, we would love to know if Daisy was helpful to you)
 
 ```
-@misc{yudi2017daisyrec,
+@misc{yudi2020daisyrec,
   title={DaisyRec},
   author={Yu Di},
   year={2020},
