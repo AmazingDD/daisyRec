@@ -36,13 +36,13 @@ ext = '.pyx' if USE_CYTHON else '.c'
 
 extensions = [
     Extension(
-        name='daisy.model.lib.matrix_factorization', 
-        sources=['daisy/model/lib/matrix_factorization' + ext], 
+        name='daisy.model.extensions.matrix_factorization', 
+        sources=['daisy/model/extensions/matrix_factorization' + ext], 
         include_dirs=[np.get_include()]
     ),
     Extension(
-        name='daisy.model.lib.simlib_cython', 
-        sources=['daisy/model/lib/simlib_cython' + ext], 
+        name='daisy.model.extensions.simlib_cython', 
+        sources=['daisy/model/extensions/simlib_cython' + ext], 
         include_dirs=[np.get_include()]
     ),
 ]
