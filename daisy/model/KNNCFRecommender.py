@@ -5,7 +5,7 @@ import scipy.sparse as sp
 from enum import Enum
 from collections import defaultdict
 
-from daisy.model.lib.simlib_python import Compute_Similarity_Python
+from daisy.model.extensions.simlib_python import Compute_Similarity_Python
 
 class SimilarityFunction(Enum):
     COSINE = "cosine"
@@ -58,7 +58,7 @@ class Compute_Similarity:
         if use_implementation == "cython":
 
             try:
-                from daisy.model.lib.simlib_cython import Compute_Similarity_Cython
+                from daisy.model.extensions.simlib_cython import Compute_Similarity_Cython
                 self.compute_similarity_object = Compute_Similarity_Cython(dataMatrix, **args)
 
             except ImportError:
