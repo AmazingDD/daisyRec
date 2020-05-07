@@ -4,7 +4,7 @@
 
 ## Overview
 
-![daisyRec's structure](pics/structure.png)
+<!-- ![daisyRec's structure](pics/structure.png) -->
 
 DaisyRec is a Python toolkit dealing with rating prediction and item ranking issue.
 
@@ -37,7 +37,7 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 - [ ] NGCF algorithm module
 - [ ] weight initialization interface
 
-## Cite
+<!-- ## Cite
 
 Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper (please keep us posted, we would love to know if Daisy was helpful to you)
 
@@ -50,6 +50,8 @@ Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper
   howpublished={\url{https://github.com/AmazingDD/daisyRec}},
 }
 ```
+
+-->
 
 <!-- ## Appendix
 
