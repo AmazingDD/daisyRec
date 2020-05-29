@@ -8,33 +8,24 @@ DaisyRec is a Python toolkit dealing with rating prediction and item ranking iss
 
 The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**r**I**son for recommender **SY**stem.
 
-1. You can download experiment data from links below: 
+You can download experiment data from links below: 
 
-    - [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/)
-    - [MovieLens 1M](https://grouplens.org/datasets/movielens/1m/)
-    - [MovieLens 10M](https://grouplens.org/datasets/movielens/10m/)
-    - [MovieLens 20M](https://grouplens.org/datasets/movielens/20m/)
-    - [Netflix Prize Data](https://archive.org/download/nf_prize_dataset.tar)
-    - [Last.fm](https://grouplens.org/datasets/hetrec-2011/)
-    - [Book Crossing](https://grouplens.org/datasets/book-crossing/)
-    - [Epinions](http://www.cse.msu.edu/~tangjili/trust.html)
-    <!-- - [Pinterest](https://sites.google.com/site/xueatalphabeta/academic-projects) -->
-    - [CiteULike](https://github.com/js05212/citeulike-a)
-    - [Amazon-Book](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv)
-    - [Amazon-Electronic](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Electronics.csv)
-    - [Amazon-Cloth](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Clothing_Shoes_and_Jewelry.csv)
-    - [Amazon-Music](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Digital_Music.csv)
-    - [Yelp Challenge](https://kaggle.com/yelp-dataset/yelp-dataset)
+  - [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/)
+  - [MovieLens 1M](https://grouplens.org/datasets/movielens/1m/)
+  - [MovieLens 10M](https://grouplens.org/datasets/movielens/10m/)
+  - [MovieLens 20M](https://grouplens.org/datasets/movielens/20m/)
+  - [Netflix Prize Data](https://archive.org/download/nf_prize_dataset.tar)
+  - [Last.fm](https://grouplens.org/datasets/hetrec-2011/)
+  - [Book Crossing](https://grouplens.org/datasets/book-crossing/)
+  - [Epinions](http://www.cse.msu.edu/~tangjili/trust.html)
+  - [CiteULike](https://github.com/js05212/citeulike-a)
+  - [Amazon-Book](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv)
+  - [Amazon-Electronic](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Electronics.csv)
+  - [Amazon-Cloth](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Clothing_Shoes_and_Jewelry.csv)
+  - [Amazon-Music](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Digital_Music.csv)
+  - [Yelp Challenge](https://kaggle.com/yelp-dataset/yelp-dataset)
 
-    then put certain dataset into corresponding folder in `data` folder.
-
-3. To get all dependencies, run:
-
-    `pip install -r requirement.txt`
-
-3. Before running, you need first run: 
-`python setup.py build_ext --inplace` 
-to generate `.so` file for `macOS` or `.pyd` file for `WindowsOS` used for further import.
+  then put certain dataset into corresponding folder in `data` folder.
 
 Make sure you have a **CUDA** enviroment to accelarate since these deep-learning models could be based on it.
 
@@ -109,3 +100,59 @@ python run_pair_mf.py --help
 ---
 
 ## Parameter settings
+
+The description of all common parameter settings used by code inside `examples` are listed below:
+
+ - dataset 
+  
+    dataset used for experiments, 'ml-100k', 'ml-1m', 'ml-10m', 'ml-20m', 'lastfm', 'bx', 'amazon-cloth','amazon-electronic', 'amazon-book', 'amazon-music', 'epinions', 'yelp', 'citeulike','netflix'
+
+  - prepro
+
+    method to processing the raw data, 'origin' for raw data, 'Ncore' for preserving user and item both have interactions more than **N**
+
+  - topk
+
+    the length of rank list
+
+  - test_method
+
+    method of train test split. 
+    'fo': split by ratio
+    'tfo': split by ratio with timesstamp
+    'tloo': leave one out with timestamp
+    'loo': leave one out
+    'ufo': split by ratio in user level
+
+  - test_size
+    ratio of test set size
+
+  - val_method
+
+    method of train validation split
+    'cv': combine with fold_num => fold_num-CV
+    'fo': combine with fold_num & val_size => fold_num-Split by ratio(9:1)
+    'tfo': Split by ratio with timestamp, combine with val_size => 1-Split by ratio(9:1)
+    'tloo': Leave one out with timestamp => 1-Leave one out
+    'loo': combine with fold_num => fold_num-Leave one out
+    'ufo': split by ratio in user level with K-fold
+
+  - fold_num
+
+    the number of fold used for validation. only work when 'cv', 'fo' is set
+
+  - cand_num
+
+    the number of candidated items used for ranking
+
+  - sample_method
+
+    negative sampling method, default is 'uniform' , 'item-ascd' for popular item with low rank, 'item-desc' for popular item with high rank
+
+  - num_ng
+
+    the number of negative samples
+
+  the other parameters used for specific algorithms are listed in paper.
+   
+
