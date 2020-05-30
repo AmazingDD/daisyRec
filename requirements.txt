@@ -1,3 +1,8 @@
-pandas>=0.24.2
-numpy
-Cython
+torch>=1.1.0
+Numpy>=1.18.0
+Pandas>=0.24.0
+scikit-learn>=0.21.3
+Cython==0.29.14
+tqdm==4.31.1
+Hyperopt==0.2.4
+scipy==1.2.1
