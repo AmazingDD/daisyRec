@@ -10,7 +10,7 @@ DaisyRec is a Python toolkit dealing with rating prediction and item ranking iss
 
 The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**r**I**son for recommender **SY**stem. The whole framework of Daisy is showed below:
 
-![DaisyRec](pics/frame.jpeg)
+![DaisyRec](pics/DiasyRec.png)
 
 Make sure you have a **CUDA** enviroment to accelarate since these deep-learning models could be based on it.
 
@@ -36,10 +36,6 @@ All data are available in links below:
   - [Amazon-Cloth](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Clothing_Shoes_and_Jewelry.csv)
   - [Amazon-Music](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Digital_Music.csv)
   - [Yelp Challenge](https://kaggle.com/yelp-dataset/yelp-dataset)
-
-## Algorithms
-
-![DaisyRec](pics/DiasyRec.png)
 
 ## How to run
 
