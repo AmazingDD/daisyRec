@@ -2,12 +2,10 @@ import os
 import gc
 from daisy.utils.loader import load_rate, split_test
 
-# 'ml-100k', 'ml-1m', 'ml-10m', 'ml-20m', 'lastfm', 'bx', 'amazon-cloth',
-# 'amazon-electronic', 'amazon-book', 'amazon-music', 'epinions', 'yelp', 'citeulike'
+dataset_list = ['netflix', 'ml-100k', 'ml-1m', 'ml-10m', 'ml-20m', 'lastfm', 'bx', 'amazon-cloth',
+'amazon-electronic', 'amazon-book', 'amazon-music', 'epinions', 'yelp', 'citeulike']
 
-dataset_list = ['netflix']
-
-prepro_list = ['5core', '10core'] # 'origin', 
+prepro_list = ['origin', '5core', '10core']
 
 if not os.path.exists('./experiment_data/'):
     os.makedirs('./experiment_data/')
