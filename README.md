@@ -39,7 +39,7 @@ All data are available in links below:
 
 ## Algorithms
 
-Lorems (pics here)
+![DaisyRec](pics/DiasyRec.png)
 
 ## How to run
 
