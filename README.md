@@ -10,7 +10,7 @@ DaisyRec is a Python toolkit dealing with rating prediction and item ranking iss
 
 The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**r**I**son for recommender **SY**stem. The whole framework of Daisy is showed below:
 
-![DaisyRec](pics/DiasyRec.png)
+<img src="pics/DiasyRec.png" align="center" width="75%" style="margin: 0 auto">
 
 Make sure you have a **CUDA** enviroment to accelarate since these deep-learning models could be based on it.
 
@@ -81,7 +81,7 @@ python run_pair_mf.py --help
 
 The description of all common parameter settings used by code inside `examples` are listed below:
 
-| Commands      | Description on Commands                                      | Choices                                                      | Description on Choices                                       |
+| Commands      | Description on Commands                                      | &nbsp;&nbsp;&nbsp;Choices&nbsp;&nbsp;&nbsp;                                                       | Description on Choices                                       |
 | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | dataset       | the selected datasets                                        | ml-100k';<br>'ml-1m';<br>'ml-10m';<br>'ml-20m';<br>'lastfm';<br>'bx';<br>'amazon-cloth';<br>'amazon-electronic';<br>'amazon-book';<br>'amazon-music';<br>'epinions';<br>'yelp';<br>'citeulike';<br>'netflix' | all choices are the name of dataset                          |
 | prepro        | The data pre-processing methods                              | 'origin';<br>'Ncore'                                         | origin for raw data; <br>Ncore for preserving user and item both have interactions more than **N**.  Notice **N** could be any integer value |
