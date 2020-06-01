@@ -81,7 +81,7 @@ python run_pair_mf.py --help
 
 The description of all common parameter settings used by code inside `examples` are listed below:
 
-| Commands      | Description on Commands                                      | &nbsp;&nbsp;&nbsp;Choices&nbsp;&nbsp;&nbsp;                                                       | Description on Choices                                       |
+| Commands      | Description on Commands                                      | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Choices&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                                                       | Description on Choices                                       |
 | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | dataset       | the selected datasets                                        | ml-100k';<br>'ml-1m';<br>'ml-10m';<br>'ml-20m';<br>'lastfm';<br>'bx';<br>'amazon-cloth';<br>'amazon-electronic';<br>'amazon-book';<br>'amazon-music';<br>'epinions';<br>'yelp';<br>'citeulike';<br>'netflix' | all choices are the name of dataset                          |
 | prepro        | The data pre-processing methods                              | 'origin';<br>'Ncore'                                         | origin for raw data; <br>Ncore for preserving user and item both have interactions more than **N**.  Notice **N** could be any integer value |
