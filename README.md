@@ -69,7 +69,7 @@ Taking the following case as an example: if we want to reproduce the top-20 resu
 
 1. Assume we have already run `data_generator.py` and get the training and test datasets by `tfo` (i.e., time-aware split by ratio method). We should get files named `train_ml-1m_10core_tfo.dat`, `test_ml-1m_10core_tfo.dat` in `./experiment_data/`.
 
-2. The whole procedure contains tuning and testing. Therefore, we first need run `hp_tune_pair_mf.py` to get the best parameter settings. Besides, we can also change the parameter search space in the `hp_tune_pair_mf.py`. Command to run:
+2. The whole procedure contains validation and test. Therefore, we first need to run `hp_tune_pair_mf.py` to get the best parameter settings. Besides, we may change the parameter search space in the `hp_tune_pair_mf.py`. Command to run:
 
 ```
 python hp_tune_pair_mf.py --dataset=ml-1m --prepro=10core --val_method=tfo --test_method=tfo --topk=20 --loss_type=BPR --sample_method=uniform --gpu=0
@@ -107,8 +107,7 @@ The description of all common parameter settings used by code inside `examples` 
 | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | dataset       | the selected datasets                                        | ml-100k;<br>ml-1m;<br>ml-10m;<br>ml-20m;<br>lastfm;<br>bx;<br>amazon-cloth;<br>amazon-electronic;<br>amazon-book;<br>amazon-music;<br>epinions;<br>yelp;<br>citeulike;<br>netflix | all choices are the names of datasets                          |
 | prepro        | The data pre-processing methods                              | origin;<br>Ncore                                         | 'origin' means using the raw data; <br>'Ncore' means only preserving users and items that  have interactions more than **N**.  Notice **N** could be any integer value |
-|val_method<br>test_method | training-validation splitting method<br>training-test splitting method    |
-fo<br>tfo<br>loo<br>tloo<br>cv   |split-by-ratio<br>time-aware split-by-ratio<br>leave one out<br>time-aware leave one out<br>cross validation (only apply to val_method) |
+|val_method<br>test_method | training-validation splitting method<br>training-test splitting method |fo<br>tfo<br>loo<br>tloo<br>cv   |split-by-ratio<br>time-aware split-by-ratio<br>leave one out<br>time-aware leave one out<br>cross validation (only apply to val_method) |
 | topk          | the length of recommendation list                            |                                                              |                                                              |
 | test_size     | ratio of test set size                                       |                                                              |                                                              |
 | fold_num      | the number of fold used for validation (only apply to 'cv', 'fo'). |                                                              |                                                              |
