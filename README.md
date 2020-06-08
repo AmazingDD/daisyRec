@@ -41,19 +41,20 @@ All data are available in links below:
 
 1. Make sure running command `python setup.py build_ext --inplace` to compile dependent extensions before running the other code. After that, you will find file \*.so or \*.pyd file generated in path `daisy/model/`
 
-2. In order to reproduce results, you need run `python data_generator.py` to create `experiment_data` folder with certain public dataset listed in our paper. If you just want to research one certain dataset, you need to modify the code in `data_generator.py` to indicate your demands and let this code yield train and test datasets as you want. In the default situation, `data_generator.py` will generate all kinds of datasets (raw data, 5-core data and 10-core data) with different data splitting methods, including `tloo`, `loo`, `tfo` and `fo`. The meaning of these split methods will be explained in the `Important Commands` of `README`.
+2. In order to reproduce results, you need to run `python data_generator.py` to create `experiment_data` folder with certain public dataset listed in our paper. If you just want to research one certain dataset, you need to modify the code in `data_generator.py` to indicate your demands and let this code yield train and test datasets as you want. In the default situation, `data_generator.py` will generate all kinds of datasets (raw data, 5-core data and 10-core data) with different data splitting methods, including `tloo`, `loo`, `tfo` and `fo`. The meaning of these split methods will be explained in the `Important Commands` of `README`.
 
 <!-- 3. There are parameter tuning codes for validation dataset stored in `nested_tune_kit` and KPI-generating code for test dataset stored in `test_kit`. Each of the code in these folders should be moved into the root path, just the same hierarchy as `data_generator.py`, so that every user could successfully implement this code. Furthermore, if you have an IDE toolkit, you can simply set your work path and run in any folder path. -->
 
-3. There are seperate codes for validation and test, and they are stored in `nested_tune_kit` and `test_kit`, respectively. Each of the code in these folders should be moved into the root path, just the same hierarchy as `data_generator.py` to successfully run these code. Furthermore, if you have an IDE toolkit, you can simply set your work path and run in any folder path. 
+3. There are seperate codes for validation and test, and they are stored in the folders of `nested_tune_kit` and `test_kit`, respectively. Each of the code in these folders should be moved into the root path, just the same directory as `data_generator.py`, so as to successfully run these code. Furthermore, if you have an IDE toolkit, you can simply set your work path and run in any folder path. 
 
 <!--4. As we all know, validation dataset is used for parameter tuning, so we provide *split_validation* interface inside all codes in the `nested_tune_kit` folder. Further and more detail parameter settings information about validation split method is depicted in `daisy/utils/loader.py` -->
 
-4. The validation dataset is used for parameter tuning, so we provide *split_validation* interfact inside the code in the `nested_tune_kit` folder. Further and more detail parameter settings information about validation split method is depicted in `daisy/utils/loader.py`. After finishing validation, the results will be stored in the generated file `tune_log/`.
+4. The validation dataset is used for parameter tuning, so we provide *split_validation* interfact inside the code in the `nested_tune_kit` folder. Further and more detail parameter settings information about validation split method is depicted in `daisy/utils/loader.py`. After finishing validation, the results will be stored in the automatically  generated folder `tune_log/`.
 
-5. Based on the best parameter determined by the validation, run the test code that you moved before and the results will be stored in the generated file `res/`.
+5. Based on the best parameter determined by the validation, run the test code that you moved into the root path before and the results will be stored in the automatically generated folder `res/`.
 
 <!-- 5. After finished operations above, you can just run the code you moved before and wait for the result files generated in `tune_log/` for the tuning procedure or `res/` for the test set ranking results, which is dynamically created while running.
+-->
 
 ## Examples to run:
 
@@ -68,13 +69,13 @@ Taking the following case as an example: if we want to reproduce the top-20 resu
 
 1. Assume we have already run `data_generator.py` and get the training and test datasets by `tfo` (i.e., time-aware split by ratio method). We should get files named `train_ml-1m_10core_tfo.dat`, `test_ml-1m_10core_tfo.dat` in `./experiment_data/`.
 
-2. The whole procedure contains tuning and testing. Therefore, we first need run `hp_tune_pair_mf.py` to get the best parameter settings. Command to run:
+2. The whole procedure contains tuning and testing. Therefore, we first need run `hp_tune_pair_mf.py` to get the best parameter settings. Besides, we can also change the parameter search space in the `hp_tune_pair_mf.py`. Command to run:
 
 ```
-python hp_tune_pair_mf.py --dataset=ml-1m --prepro=10core --val_method=tfo --topk=20 --loss_type=BPR --sample_method=uniform --gpu=0
+python hp_tune_pair_mf.py --dataset=ml-1m --prepro=10core --val_method=tfo --test_method=tfo --topk=20 --loss_type=BPR --sample_method=uniform --gpu=0
 ```
-  Since all reasonable parameter search scope was fixed in the code, there is no need to parse more arguments
-  
+  <!--Since all reasonable parameter search scope was fixed in the code, there is no need to parse more arguments-->
+
 <!--3. After you finished step 2 and just get the best parameter settings from `tune_log/` or you just wanna reproduce the results provided in paper, you can run the following command to achieve it.-->
 
 3. After finishing step 2, we will get the best paramter settings from `tune_log/`. Then we can run the test code by following the command as below:
@@ -92,12 +93,28 @@ python run_pair_mf.py --help
 
 4. Once step 3 terminated, we can obtain the results w.r.t. top-20 from the dynamically generated result file `./res/ml-1m/10core_tfo_pairmf_BPR_uniform.csv`
 
----
+
+## More Ranking Results
+
+More ranking results for different methods on different datasets across various settings of top-N (N=1,5,10,20,30) are available in the file of `ranking_results.md`.
+
 
 ## Important Commands
 
 The description of all common parameter settings used by code inside `examples` are listed below:
 
+| Commands      | Description on Commands                                      | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Choices&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                                                       | Description on Choices                                       |
+| ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| dataset       | the selected datasets                                        | ml-100k;<br>ml-1m;<br>ml-10m;<br>ml-20m;<br>lastfm;<br>bx;<br>amazon-cloth;<br>amazon-electronic;<br>amazon-book;<br>amazon-music;<br>epinions;<br>yelp;<br>citeulike;<br>netflix | all choices are the names of datasets                          |
+| prepro        | The data pre-processing methods                              | origin;<br>Ncore                                         | 'origin' means using the raw data; <br>'Ncore' means only preserving users and items that  have interactions more than **N**.  Notice **N** could be any integer value |
+| topk          | the length of recommendation list                            |                                                              |                                                              |
+| test_size     | ratio of test set size                                       |                                                              |                                                              |
+| fold_num      | the number of fold used for validation(only  work when 'cv', 'fo' is set). |                                                              |                                                              |
+| cand_num      | the number of candidate items used for ranking             |                                                              |                                                              |
+| sample_method | negative sampling method                                     | uniform<br>item-ascd<br>item-desc                      | uniformly sampling;<br>sampling popular items with low rank;<br>sampling popular item with high rank |
+| num_ng        | the number of negative samples                               |                                                              |                                                              |
+
+<!--
 | Commands      | Description on Commands                                      | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Choices&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                                                       | Description on Choices                                       |
 | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | dataset       | the selected datasets                                        | ml-100k;<br>ml-1m;<br>ml-10m;<br>ml-20m;<br>lastfm;<br>bx;<br>amazon-cloth;<br>amazon-electronic;<br>amazon-book;<br>amazon-music;<br>epinions;<br>yelp;<br>citeulike;<br>netflix | all choices are the names of datasets                          |
@@ -110,10 +127,8 @@ The description of all common parameter settings used by code inside `examples` 
 | cand_num      | the number of candidate items used for ranking             |                                                              |                                                              |
 | sample_method | negative sampling method                                     | uniform<br>item-ascd<br>item-desc                      | uniformly sampling;<br>sampling popular items with low rank;<br>sampling popular item with high rank |
 | num_ng        | the number of negative samples                               |                                                              |                                                              |
-
+-->
 
 <!--The other parameters used for specific algorithms are listed in paper.-->
 
-## More Ranking Results
 
-More ranking results for different methods on different datasets across various settings of top-N (N=1,5,10,20,30) are available in the file of `ranking_results.md`.
