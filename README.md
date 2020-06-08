@@ -103,7 +103,7 @@ More ranking results for different methods on different datasets across various 
 
 The description of all common parameter settings used by code inside `examples` are listed below:
 
-| Commands      | Description on Commands &nbsp;&nbsp;                         | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Choices&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                                                       | Description on Choices                                       |
+| Commands      | &nbsp;&nbsp;&nbsp;Description on Commands&nbsp;&nbsp;&nbsp;&nbsp;                         | &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Choices&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;                                                       | Description on Choices                                       |
 | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | dataset       | the selected datasets                                        | ml-100k;<br>ml-1m;<br>ml-10m;<br>ml-20m;<br>lastfm;<br>bx;<br>amazon-cloth;<br>amazon-electronic;<br>amazon-book;<br>amazon-music;<br>epinions;<br>yelp;<br>citeulike;<br>netflix | all choices are the names of datasets                          |
 | prepro        | The data pre-processing methods                              | origin;<br>Ncore                                         | 'origin' means using the raw data; <br>'Ncore' means only preserving users and items that  have interactions more than **N**.  Notice **N** could be any integer value |
