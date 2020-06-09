@@ -12,21 +12,38 @@ import torch.utils.data as data
 from collections import defaultdict
 from sklearn.model_selection import KFold, train_test_split, GroupShuffleSplit
 
+
 def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
+    """
+    method of loading certain raw data
+    Parameters
+    ----------
+    src : str, the name of dataset
+    prepro : str, way to pre-process raw data input, expect 'origin' or f'{N}core', N is integer value
+    binary : boolean, whether to transform rating to binary label as CTR or not as Regression
+    pos_threshold :  pos_threshold: float, if not None, treat rating larger than this threshold as positive sample
+
+    Returns
+    -------
+    df : pd.DataFrame, rating information with columns: user, item, rating, (options: timestamp)
+    user_num : int, the number of users
+    item_num : int, the number of items
+    """
+    df = pd.DataFrame()
     # which dataset will use
     if src == 'ml-100k':
-        df = pd.read_csv(f'./data/{src}/u.data', sep='\t', header=None, 
-                        names=['user', 'item', 'rating', 'timestamp'], engine='python')
+        df = pd.read_csv(f'./data/{src}/u.data', sep='\t', header=None,
+                         names=['user', 'item', 'rating', 'timestamp'], engine='python')
 
     elif src == 'ml-1m':
         df = pd.read_csv(f'./data/{src}/ratings.dat', sep='::', header=None, 
-                        names=['user', 'item', 'rating', 'timestamp'], engine='python')
+                         names=['user', 'item', 'rating', 'timestamp'], engine='python')
         # only consider rating >=4 for data density
         df = df.query('rating >= 4').reset_index(drop=True).copy()
 
     elif src == 'ml-10m':
         df = pd.read_csv(f'./data/{src}/ratings.dat', sep='::', header=None, 
-                        names=['user', 'item', 'rating', 'timestamp'], engine='python')
+                         names=['user', 'item', 'rating', 'timestamp'], engine='python')
         df = df.query('rating >= 4').reset_index(drop=True).copy()
 
     elif src == 'ml-20m':
@@ -59,7 +76,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
     elif src == 'lastfm':
         # user_artists.dat
         df = pd.read_csv(f'./data/{src}/user_artists.dat', sep='\t')
-        df.rename(columns={'userID':'user', 'artistID':'item', 'weight':'rating'}, inplace=True)
+        df.rename(columns={'userID': 'user', 'artistID': 'item', 'weight': 'rating'}, inplace=True)
         # treat weight as interaction, as 1
         df['rating'] = 1.0
         # fake timestamp column
@@ -72,25 +89,26 @@ def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
         df['timestamp'] = 1
 
     elif src == 'pinterest':
+        # TODO this dataset has wrong source URL, we will figure out in future
         pass
 
     elif src == 'amazon-cloth':
         df = pd.read_csv(f'./data/{src}/ratings_Clothing_Shoes_and_Jewelry.csv', 
-                        names=['user', 'item', 'rating', 'timestamp'])
+                         names=['user', 'item', 'rating', 'timestamp'])
 
     elif src == 'amazon-electronic':
         df = pd.read_csv(f'./data/{src}/ratings_Electronics.csv', 
-                        names=['user', 'item', 'rating', 'timestamp'])
+                         names=['user', 'item', 'rating', 'timestamp'])
 
     elif src == 'amazon-book':
         df = pd.read_csv(f'./data/{src}/ratings_Books.csv', 
-                        names=['user', 'item', 'rating', 'timestamp'], low_memory=False)
+                         names=['user', 'item', 'rating', 'timestamp'], low_memory=False)
         df = df[df['timestamp'].str.isnumeric()].copy()
         df['timestamp'] = df['timestamp'].astype(int)
 
     elif src == 'amazon-music':
         df = pd.read_csv(f'./data/{src}/ratings_Digital_Music.csv', 
-                        names=['user', 'item', 'rating', 'timestamp'])
+                         names=['user', 'item', 'rating', 'timestamp'])
 
     elif src == 'epinions':
         d = sio.loadmat(f'./data/{src}/rating_with_timestamp.mat')
@@ -168,16 +186,29 @@ def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
 
     return df, user_num, item_num
 
+
 def split_test(df, test_method='fo', test_size=.2):
     """
-    :param df: raw data waiting for test set splitting
-    :param test_method: way to split test set
-                        'fo': split by ratio
-                        'tfo': split by ratio with timesstamp
-                        'tloo': leave one out with timestamp
-                        'loo': leave one out
-                        TODO 'ufo': split by ratio in user level
+    method of splitting data into training data and test data
+    Parameters
+    ----------
+    df : pd.DataFrame raw data waiting for test set splitting
+    test_method : str, way to split test set
+                    'fo': split by ratio
+                    'tfo': split by ratio with timestamp
+                    'tloo': leave one out with timestamp
+                    'loo': leave one out
+                    'ufo': split by ratio in user level
+    test_size : float, size of test set
+
+    Returns
+    -------
+    train_set : pd.DataFrame training dataset
+    test_set : pd.DataFrame test dataset
+
     """
+
+    train_set, test_set = pd.DataFrame(), pd.DataFrame()
     if test_method == 'ufo':
         driver_ids = df['user']
         _, driver_indices = np.unique(np.array(driver_ids), return_inverse=True)
@@ -185,7 +216,7 @@ def split_test(df, test_method='fo', test_size=.2):
         for train_idx, test_idx in gss.split(df, groups=driver_indices):
             train_set, test_set = df.loc[train_idx, :].copy(), df.loc[test_idx, :].copy()
 
-    if test_method == 'tfo':
+    elif test_method == 'tfo':
         # df = df.sample(frac=1)
         df = df.sort_values(['timestamp']).reset_index(drop=True)
         split_idx = int(np.ceil(len(df) * (1 - test_size)))
@@ -219,18 +250,29 @@ def split_test(df, test_method='fo', test_size=.2):
 
     return train_set, test_set
 
+
 def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
     """
-    Parameter
-    ---------
-    :param train_set: train set waiting for split validation
-    :param val_method: way to split validation
-                       'cv': combine with fold_num => fold_num-CV
-                       'fo': combine with fold_num & val_size => fold_num-Split by ratio(9:1)
-                       'tfo': Split by ratio with timestamp, combine with val_size => 1-Split by ratio(9:1)
-                       'tloo': Leave one out with timestamp => 1-Leave one out
-                       'loo': combine with fold_num => fold_num-Leave one out
-                       'ufo': split by ratio in user level with K-fold
+    method of split data into training data and validation data
+    Parameters
+    ----------
+    train_set : pd.DataFrame train set waiting for split validation
+    val_method : str, way to split validation
+                    'cv': combine with fold_num => fold_num-CV
+                    'fo': combine with fold_num & val_size => fold_num-Split by ratio(9:1)
+                    'tfo': Split by ratio with timestamp, combine with val_size => 1-Split by ratio(9:1)
+                    'tloo': Leave one out with timestamp => 1-Leave one out
+                    'loo': combine with fold_num => fold_num-Leave one out
+                    'ufo': split by ratio in user level with K-fold
+    fold_num : int, the number of folder need to be validated, only work when val_method is 'cv', 'loo', or 'fo'
+    val_size: float, the size of validation dataset
+
+    Returns
+    -------
+    train_set_list : List, list of generated training datasets
+    val_set_list : List, list of generated validation datasets
+    cnt : cnt: int, the number of train-validation pair
+
     """
     if val_method in ['tloo', 'tfo']:
         cnt = 1
@@ -289,23 +331,59 @@ def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
 
     return train_set_list, val_set_list, cnt
 
+
 def get_ur(df):
+    """
+
+    Parameters
+    ----------
+    df : pd.DataFrame, rating dataframe
+
+    Returns
+    -------
+    ur : dict, dictionary stored user-items interactions
+    """
     ur = defaultdict(set)
     for _, row in df.iterrows():
         ur[int(row['user'])].add(int(row['item']))
 
     return ur
 
+
 def get_ir(df):
+    """
+
+    Parameters
+    ----------
+    df : pd.DataFrame, rating dataframe
+
+    Returns
+    -------
+    ir : dict, dictionary stored item-users interactions
+    """
     ir = defaultdict(set)
     for _, row in df.iterrows():
         ir[int(row['item'])].add(int(row['user']))
 
     return ir
 
+
 def build_feat_idx_dict(df:pd.DataFrame, 
                         cat_cols:list=['user', 'item'], 
                         num_cols:list=[]):
+    """
+
+    Parameters
+    ----------
+    df : pd.DataFrame feature dataframe
+    cat_cols : List, list of categorical column names
+    num_cols : List, list of numeric column names
+
+    Returns
+    -------
+    feat_idx_dict : Dictionary, dict with index-feature column mapping information
+    cnt : int, the number of features
+    """
     feat_idx_dict = {}
     idx = 0
     for col in cat_cols:
@@ -320,20 +398,46 @@ def build_feat_idx_dict(df:pd.DataFrame,
     for col in cat_cols:
         for _ in df[col].unique():
             cnt += 1
-    for col in num_cols:
+    for _ in num_cols:
         cnt += 1
     print(f'Number of features: {cnt}')
 
     return feat_idx_dict, cnt
 
+
 def convert_npy_mat(user_num, item_num, df):
+    """
+    method of convert dataframe to numoy matrix
+    Parameters
+    ----------
+    user_num : int, the number of users
+    item_num : int, the number of items
+    df :  pd.DataFrame, rating dataframe
+
+    Returns
+    -------
+    mat : np.matrix, rating matrix
+    """
     mat = np.zeros((user_num, item_num))
     for _, row in df.iterrows():
         u, i, r = row['user'], row['item'], row['rating']
         mat[int(u), int(i)] = float(r)
     return mat
 
-def build_candidates_set(test_ur, train_ur, item_pool, candidates_num):
+
+def build_candidates_set(test_ur, train_ur, item_pool, candidates_num=1000):
+    """
+    method of building candidate items for ranking
+    Parameters
+    ----------
+    test_ur : dict, ground_truth that represents the relationship of user and item in the test set
+    train_ur : dict, this represents the relationship of user and item in the train set
+    item_pool : the set of all items
+    candidates_num : int, the number of candidates
+    Returns
+    -------
+    test_ucands : dict, dictionary storing candidates for each user in test set
+    """
     test_ucands = defaultdict(list)
     for k, v in test_ur.items():
         sample_num = candidates_num - len(v) if len(v) < candidates_num else 0
@@ -348,14 +452,21 @@ def build_candidates_set(test_ur, train_ur, item_pool, candidates_num):
     
     return test_ucands
 
+
 class Sampler(object):
     def __init__(self, user_num, item_num, num_ng=4, sample_method='item-desc', sample_ratio=0):
         """
-        :param num_ng: # of nagative sampling per sample
-        :param neg_label_val: target value for negative samples
-        :param sample_method: 'uniform' discrete uniform 
-                          'item-desc' descending item popularity, high popularity means high probability to choose
-                          'item-ascd' ascending item popularity, low popularity means high probability to choose
+
+        Parameters
+        ----------
+        user_num: int, the number of users
+        item_num: int, the number of items
+        num_ng : int, # of nagative sampling per sample
+        sample_method : str, sampling method
+                        'uniform' discrete uniform
+                        'item-desc' descending item popularity, high popularity means high probability to choose
+                        'item-ascd' ascending item popularity, low popularity means high probability to choose
+        sample_ratio : float, scope [0, 1], it determines what extent the sample method except 'uniform' occupied
         """
         self.user_num = user_num
         self.item_num = item_num
@@ -367,6 +478,17 @@ class Sampler(object):
         assert 0 <= sample_ratio <= 1, 'Invalid sample ratio value'
 
     def transform(self, sampled_df, is_training=True):
+        """
+
+        Parameters
+        ----------
+        sampled_df : pd.DataFrame, dataframe waiting for sampling
+        is_training : boolean, whether the procedure using this method is training part
+
+        Returns
+        -------
+        neg_set : List, list of (user, item, rating, negative sampled items)
+        """
         if not is_training:
             neg_set = []
             for _, row in sampled_df.iterrows():
@@ -425,8 +547,17 @@ class Sampler(object):
 
         return neg_set
 
+
 class PointData(data.Dataset):
     def __init__(self, neg_set, is_training=True, neg_label_val=0.):
+        """
+        Dataset formatter adapted point-wise algorithms
+        Parameters
+        ----------
+        neg_set : List, negative sampled result generated by Sampler
+        is_training : boolean, whether the procedure using this method is training part
+        neg_label_val : float, rating value towards negative sample
+        """
         super(PointData, self).__init__()
         self.features_fill = []
         self.labels_fill = []
@@ -453,8 +584,16 @@ class PointData(data.Dataset):
 
         return user, item, label
 
+
 class PairData(data.Dataset):
-    def __init__(self, neg_set, is_training=True, neg_label_val=0.):
+    def __init__(self, neg_set, is_training=True):
+        """
+        Dataset formatter adapted pair-wise algorithms
+        Parameters
+        ----------
+        neg_set : List,
+        is_training : bool,
+        """
         super(PairData, self).__init__()
         self.features_fill = []
 
@@ -478,8 +617,18 @@ class PairData(data.Dataset):
 
         return user, item_i, item_j, label
 
-class UAEData(data.Dataset):  # user-level auto-encoder data generator
+
+class UAEData(data.Dataset):
     def __init__(self, user_num, item_num, train_set, test_set):
+        """
+        user-level Dataset formatter adapted AutoEncoder-like algorithms
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        train_set : pd.DataFrame, training set
+        test_set : pd.DataFrame, test set
+        """
         super(UAEData, self).__init__()
         self.user_num = user_num
         self.item_num = item_num
@@ -507,8 +656,18 @@ class UAEData(data.Dataset):  # user-level auto-encoder data generator
 
         return u, ur, mask_ur
 
-class IAEData(data.Dataset):  # item-level auto-encoder data generator
+
+class IAEData(data.Dataset):
     def __init__(self, user_num, item_num, train_set, test_set):
+        """
+        item-level Dataset formatter adapted AutoEncoder-like algorithms
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        train_set : pd.DataFrame, training set
+        test_set : pd.DataFrame, test set
+        """
         super(IAEData, self).__init__()
         self.user_num = user_num
         self.item_num = item_num
@@ -536,13 +695,18 @@ class IAEData(data.Dataset):  # item-level auto-encoder data generator
 
         return i, ir, mask_ir
 
-##############################################################################
+
 class BuildCorpus(object):
-    """ 
-    Item2Vec Specific Process 
-    building item-corpus by dataframe
-    """
     def __init__(self, corpus_df, window=None, max_item_num=20000, unk='<UNK>'):
+        """
+        Item2Vec Specific Process, building item-corpus by dataframe
+        Parameters
+        ----------
+        corpus_df : pd.DataFrame, the whole dataset
+        window : int, window size
+        max_item_num : the maximum item pool size,
+        unk : str, if there are items beyond existed items, they will all be treated as this value
+        """
         # if window is None, means no timestamp, then set max series length as window size
         bad_window = corpus_df.groupby('user')['item'].count().max()
         self.window = bad_window if window is None else window
@@ -552,7 +716,12 @@ class BuildCorpus(object):
         # build corpus
         self.corpus = corpus_df.groupby('user')['item'].apply(lambda x: x.values.tolist()).reset_index()
 
-    def skipgram(self, record, i):
+        self.wc = None
+        self.idx2item = None
+        self.item2idx = None
+        self.vocab = None
+
+    def skip_gram(self, record, i):
         iitem = record[i]
         left = record[max(i - self.window, 0): i]
         right = record[i + 1: i + 1 + self.window]
@@ -563,7 +732,7 @@ class BuildCorpus(object):
         max_item_num = self.max_item_num
         corpus = self.corpus
         print('building vocab...')
-        self.wc = {self.unk : 1}
+        self.wc = {self.unk: 1}
         for _, row in corpus.iterrows():
             sent = row['item']
             for item in sent:
@@ -576,8 +745,18 @@ class BuildCorpus(object):
         print('build done')
 
     def convert(self, corpus_train_df):
+        """
+
+        Parameters
+        ----------
+        corpus_train_df
+
+        Returns
+        -------
+        dt
+        """
         print('converting train by corpus build before...')
-        data = []
+        dt = []
         corpus = corpus_train_df.groupby('user')['item'].apply(lambda x: x.values.tolist()).reset_index()
         for _, row in corpus.iterrows():
             sent = []
@@ -587,12 +766,13 @@ class BuildCorpus(object):
                 else:
                     sent.append(self.unk)
             for i in range(len(sent)):
-                iitem, oitems = self.skipgram(sent, i)
-                data.append((self.item2idx[iitem], [self.item2idx[oitem] for oitem in oitems]))
+                iitem, oitems = self.skip_gram(sent, i)
+                dt.append((self.item2idx[iitem], [self.item2idx[oitem] for oitem in oitems]))
         
         print('conversion done')
 
-        return data
+        return dt
+
 
 class PermutedSubsampledCorpus(data.Dataset):
     def __init__(self, dt, ws=None):
@@ -611,6 +791,7 @@ class PermutedSubsampledCorpus(data.Dataset):
         iitem, oitems = self.dt[idx]
         return iitem, np.array(oitems)
 
+
 def get_weights(wc, idx2item, ss_t, whether_weights):
     wf = np.array([wc[item] for item in idx2item])
     wf = wf / wf.sum()
@@ -621,7 +802,27 @@ def get_weights(wc, idx2item, ss_t, whether_weights):
 
     return vocab_size, weights
 
-def Item2VecData(train_set, test_set, window, item_num, batch_size, ss_t=1e-5, unk='<UNK>', weights=None):
+
+def item2vec_data(train_set, test_set, window, item_num, batch_size, ss_t=1e-5, unk='<UNK>', weights=None):
+    """
+
+    Parameters
+    ----------
+    train_set : pd.DataFrame,
+    test_set : pd.DataFrame,
+    window : int, rolling window size
+    item_num : int, the number of total items
+    batch_size : batch size
+    ss_t : float
+    unk : str,
+    weights : wheter parse weight
+
+    Returns
+    -------
+    data_loader: torch.data.Dataset, data generator used for Item2Vec
+    vocab_size: int, max item length
+    pre.item2idx, dict, the mapping information for item to index code
+    """
     df = pd.concat([train_set, test_set], ignore_index=True)
     pre = BuildCorpus(df, window, item_num + 1, unk)
     pre.build()
@@ -632,6 +833,3 @@ def Item2VecData(train_set, test_set, window, item_num, batch_size, ss_t=1e-5, u
     data_loader = data.DataLoader(data_set, batch_size=batch_size, shuffle=True) 
 
     return data_loader, vocab_size, pre.item2idx
-
-##############################################################################
-
