@@ -18,7 +18,7 @@ Before running, you need first run:
 
     python setup.py build_ext --inplace
 
-to generate `.so` file for `macOS` or `.pyd` file for `WindowsOS` used for further import.
+to generate `.so` or `.pyd` file used for further import.
 
 Make sure you have a **CUDA** enviroment to accelarate since these deep-learning models could be based on it.
 
@@ -32,11 +32,9 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 
 ## TODO list
 
-- [X] DeepFM algorithm module
-- [X] AFM algorithm module
 - [ ] weight initialization interface
 
-<!-- ## Cite
+## Cite
 
 Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper (please keep us posted, we would love to know if Daisy was helpful to you)
 
@@ -49,23 +47,3 @@ Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper
   howpublished={\url{https://github.com/AmazingDD/daisyRec}},
 }
 ```
-
--->
-
-<!-- ## Appendix
-
-**Reference**
-
-* SLIM: Sparse Linear Methods for Top-N Recommender Systems
-* Probabilistic matrix factorization
-* Performance of recommender algorithms on top-N recommendation tasks
-* Factorization meets the neighborhood: a multifaceted collaborative filtering model
-* Collaborative Filtering for Implicit Feedback Datasets
-* BPR: Bayesian Personalized Ranking from Implicit Feedback
-
-* Factorization Machines
-* Neural Factorization Machines for Sparse Predictive Analytics
-* Neural Collaborative Filtering
-* Item2Vec: Neural Item Embedding for Collaborative Filtering
-* AutoRec: Autoencoders Meet Collaborative Filtering -->
-<!-- | eALS | EALSRecommender.py | Fast Matrix Factorization for Online Recommendation with Implicit Feedback | -->

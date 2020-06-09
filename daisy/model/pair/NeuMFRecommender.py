@@ -4,8 +4,8 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils.data as data
 import torch.backends.cudnn as cudnn
+
 
 class PairNeuMF(nn.Module):
     def __init__(self,
@@ -24,17 +24,27 @@ class PairNeuMF(nn.Module):
                  MLP_model=None, 
                  gpuid='0', 
                  early_stop=True):
+        """
+        Pair-wise NeuMF Recommender Class
+        Parameters
+        ----------
+        user_num : int, number of users;
+        item_num : int, number of items;
+        factors : int, the number of latent factor
+        num_layers : int, number of hidden layers
+        q : float, dropout rate
+        epochs : int, number of training epochs
+        lr : float, learning rate
+        reg_1 : float, first-order regularization term
+        reg_2 : float, second-order regularization term
+        loss_type : str, loss function type
+        model_name : str, model name
+        GMF_model : Object, pre-trained GMF weights;
+        MLP_model : Object, pre-trained MLP weights.
+        gpuid : str, GPU ID
+        early_stop : bool, whether to activate early stop mechanism
+        """
         super(PairNeuMF, self).__init__()
-        """
-        user_num: number of users;
-		item_num: number of items;
-		factors: number of predictive factors;
-		num_layers: the number of layers in MLP model;
-		q: dropout rate between fully connected layers;
-		model: 'MLP', 'GMF', 'NeuMF-end', and 'NeuMF-pre';
-		GMF_model: pre-trained GMF weights;
-		MLP_model: pre-trained MLP weights.
-        """
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
         cudnn.benchmark = True
 

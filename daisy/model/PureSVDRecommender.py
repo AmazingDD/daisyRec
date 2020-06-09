@@ -1,13 +1,23 @@
-import numpy as np
-import pandas as pd
 import scipy.sparse as sp
 from sklearn.utils.extmath import randomized_svd
 
+
 class PureSVD(object):
     def __init__(self, user_num, item_num, factors=150):
+        """
+        PureSVD Recommender
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        factors : int, latent factor number
+        """
         self.user_num = user_num
         self.item_num = item_num
         self.factors = factors
+
+        self.user_vec = None
+        self.item_vec = None
 
     def fit(self, df):
         print(" Computing SVD decomposition...")
@@ -26,7 +36,7 @@ class PureSVD(object):
         return self.user_vec[u, :].dot(self.item_vec[i, :])
 
     def _convert_df(self, user_num, item_num, df):
-        '''Process Data to make WRMF available'''
+        """Process Data to make WRMF available"""
         ratings = list(df['rating'])
         rows = list(df['user'])
         cols = list(df['item'])

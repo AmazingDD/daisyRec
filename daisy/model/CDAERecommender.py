@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
+
 class CDAE(nn.Module):
     def __init__(self, 
                  rating_mat,
@@ -20,6 +21,23 @@ class CDAE(nn.Module):
                  loss_type='CL',
                  gpuid='0',
                  early_stop=True):
+        """
+        CDAE Recommender Class
+        Parameters
+        ----------
+        rating_mat : np.matrix, rating matrix
+        factors : int, latent factor number
+        act_activation : str, activation function for hidden layer, default is 'relu'
+        out_activation : str, activation function for output layer, default is 'sigmoid'
+        epochs : int, number of training epochs
+        lr : float, learning rate
+        q : float, drop out rate
+        reg_1 : float, first-order regularization term
+        reg_2 : float, second-order regularization term
+        loss_type : str, loss function type
+        gpuid : str, GPU ID
+        early_stop : bool, whether to activate early stop mechanism
+        """
         super(CDAE, self).__init__()
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
         cudnn.benchmark = True
@@ -59,6 +77,8 @@ class CDAE(nn.Module):
         self.h_user = nn.Embedding(user_num, factors)
 
         self.out = nn.Linear(factors, item_num)
+
+        self.prediction = None  # this is used for storing prediction result
 
     def forward(self, x_user, x_items):
         h_i = self.dropout(x_items)
@@ -133,9 +153,9 @@ class CDAE(nn.Module):
 
         x_user = torch.tensor(list(range(self.user_num)))
         x_items = torch.tensor(self.rating_mat).float()
-        self.prediction = self.forward(x_user, x_items)
-        self.prediction.clamp_(min=0, max=5)
-        self.prediction = self.prediction.detach().numpy()
+        prediction = self.forward(x_user, x_items)
+        prediction.clamp_(min=0, max=5)
+        self.prediction = prediction.detach().numpy()
 
     def predict(self, u, i):
         return self.prediction[u, i]

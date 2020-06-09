@@ -8,6 +8,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
 
+
 class PointDeepFM(nn.Module):
     def __init__(self,
                  user_num, 
@@ -24,6 +25,25 @@ class PointDeepFM(nn.Module):
                  loss_type='CL', 
                  gpuid='0', 
                  early_stop=True):
+        """
+        Point-wise DeepFM Recommender Class
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        factors : int, the number of latent factor
+        act_activation : str, activation function for hidden layer
+        num_layers : int, number of hidden layers
+        batch_norm : bool, whether to normalize a batch of data
+        q : float, dropout rate
+        epochs : int, number of training epochs
+        lr : float, learning rate
+        reg_1 : float, first-order regularization term
+        reg_2 : float, second-order regularization term
+        loss_type : str, loss function type
+        gpuid : str, GPU ID
+        early_stop : bool, whether to activate early stop mechanism
+        """
         super(PointDeepFM, self).__init__()
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
         cudnn.benchmark = True

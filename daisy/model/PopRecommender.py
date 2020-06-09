@@ -1,12 +1,15 @@
-import numpy as np
-import pandas as pd
-
 class MostPop(object):
-    def __init__(self, N=400):
-        self.N = N
+    def __init__(self, n=400):
+        """
+        Most Popular Recommender
+        Parameters
+        ----------
+        n : pre-selected popular item number
+        """
+        self.rank_list = None
+        self.N = n
 
     def fit(self, train_set):
-        '''most popular item'''
         res = train_set['item'].value_counts()
         # self.top_n = res[:self.N].index.tolist()
         self.rank_list = res.index.tolist()[:self.N]

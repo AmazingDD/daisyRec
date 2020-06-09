@@ -8,6 +8,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 
+
 class VAE(nn.Module):
     def __init__(self,
                  rating_mat,
@@ -20,6 +21,21 @@ class VAE(nn.Module):
                  loss_type='CL',
                  gpuid='0',
                  early_stop=True):
+        """
+        VAE Recommender Class
+        Parameters
+        ----------
+        rating_mat : np.matrix,
+        q_dims : List, Q-net dimension list
+        q : float, drop out rate
+        epochs : int, number of training epochs
+        lr : float, learning rate
+        reg_1 : float, first-order regularization term
+        reg_2 : float, second-order regularization term
+        loss_type : str, loss function type
+        gpuid : str, GPU ID
+        early_stop : bool, whether to activate early stop mechanism
+        """
         super(VAE, self).__init__()
 
         self.epochs = epochs
@@ -56,6 +72,8 @@ class VAE(nn.Module):
         )
         self.drop = nn.Dropout(q)
         self._init_weights()
+
+        self.prediction = None
 
     def _init_weights(self):
         for layer in self.q_layers:
@@ -181,7 +199,6 @@ class VAE(nn.Module):
         self.prediction = self.forward(x_items)[0]
         self.prediction.clamp_(min=0, max=5)
         self.prediction = self.prediction.detach().numpy()
-        
 
     def predict(self, u, i):
         return self.prediction[u, i]

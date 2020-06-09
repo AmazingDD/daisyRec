@@ -7,10 +7,12 @@ from collections import defaultdict
 
 from daisy.model.extensions.simlib_python import Compute_Similarity_Python
 
+
 class SimilarityFunction(Enum):
     COSINE = "cosine"
     PEARSON = "pearson"
     JACCARD = "jaccard"
+
 
 class Compute_Similarity:
     def __init__(self, dataMatrix, 
@@ -29,7 +31,6 @@ class Compute_Similarity:
 
         if similarity is not None:
             args["similarity"] = similarity
-
 
         if use_implementation == "density":
 
@@ -56,7 +57,6 @@ class Compute_Similarity:
                 use_implementation = "cython"
 
         if use_implementation == "cython":
-
             try:
                 from daisy.model.extensions.simlib_cython import Compute_Similarity_Cython
                 self.compute_similarity_object = Compute_Similarity_Cython(dataMatrix, **args)
@@ -65,22 +65,30 @@ class Compute_Similarity:
                 print("Unable to load Cython Compute_Similarity, reverting to Python")
                 self.compute_similarity_object = Compute_Similarity_Python(dataMatrix, **args)
 
-
         elif use_implementation == "python":
             self.compute_similarity_object = Compute_Similarity_Python(dataMatrix, **args)
 
         else:
-
             raise  ValueError("Compute_Similarity: value for argument 'use_implementation' not recognized")
 
     def compute_similarity(self,  **args):
         return self.compute_similarity_object.compute_similarity(**args)
 
+
 class ItemKNNCF(object):
-    """ ItemKNN recommender"""
     def __init__(self, user_num, item_num, maxk=40, shrink=100, 
-                 similarity='cosine', normalize=True,
-                 tune_or_not=False, serial='ml-100k-origin-loo-0-cosine'):
+                 similarity='cosine', normalize=True):
+        """
+        ItemKNN recommender
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        maxk : int, the max similar items number
+        shrink : float, shrink similarity value
+        similarity : str, way to calculate similarity
+        normalize : bool, whether calculate similarity with normalized value
+        """
         self.user_num = user_num
         self.item_num = item_num
 
@@ -91,11 +99,8 @@ class ItemKNNCF(object):
 
         self.RECOMMENDER_NAME = "ItemKNNCFRecommender"
 
-        self.tune_or_not = tune_or_not
-        self.serial = serial
-
-        if not os.path.exists('./tmp/itemknncf/sim_matrix/'):
-            os.makedirs('./tmp/itemknncf/sim_matrix/')
+        self.pred_mat = None
+        self.yr = None
 
     def fit(self, train_set):
         self.yr = defaultdict(list)
@@ -108,18 +113,18 @@ class ItemKNNCF(object):
 
         if cold_items_mask.any():
             print("{}: Detected {} ({:.2f} %) cold items.".format(
-                self.RECOMMENDER_NAME, cold_items_mask.sum(), cold_items_mask.sum()/len(cold_items_mask)*100))
+                self.RECOMMENDER_NAME, cold_items_mask.sum(), cold_items_mask.sum() / len(cold_items_mask)*100))
 
         similarity = Compute_Similarity(train, 
                                         shrink=self.shrink, 
                                         topK=self.k,
                                         normalize=self.normalize, 
-                                        similarity = self.similarity)
+                                        similarity=self.similarity)
         
-        W_sparse = similarity.compute_similarity()
-        W_sparse = W_sparse.tocsc()
+        w_sparse = similarity.compute_similarity()
+        w_sparse = w_sparse.tocsc()
 
-        self.pred_mat = train.dot(W_sparse).tolil()
+        self.pred_mat = train.dot(w_sparse).tolil()
 
     def predict(self, u, i):
         if u >= self.user_num or i >= self.item_num:
@@ -128,7 +133,7 @@ class ItemKNNCF(object):
         return self.pred_mat[u, i]
 
     def _convert_df(self, user_num, item_num, df):
-        '''Process Data to make ItemKNN available'''
+        """Process Data to make ItemKNN available"""
         ratings = list(df['rating'])
         rows = list(df['user'])
         cols = list(df['item'])
@@ -137,11 +142,21 @@ class ItemKNNCF(object):
 
         return mat
 
+
 class UserKNNCF(object):
-    """ UserKNN recommender"""
     def __init__(self, user_num, item_num, maxk=40, shrink=100, 
-                 similarity='cosine', normalize=True, 
-                 tune_or_not=False, serial='ml-100k-origin-loo-0-cosine'):
+                 similarity='cosine', normalize=True):
+        """
+        UserKNN recommender
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        maxk : int, the max similar items number
+        shrink : float, shrink similarity value
+        similarity : str, way to calculate similarity
+        normalize : bool, whether calculate similarity with normalized value
+        """
         self.user_num = user_num
         self.item_num = item_num
 
@@ -149,14 +164,9 @@ class UserKNNCF(object):
         self.shrink = shrink
         self.normalize = normalize
         self.similarity = similarity
-
         self.RECOMMENDER_NAME = "UserKNNCFRecommender"
 
-        self.tune_or_not = tune_or_not
-        self.serial = serial
-
-        if not os.path.exists('./tmp/userknncf/sim_matrix/'):
-            os.makedirs('./tmp/userknncf/sim_matrix/')
+        self.pred_mat = None
 
     def fit(self, train_set):
         train = self._convert_df(self.user_num, self.item_num, train_set)
@@ -172,10 +182,10 @@ class UserKNNCF(object):
                                         normalize=self.normalize, 
                                         similarity = self.similarity)
 
-        W_sparse = similarity.compute_similarity()
-        W_sparse = W_sparse.tocsc()
+        w_sparse = similarity.compute_similarity()
+        w_sparse = w_sparse.tocsc()
 
-        self.pred_mat = W_sparse.dot(train).tolil()
+        self.pred_mat = w_sparse.dot(train).tolil()
 
     def predict(self, u, i):
         if u >= self.user_num or i >= self.item_num:
@@ -184,7 +194,7 @@ class UserKNNCF(object):
         return self.pred_mat[u, i]
 
     def _convert_df(self, user_num, item_num, df):
-        '''Process Data to make UserKNN available'''
+        """Process Data to make UserKNN available"""
         ratings = list(df['rating'])
         rows = list(df['user'])
         cols = list(df['item'])

@@ -7,9 +7,21 @@ from sklearn.linear_model import ElasticNet
 
 # TODO this recommender must change to multiprocessing mode and compress into a more beautiful way
 
+
 class SLIM(object):
     def __init__(self, user_num, item_num, topk=100,
                  l1_ratio=0.1, alpha=1.0, positive_only=True):
+        """
+        SLIM Recommender Class
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        topk : int, Top-K number
+        l1_ratio : float, The ElasticNet mixing parameter, with `0 <= l1_ratio <= 1`
+        alpha : float, Constant that multiplies the penalty terms
+        positive_only : bool, When set to True, forces the coefficients to be positive
+        """
         self.md = ElasticNet(alpha=alpha, 
                              l1_ratio=l1_ratio, 
                              positive=positive_only, 
@@ -19,10 +31,12 @@ class SLIM(object):
                              selection='random',
                              max_iter=100,
                              tol=1e-4)
-
         self.item_num = item_num
         self.user_num = user_num
         self.topk = topk
+
+        self.w_sparse = None
+        self.A_tilde = None
 
         print(f'user num: {user_num}, item num: {item_num}')
 
@@ -90,18 +104,18 @@ class SLIM(object):
                 start_time_printBatch = time.time()
 
         # generate the sparse weight matrix
-        self.W_sparse = sp.csr_matrix((values[:numCells], (rows[:numCells], cols[:numCells])),
-                                       shape=(self.item_num, self.item_num), dtype=np.float32)
+        self.w_sparse = sp.csr_matrix((values[:numCells], (rows[:numCells], cols[:numCells])),
+                                      shape=(self.item_num, self.item_num), dtype=np.float32)
 
         train = train.tocsr()
-        self.A_tilde = train.dot(self.W_sparse).A
+        self.A_tilde = train.dot(self.w_sparse).A
 
     def predict(self, u, i):
 
         return self.A_tilde[u, i]
 
     def _convert_df(self, user_num, item_num, df):
-        '''Process Data to make WRMF available'''
+        """Process Data to make WRMF available"""
         ratings = list(df['rating'])
         rows = list(df['user'])
         cols = list(df['item'])

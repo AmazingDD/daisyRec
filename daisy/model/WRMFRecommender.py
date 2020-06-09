@@ -1,9 +1,9 @@
 import numpy as np
-import pandas as pd
 import scipy.sparse as sp
 
 from tqdm import tqdm
 from scipy.sparse.linalg import spsolve
+
 
 class WRMF(object):
     def __init__(self, 
@@ -15,6 +15,19 @@ class WRMF(object):
                  alpha=40,
                  reg_2=0.1,  
                  seed=2019):
+        """
+        WRMF Recommender Class
+        Parameters
+        ----------
+        user_num : int, number of users
+        item_num : int, number of items
+        df : pd.DataFrame, rating data frame
+        factors : latent factor number
+        epochs : number of training epochs
+        alpha : amplify coefficients
+        reg_2 : float, second-order regularization term
+        seed : random seed
+        """
         train_set = self._convert_df(user_num, item_num, df)
 
         self.epochs = epochs
@@ -29,6 +42,8 @@ class WRMF(object):
         self.X_eye = sp.eye(user_num)
         self.Y_eye = sp.eye(item_num)
         self.lambda_eye = reg_2 * sp.eye(factors)
+
+        self.user_vec, self.item_vec, self.pred_mat = None, None, None
 
     def fit(self):
         for _ in tqdm(range(self.epochs)):

@@ -22,11 +22,11 @@ if __name__ == '__main__':
     time_log = open('time_log.txt', 'a') 
     
     ''' Test Process for Metrics Exporting '''
-    # df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=False)
-    # train_set, test_set = split_test(df, args.test_method, args.test_size)
-    ## temporary used for tuning test result
-    train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
-    test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=False)
+    train_set, test_set = split_test(df, args.test_method, args.test_size)
+    # temporary used for tuning test result
+    # train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+    # test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
     if args.dataset in ['yelp']:
         train_set['timestamp'] = pd.to_datetime(train_set['timestamp'])
         test_set['timestamp'] = pd.to_datetime(test_set['timestamp'])

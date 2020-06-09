@@ -1,12 +1,11 @@
 import os
-import numpy as np
-import pandas as pd
 from tqdm import tqdm
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+
 
 class PairNFM(nn.Module):
     def __init__(self,
@@ -24,12 +23,25 @@ class PairNFM(nn.Module):
                  loss_type='BPR', 
                  gpuid='0', 
                  early_stop=True):
-        '''
-        user_num: number of users;
-		item_num: number of items;
-		factors: number of predictive factors.
-        num_layers: # of deep layers,
-        '''
+        """
+        Pair-wise NFM Recommender Class
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        factors : int, the number of latent factor
+        act_function : str, activation function for hidden layer
+        num_layers : int, number of hidden layers
+        batch_norm : bool, whether to normalize a batch of data
+        q : float, dropout rate
+        epochs : int, number of training epochs
+        lr : float, learning rate
+        reg_1 : float, first-order regularization term
+        reg_2 : float, second-order regularization term
+        loss_type : str, loss function type
+        gpuid : str, GPU ID
+        early_stop : bool, whether to activate early stop mechanism
+        """
         super(PairNFM, self).__init__()
 
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid

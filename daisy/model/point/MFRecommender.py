@@ -1,12 +1,11 @@
 import os
-import numpy as np
-import pandas as pd
 from tqdm import tqdm
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.backends.cudnn as cudnn
+
 
 class PointMF(nn.Module):
     def __init__(self, 
@@ -20,11 +19,21 @@ class PointMF(nn.Module):
                  loss_type='CL', 
                  gpuid='0',
                  early_stop=True):
-        '''
-        user_num: number of users;
-		item_num: number of items;
-		factor_num: number of predictive factors.
-        '''
+        """
+        Point-wise MF Recommender Class
+        Parameters
+        ----------
+        user_num : int, the number of users
+        item_num : int, the number of items
+        factors : int, the number of latent factor
+        epochs : int, number of training epochs
+        lr : float, learning rate
+        reg_1 : float, first-order regularization term
+        reg_2 : float, second-order regularization term
+        loss_type : str, loss function type
+        gpuid : str, GPU ID
+        early_stop : bool, whether to activate early stop mechanism
+        """
         super(PointMF, self).__init__()
 
         os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
