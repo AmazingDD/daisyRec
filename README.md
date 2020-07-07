@@ -8,7 +8,7 @@
 
 DaisyRec is a Python toolkit dealing with rating prediction and item ranking issue.
 
-The name DAISY (roughly :) ) stands for Multi-**D**imension f**AI**rly comp**A**r**I**son for recommender **SY**stem.
+The name DAISY (roughly :) ) stands for multi-**D**imension f**A**irly compAr**I**son for recommender **SY**stem.
 
 To get all dependencies, run:
 
@@ -24,7 +24,7 @@ Make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 
 DaisyRec handled ranking issue mainly and split recommendation problem into point-wise ones and pair-wise ones so that different loss function are constructed such as BPR, Top-1, Hinge and Cross Entropy. All algorithms already implemented are exhibited below:
 
-<img src="pics/algos.jpeg" width="30%" height="20%" style="margin: auto; cursor:default" />
+<img src="pics/algos.jpeg" width="40%" height="30%" style="margin: auto; cursor:default" />
 
 use `main.py` to achieve KPI results calculated by certain algorithm above. For example, you can implement this program to implement BPR-MF:
 
@@ -33,7 +33,7 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 ## TODO list
 
 - [ ] weight initialization interface
-- [ ] user-level time-aware fold-out method
+- [x] user-level time-aware fold-out method
 - [x] user-level/item-level/user-item-level Ncore
 
 ## Cite

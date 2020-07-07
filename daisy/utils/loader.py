@@ -225,6 +225,7 @@ def split_test(df, test_method='fo', test_size=.2):
                     'tloo': leave one out with timestamp
                     'loo': leave one out
                     'ufo': split by ratio in user level
+                    'utfo': time-aware split by ratio in user level
     test_size : float, size of test set
 
     Returns
@@ -241,6 +242,20 @@ def split_test(df, test_method='fo', test_size=.2):
         gss = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=2020)
         for train_idx, test_idx in gss.split(df, groups=driver_indices):
             train_set, test_set = df.loc[train_idx, :].copy(), df.loc[test_idx, :].copy()
+
+    elif test_method == 'utfo':
+        df = df.sort_values(['user', 'timestamp']).reset_index(drop=True)
+        def time_split(grp):
+            start_idx = grp.index[0]
+            split_len = int(np.ceil(len(grp) * (1 - test_size)))
+            split_idx = start_idx + split_len
+            end_idx = grp.index[-1]
+
+            return list(range(split_idx, end_idx + 1))
+
+        test_index = df.groupby('user').apply(time_split).explode().values
+        test_set = df.loc[test_index, :]
+        train_set = df[~df.index.isin(test_index)]
 
     elif test_method == 'tfo':
         # df = df.sample(frac=1)
@@ -279,7 +294,10 @@ def split_test(df, test_method='fo', test_size=.2):
 
 def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
     """
-    method of split data into training data and validation data
+    method of split data into training data and validation data.
+    (Currently, this method returns list of train & validation set, but I'll change 
+    it to index list or generator in future so as to save memory space) TODO
+
     Parameters
     ----------
     train_set : pd.DataFrame train set waiting for split validation
@@ -290,6 +308,7 @@ def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
                     'tloo': Leave one out with timestamp => 1-Leave one out
                     'loo': combine with fold_num => fold_num-Leave one out
                     'ufo': split by ratio in user level with K-fold
+                    'utfo': time-aware split by ratio in user level
     fold_num : int, the number of folder need to be validated, only work when val_method is 'cv', 'loo', or 'fo'
     val_size: float, the size of validation dataset
 
@@ -300,7 +319,7 @@ def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
     cnt : cnt: int, the number of train-validation pair
 
     """
-    if val_method in ['tloo', 'tfo']:
+    if val_method in ['tloo', 'tfo', 'utfo']:
         cnt = 1
     elif val_method in ['cv', 'loo', 'fo', 'ufo']:
         cnt = fold_num
@@ -315,6 +334,20 @@ def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
         for train_idx, val_idx in gss.split(train_set, groups=driver_indices):
             train_set_list.append(train_set.loc[train_idx, :])
             val_set_list.append(train_set.loc[val_idx, :])
+    if val_method == 'utfo':
+        train_set = train_set.sort_values(['user', 'timestamp']).reset_index(drop=True)
+        def time_split(grp):
+            start_idx = grp.index[0]
+            split_len = int(np.ceil(len(grp) * (1 - val_size)))
+            split_idx = start_idx + split_len
+            end_idx = grp.index[-1]
+
+            return list(range(split_idx, end_idx + 1))
+        val_index = train_set.groupby('user').apply(time_split).explode().values
+        val_set = train_set.loc[val_index, :]
+        train_set = train_set[~train_set.index.isin(val_index)]
+        train_set_list.append(train_set)
+        val_set_list.append(val_set)
     if val_method == 'cv':
         kf = KFold(n_splits=fold_num, shuffle=False, random_state=2019)
         for train_index, val_index in kf.split(train_set):
@@ -333,10 +366,6 @@ def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
         val_set_list.append(train_set.iloc[split_idx:, :])
     elif val_method == 'loo':
         for _ in range(fold_num):
-            # val_set = train_set.groupby(['user']).apply(pd.DataFrame.sample, n=1).reset_index(drop=True)
-            # val_key = val_set[['user', 'item']].copy()
-            # sub_train_set = train_set.set_index(['user', 'item']).drop(pd.MultiIndex.from_frame(val_key)).reset_index().copy()
-
             val_index = train_set.groupby(['user']).apply(lambda grp: np.random.choice(grp.index))
             val_set = train_set.loc[val_index, :].reset_index(drop=True).copy()
             sub_train_set = train_set[~train_set.index.isin(val_index)].reset_index(drop=True).copy()
