@@ -13,7 +13,7 @@ from collections import defaultdict
 from sklearn.model_selection import KFold, train_test_split, GroupShuffleSplit
 
 
-def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
+def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None, prepro_level='ui'):
     """
     method of loading certain raw data
     Parameters
@@ -21,7 +21,8 @@ def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
     src : str, the name of dataset
     prepro : str, way to pre-process raw data input, expect 'origin' or f'{N}core', N is integer value
     binary : boolean, whether to transform rating to binary label as CTR or not as Regression
-    pos_threshold :  pos_threshold: float, if not None, treat rating larger than this threshold as positive sample
+    pos_threshold : float, if not None, treat rating larger than this threshold as positive sample
+    prepro_level : str, which level to do with 'Ncore' operation (it only works when prepro contains 'core')
 
     Returns
     -------
@@ -162,14 +163,39 @@ def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None):
         pattern = re.compile(r'\d+')
         core_num = int(pattern.findall(prepro)[0])
 
-        tmp1 = df.groupby(['user'], as_index=False)['item'].count()
-        tmp1.rename(columns={'item': 'cnt_item'}, inplace=True)
-        tmp2 = df.groupby(['item'], as_index=False)['user'].count()
-        tmp2.rename(columns={'user': 'cnt_user'}, inplace=True)
-        df = df.merge(tmp1, on=['user']).merge(tmp2, on=['item'])
-        df = df.query(f'cnt_item >= {core_num} and cnt_user >= {core_num}').reset_index(drop=True).copy()
-        df.drop(['cnt_item', 'cnt_user'], axis=1, inplace=True)
-        del tmp1, tmp2
+        def filter_user(df):
+            tmp = df.groupby(['user'], as_index=False)['item'].count()
+            tmp.rename(columns={'item': 'cnt_item'}, inplace=True)
+            df = df.merge(tmp, on=['user'])
+            df = df.query(f'cnt_item >= {core_num}').reset_index(drop=True).copy()
+            df.drop(['cnt_item'], axis=1, inplace=True)
+
+            return df
+
+        def filter_item(df):
+            tmp = df.groupby(['item'], as_index=False)['user'].count()
+            tmp.rename(columns={'user': 'cnt_user'}, inplace=True)
+            df = df.merge(tmp, on=['item'])
+            df = df.query(f'cnt_user >= {core_num}').reset_index(drop=True).copy()
+            df.drop(['cnt_user'], axis=1, inplace=True)
+
+            return df
+
+        if prepro_level == 'ui':
+            while 1:
+                df = filter_user(df)
+                df = filter_item(df)
+                chk_u = df.groupby('user')['item'].count()
+                chk_i = df.groupby('item')['user'].count()
+                if len(chk_i[chk_i < core_num]) <= 0 and len(chk_u[chk_u < core_num]) <= 0:
+                    break
+        elif prepro_level == 'u':
+            df = filter_user(df)
+        elif prepro_level == 'i':
+            df = filter_item(df)
+        else:
+            raise ValueError(f'Invalid prepro_level value: {prepro_level}')
+
         gc.collect()
 
     else:

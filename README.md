@@ -34,7 +34,7 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 
 - [ ] weight initialization interface
 - [ ] user-level time-aware fold-out method
-- [ ] user-level/item-level/user-item-level Ncore
+- [x] user-level/item-level/user-item-level Ncore
 
 ## Cite
 
