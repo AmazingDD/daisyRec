@@ -33,7 +33,7 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 ## TODO list
 
 - [ ] weight initialization interface
-- [ ] user-level time-aware leave one out method
+- [ ] user-level time-aware fold-out method
 - [ ] user-level/item-level/user-item-level Ncore
 
 ## Cite
