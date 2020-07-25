@@ -26,7 +26,7 @@ Make sure you have a **CUDA** enviroment to accelarate since these deep-learning
 
 DaisyRec handled ranking issue mainly and split recommendation problem into point-wise ones and pair-wise ones so that different loss function are constructed such as BPR, Top-1, Hinge and Cross Entropy. All algorithms already implemented are exhibited below:
 
-<img src="pics/algos.jpeg" width="40%" height="30%" style="margin: auto; cursor:default" />
+<img src="pics/algos.png" width="40%" height="30%" style="margin: auto; cursor:default" />
 
 use `main.py` to achieve KPI results calculated by certain algorithm above. For example, you can implement this program to implement BPR-MF:
 
