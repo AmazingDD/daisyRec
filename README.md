@@ -46,11 +46,19 @@ All experiments code and data links implemented in our paper are exhibited in `m
 Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper (please keep us posted, we would love to know if Daisy was helpful to you)
 
 ```
+@inproceedings{sun2020are,
+  title={Are We Evaluating Rigorously? Benchmarking Recommendation for Reproducible Evaluation and Fair Comparison},
+  author={Sun, Zhu and Yu, Di and Fang, Hui and Yang, Jie and Qu, Xinghua and Zhang, Jie and Geng, Cong},
+  booktitle={Proceedings of the 14th ACM Conference on Recommender Systems},
+  year={2020}
+}
+<!--
 @misc{yudi2020daisyrec,
-  title={DaisyRec},
-  author={Yu Di},
+  title={Are We Evaluating Rigorously? Benchmarking Recommendation for Reproducible Evaluation and Fair Comparison},
+  author={Zhu Sun, Yu Di, Hui Fang, Jie Yang, Xinghua Qu, Jie Zhang, Cong Geng},
   year={2020},
   publisher={GitHub},
   howpublished={\url{https://github.com/AmazingDD/daisyRec}},
 }
+-->
 ```
