@@ -53,13 +53,4 @@ Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper
   year={2020}
 }
 
-<!--
-@misc{yudi2020daisyrec,
-  title={Are We Evaluating Rigorously? Benchmarking Recommendation for Reproducible Evaluation and Fair Comparison},
-  author={Zhu Sun, Yu Di, Hui Fang, Jie Yang, Xinghua Qu, Jie Zhang, Cong Geng},
-  year={2020},
-  publisher={GitHub},
-  howpublished={\url{https://github.com/AmazingDD/daisyRec}},
-}
--->
 ```
