@@ -12,7 +12,7 @@ from collections import defaultdict
 
 def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None, level='ui'):
     """
-    method of loading certain raw data
+    Method of loading certain raw data
     Parameters
     ----------
     src : str, the name of dataset
@@ -218,7 +218,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None, l
         gc.collect()
 
     else:
-        raise ValueError('Invalid dataset preprocess type, origin/Ncore (N is int number) expected')
+        raise ValueError('Invalid dataset preprocess type, origin/Ncore/Nfilter (N is int number) expected')
 
     # encoding user_id and item_id
     df['user'] = pd.Categorical(df['user']).codes
@@ -234,7 +234,7 @@ def load_rate(src='ml-100k', prepro='origin', binary=True, pos_threshold=None, l
 
 def get_ur(df):
     """
-
+    Method of getting user-rating pairs
     Parameters
     ----------
     df : pd.DataFrame, rating dataframe
@@ -252,7 +252,7 @@ def get_ur(df):
 
 def get_ir(df):
     """
-
+    Method of getting item-rating pairs
     Parameters
     ----------
     df : pd.DataFrame, rating dataframe
@@ -272,7 +272,7 @@ def build_feat_idx_dict(df:pd.DataFrame,
                         cat_cols:list=['user', 'item'], 
                         num_cols:list=[]):
     """
-
+    Method of encoding features mapping for FM
     Parameters
     ----------
     df : pd.DataFrame feature dataframe
