@@ -6,7 +6,7 @@
 [origin-PureSVD](#origin-PureSVD)　　　[5core-PureSVD](#5core-PureSVD)　　　[10core-PureSVD](#10core-PureSVD)  
 [Origin-BPRMF](#origin-BPRMF)　　　[5core-BPRMF](#5core-BPRMF)　　　[10core-BPRMF](#10core-BPRMF)  
 [Origin-BPRFM](#origin-BPRFM)　　　[5core-BPRFM](#5core-BPRFM)　　　[10core-BPRFM](#10core-BPRFM)  
-[10core-SLIM](#origin-SLIM)  
+[10core-SLIM](#10core-SLIM)  
 [Origin-NeuMF](#origin-NeuMF)　　　[5core-NeuMF](#5core-NeuMF)　　　[10core-NeuMF](#10core-NeuMF)
 
 ---
