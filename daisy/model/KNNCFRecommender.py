@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 """
 Created on 23/10/17
+Modified on 21/8/2020
 @author: Maurizio Ferrari Dacrema, Yu Di
-@Description: I modified this source file and change it to adapt to daisyRec mode, thanhs for the original author
+@Description: Modify this source file and change it to adapt to daisyRec mode, the original author is Maurizio Ferrari Dacrema
 """
 
 import os
