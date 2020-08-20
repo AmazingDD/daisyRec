@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on 23/10/17
+@author: Maurizio Ferrari Dacrema, Yu Di
+@Description: I modified this source file and change it to adapt to daisyRec mode, thanhs for the original author
+"""
+
 import sys
 import time
 import numpy as np

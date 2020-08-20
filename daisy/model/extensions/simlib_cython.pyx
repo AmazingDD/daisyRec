@@ -1,3 +1,8 @@
+"""
+Created on 23/10/17
+@author: Maurizio Ferrari Dacrema
+"""
+
 #cython: boundscheck=False
 #cython: wraparound=True
 #cython: initializedcheck=False

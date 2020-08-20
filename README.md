@@ -75,3 +75,10 @@ Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper
 }
 
 ```
+
+## Acknowledge
+
+Thanks for the following repositories, we refer them to help us improving our code:
+
+ - [RecSys2019_DeepLearning_Evaluation](https://github.com/MaurizioFD/RecSys2019_DeepLearning_Evaluation)
+
