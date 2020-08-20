@@ -78,7 +78,7 @@ Here is a Bibtex entry if you ever need to cite **DaisyRec** in a research paper
 
 ## Acknowledgements
 
-Thanks for the following repositories. We refer them to help us improving our code:
+We refer them to help us improving our code:
 
  - SliM and KNN-CF parts with [RecSys2019_DeepLearning_Evaluation](https://github.com/MaurizioFD/RecSys2019_DeepLearning_Evaluation)
  - SVD++ part with [Surprise](https://github.com/NicolasHug/Surprise)
