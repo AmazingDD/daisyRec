@@ -40,6 +40,7 @@ All experiments code and data links implemented in our paper are exhibited in `m
 - [x] user-level/item-level/user-item-level N-core
 - [x] distinguish N-filter and N-core preprocess method
 - [ ] weight initialization interface
+- [ ] a more friendly tuner
 
 ## Cite
 
