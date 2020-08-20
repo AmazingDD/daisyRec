@@ -7,6 +7,7 @@
     - [origin-PureSVD](#origin-PureSVD)
     - [origin-BPRMF](#origin-BPRMF)
     - [origin-BPRFM](#origin-BPRFM)
+    - [origin-NeuMF](#origin-NeuMF)
 * ### 5filter
     - [5filter-ItemKNN](#5filter-ItemKNN)
     - [5filter-PureSVD](#5filter-PureSVD)
