@@ -32,7 +32,27 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 
     python main.py --problem_type=pair --algo_name=mf --loss_type=BPR --num_ng=2
 
-All experiments code and data links implemented in our paper are exhibited in `master` branch. Please check out to `master` if you are interested.
+All experiments code implemented in our paper are exhibited in `master` branch. Please check out to `master` if you are interested.
+
+## Datasets
+
+You can download experiment data, and put them into the `data` folder.
+All data are available in links below: 
+
+  - [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/)
+  - [MovieLens 1M](https://grouplens.org/datasets/movielens/1m/)
+  - [MovieLens 10M](https://grouplens.org/datasets/movielens/10m/)
+  - [MovieLens 20M](https://grouplens.org/datasets/movielens/20m/)
+  - [Netflix Prize Data](https://archive.org/download/nf_prize_dataset.tar)
+  - [Last.fm](https://grouplens.org/datasets/hetrec-2011/)
+  - [Book Crossing](https://grouplens.org/datasets/book-crossing/)
+  - [Epinions](http://www.cse.msu.edu/~tangjili/trust.html)
+  - [CiteULike](https://github.com/js05212/citeulike-a)
+  - [Amazon-Book](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Books.csv)
+  - [Amazon-Electronic](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Electronics.csv)
+  - [Amazon-Cloth](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Clothing_Shoes_and_Jewelry.csv)
+  - [Amazon-Music](http://snap.stanford.edu/data/amazon/productGraph/categoryFiles/ratings_Digital_Music.csv)
+  - [Yelp Challenge](https://kaggle.com/yelp-dataset/yelp-dataset)
 
 ## TODO list
 
