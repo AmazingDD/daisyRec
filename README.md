@@ -32,7 +32,7 @@ use `main.py` to achieve KPI results calculated by certain algorithm above. For 
 
     python main.py --problem_type=pair --algo_name=mf --loss_type=BPR --num_ng=2
 
-All experiments code are exhibited in `master` branch. Please check out to `master` if you are interested.
+**All experiments code executed in our paper are exhibited in `master` branch. Please check out to `master` branch. Code in `dev` branch is still under developing.**
 
 ## Datasets
 
