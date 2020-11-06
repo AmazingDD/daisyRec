@@ -14,7 +14,7 @@ The name DAISY (roughly :) ) stands for multi-**D**imension f**A**irly compAr**I
 
 To get all dependencies, run:
 
-    pip install -r requirement.txt
+    pip install -r requirements.txt
 
 Before running, you need first run: 
 
