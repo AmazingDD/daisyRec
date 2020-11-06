@@ -10,9 +10,11 @@ from hyperopt import hp, tpe, fmin
 import torch
 import torch.utils.data as data
 
-from daisy.utils.opt_toolkit import *
+from daisy.utils.sampler import Sampler
 from daisy.utils.parser import parse_args
+from daisy.utils.data import PointData, PairData, UAEData
 from daisy.utils.splitter import split_test, split_validation
+from daisy.utils.opt_toolkit import param_extract, confirm_space
 from daisy.utils.loader import load_rate, get_ur, convert_npy_mat, build_candidates_set
 from daisy.utils.metrics import precision_at_k, recall_at_k, map_at_k, hr_at_k, ndcg_at_k, mrr_at_k
 
@@ -64,7 +66,7 @@ def opt_func(space):
         # reformat to adapt certain algorithm
         if args.algo_name in ['cdae', 'vae']:
             train_dataset = UAEData(user_num, item_num, train, validation)
-            training_mat = convert_npy_mat(user_num, item_num, train_set)
+            training_mat = convert_npy_mat(user_num, item_num, train)
         else:
             if args.problem_type == 'pair':
                 train_dataset = PairData(neg_set, is_training=True)
@@ -232,57 +234,101 @@ def opt_func(space):
 
         model.fit(train_loader)
         print('Start Calculating Metrics......')
-        test_ucands = build_candidates_set(test_ur, total_train_ur, item_pool, candidates_num)
+        val_ucands = build_candidates_set(val_ur, train_ur, item_pool, candidates_num)
+        # get predict result
+        print('')
+        print('Generate recommend list...')
+        print('')
+        preds = {}
+        if args.algo_name in ['vae', 'cdae'] and args.problem_type == 'point':
+            for u in tqdm(val_ucands.keys()):
+                pred_rates = [model.predict(u, i) for i in val_ucands[u]]
+                rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
+                top_n = np.array(val_ucands[u])[rec_idx]
+                preds[u] = top_n
+        else:
+            for u in tqdm(val_ucands.keys()):
+                # build a test MF dataset for certain user u to accelerate
+                tmp = pd.DataFrame({
+                    'user': [u for _ in val_ucands[u]], 
+                    'item': val_ucands[u], 
+                    'rating': [0. for _ in val_ucands[u]], # fake label, make nonsense
+                })
+                tmp_neg_set = sampler.transform(tmp, is_training=False)
+                tmp_dataset = PairData(tmp_neg_set, is_training=False)
+                tmp_loader = data.DataLoader(
+                    tmp_dataset,
+                    batch_size=candidates_num, 
+                    shuffle=False, 
+                    num_workers=0
+                )
+                # get top-N list with torch method 
+                for items in tmp_loader:
+                    user_u, item_i = items[0], items[1]
+                    if torch.cuda.is_available():
+                        user_u = user_u.cuda()
+                        item_i = item_i.cuda()
+                    else:
+                        user_u = user_u.cpu()
+                        item_i = item_i.cpu()
 
+                    prediction = model.predict(user_u, item_i)
+                    _, indices = torch.topk(prediction, args.topk)
+                    top_n = torch.take(torch.tensor(val_ucands[u]), indices).cpu().numpy()
 
-    
+                preds[u] = top_n
 
-if __name__ == '__main__':
-    ''' all parameter part '''
-    args = parse_args()
+        # convert rank list to binary-interaction
+        for u in preds.keys():
+            preds[u] = [1 if i in val_ur[u] else 0 for i in preds[u]]
+        # TODO save the result
 
-    ''' Test Process for Metrics Exporting '''
-    df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=True)
-    train_set, test_set = split_test(df, args.test_method, args.test_size)
-    # temporary used for tuning test result
-    # train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
-    # test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
-    if args.dataset in ['yelp']:
-        train_set['timestamp'] = pd.to_datetime(train_set['timestamp'])
-        test_set['timestamp'] = pd.to_datetime(test_set['timestamp'])
-    # df = pd.concat([train_set, test_set], ignore_index=True)
-    # user_num = df['user'].nunique()
-    # item_num = df['item'].nunique()
+''' all parameter part '''
+args = parse_args()
 
-    # train_set['rating'] = 1.0
-    # test_set['rating'] = 1.0
+''' Test Process for Metrics Exporting '''
+df, user_num, item_num = load_rate(args.dataset, args.prepro, binary=True)
+train_set, test_set = split_test(df, args.test_method, args.test_size)
+# temporary used for tuning test result
+# train_set = pd.read_csv(f'./experiment_data/train_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+# test_set = pd.read_csv(f'./experiment_data/test_{args.dataset}_{args.prepro}_{args.test_method}.dat')
+if args.dataset in ['yelp']:
+    train_set['timestamp'] = pd.to_datetime(train_set['timestamp'])
+    test_set['timestamp'] = pd.to_datetime(test_set['timestamp'])
+# df = pd.concat([train_set, test_set], ignore_index=True)
+# user_num = df['user'].nunique()
+# item_num = df['item'].nunique()
 
-    # get ground truth
-    test_ur = get_ur(test_set)
-    total_train_ur = get_ur(train_set)
-    # initial candidate item pool
-    item_pool = set(range(item_num))
-    candidates_num = args.cand_num
+# train_set['rating'] = 1.0
+# test_set['rating'] = 1.0
 
-    train_set_list, val_set_list, fn = split_validation(
-        train_set, 
-        args.val_method, 
-        args.fold_num
-    )
+# initial candidate item pool
+item_pool = set(range(item_num))
+candidates_num = args.cand_num
 
-    print('='*50, '\n')
-    # TODO begin tuning here
-    param_limit = param_extract(args)
-    param_dict = confirm_space(param_limit)
+train_set_list, val_set_list, fn = split_validation(
+    train_set, 
+    args.val_method, 
+    args.fold_num
+)
 
-    space = dict()
-    for key, val in param_dict.items():
-        if val[3] == 'int':
-            space[key] = hp.quniform(key, val[0], val[1], int(val[2]))
-        elif val[3] == 'float':
-            space[key] = hp.loguniform(key, np.log(val[0]), np.log(val[1]))
+print('='*50, '\n')
+# TODO begin tuning here
+param_limit = param_extract(args)
+param_dict = confirm_space(param_limit)
 
-    best = fmin(opt_func, space, algo=tpe.suggest, max_evals=args.tune_epochs)
+space = dict()
+for key, val in param_dict.items():
+    if val[3] == 'int':
+        space[key] = hp.quniform(key, val[0], val[1], int(val[2]))
+    elif val[3] == 'float':
+        space[key] = hp.loguniform(key, np.log(val[0]), np.log(val[1]))
+    elif val[3] == 'choice':
+        space[key] = hp.choice(key, val[2])
+    else:
+        raise ValueError(f'Invalid space parameter {val[3]}')
+
+best = fmin(opt_func, space, algo=tpe.suggest, max_evals=args.tune_epochs)
 
 
 

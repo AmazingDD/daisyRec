@@ -46,13 +46,11 @@ def confirm_space(param_limit):
             while 1:
                 print(f'Param [ {param} ] ')
                 min_val, max_val = input('minimum value: '), input('maximum value: ')
-                tp = input('confirm value type(int/float) available: ')
+                tp = input('confirm value type(int/float/choice) available: ')
                 if float(min_val) < float(max_val) and tp in ['int', 'float', 'choice']:
                     break
                 else:
                     print('Invalid value, please check')
-            
-            tp_op = eval(tp)
 
             while 1:
                 if tp == 'choice':
@@ -61,10 +59,15 @@ def confirm_space(param_limit):
                     assert ct in ['int', 'float'], 'Invalid choice type'
                     ct_op = eval(ct)
                     cs = input('choice set(space as delimeter): ')
+                    fnl_cs = []
                     for c in cs.strip().split(' '):
-                        if c.isdigit() and ct_op()
+                        if re.match(r'^(\d+)(\.\d+)?$', c) and ct_op(min_val) <= ct_op(c) <= ct_op(max_val):
+                            fnl_cs.append(ct_op(c))
+                    param_dict[param] = [ct_op(min_val), ct_op(max_val), fnl_cs, tp]
+                    break
 
                 else:
+                    tp_op = eval(tp)
                     step_size = input('step size(if no need, just press enter): ')
                     if len(step_size) == 0:
                         param_dict[param] = [tp_op(min_val), tp_op(max_val), 0, tp]
