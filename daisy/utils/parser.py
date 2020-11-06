@@ -3,6 +3,15 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description='test recommender')
+    # tuner settings
+    parser.add_argument('--score_metric', 
+                        type=str, 
+                        default='ndcg', 
+                        help='use which metric to define hyperopt score')
+    parser.add_argument('--tune_epochs', 
+                        type=int, 
+                        default=30, 
+                        help='tuning epochs')
     # common settings
     parser.add_argument('--problem_type', 
                         type=str, 
@@ -78,7 +87,7 @@ def parse_args():
                         help='latent factors numbers in the model')
     parser.add_argument('--reg_1', 
                         type=float, 
-                        default=0.001, 
+                        default=0., 
                         help='L1 regularization')
     parser.add_argument('--reg_2', 
                         type=float, 
