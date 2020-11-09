@@ -243,7 +243,7 @@ def opt_func(space):
         if args.algo_name in ['vae', 'cdae'] and args.problem_type == 'point':
             for u in tqdm(val_ucands.keys()):
                 pred_rates = [model.predict(u, i) for i in val_ucands[u]]
-                rec_idx = np.argsort(pred_rates)[::-1][:args.topk]
+                rec_idx = np.argsort(pred_rates)[::-1][:topk]
                 top_n = np.array(val_ucands[u])[rec_idx]
                 preds[u] = top_n
         else:
@@ -281,7 +281,37 @@ def opt_func(space):
         # convert rank list to binary-interaction
         for u in preds.keys():
             preds[u] = [1 if i in val_ur[u] else 0 for i in preds[u]]
-        # TODO save the result
+        # TODO calculate kpi & save the result
+        # calculate metrics for validation set
+        pre_k = np.mean([precision_at_k(r, topk) for r in preds.values()])
+        rec_k = recall_at_k(preds, val_ur, topk)
+        hr_k = hr_at_k(preds, val_ur)
+        map_k = map_at_k(preds.values())
+        mrr_k = mrr_at_k(preds, topk)
+        ndcg_k = np.mean([ndcg_at_k(r, topk) for r in preds.values()])
+
+        tmp_metric = np.array([pre_k, rec_k, hr_k, map_k, mrr_k, ndcg_k])
+        fnl_metric.append(tmp_metric)
+
+    # get final validation metrics result by average operation
+    fnl_metric = np.array(fnl_metric).mean(axis=0)
+    print('='*20, 'Metrics for All Validation', '='*20)
+    print(f'Precision@{topk}: {fnl_metric[0]:.4f}')
+    print(f'Recall@{topk}: {fnl_metric[1]:.4f}')
+    print(f'HR@{topk}: {fnl_metric[2]:.4f}')
+    print(f'MAP@{topk}: {fnl_metric[3]:.4f}')
+    print(f'MRR@{topk}: {fnl_metric[4]:.4f}')
+    print(f'NDCG@{topk}: {fnl_metric[5]:.4f}')
+
+    score = fnl_metric[metric_idx[mi]]
+
+    # record all tuning result and settings
+    fnl_metric = [f'{mt:.4f}' for mt in fnl_metric]
+    line = ','.join(fnl_metric) + f',{num_ng},{factors},{num_layers},{dropout},{lr},{batch_size},{reg_1},{reg_2}' + '\n'
+    f.write(line)
+    f.flush()
+
+    return -score
 
 ''' all parameter part '''
 args = parse_args()
@@ -314,6 +344,15 @@ train_set_list, val_set_list, fn = split_validation(
 
 print('='*50, '\n')
 # TODO begin tuning here
+tune_log_path = './tune_log/'
+if not os.path.exists(tune_log_path):
+    os.makedirs(tune_log_path)
+
+f = open(tune_log_path + f'{args.loss_type}_{args.algo_name}_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
+         'w', 
+         encoding='utf-8')
+f.write('Pre,Rec,HR,MAP,MRR,NDCG,num_ng,factors,num_layers,dropout,lr,batch_size,reg_1,reg_2' + '\n')
+
 param_limit = param_extract(args)
 param_dict = confirm_space(param_limit)
 
