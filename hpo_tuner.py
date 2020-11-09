@@ -28,7 +28,6 @@ metric_idx = {
 }
 
 def opt_func(space):
-    args = parse_args()
     mi=args.score_metric
     topk=args.topk
 
@@ -359,15 +358,21 @@ param_dict = confirm_space(param_limit)
 space = dict()
 for key, val in param_dict.items():
     if val[3] == 'int':
+        print(key, 'quniform', val[0], val[1], int(val[2]))
         space[key] = hp.quniform(key, val[0], val[1], int(val[2]))
     elif val[3] == 'float':
+        print(key, 'loguniform', np.log(val[0]), np.log(val[1]))
         space[key] = hp.loguniform(key, np.log(val[0]), np.log(val[1]))
     elif val[3] == 'choice':
+        print(key, 'choice', val[2])
         space[key] = hp.choice(key, val[2])
     else:
         raise ValueError(f'Invalid space parameter {val[3]}')
 
-best = fmin(opt_func, space, algo=tpe.suggest, max_evals=args.tune_epochs)
+if __name__ == '__main__':
+    best = fmin(opt_func, space, algo=tpe.suggest, max_evals=args.tune_epochs)
+    print(best)
+    f.close()
 
 
 
