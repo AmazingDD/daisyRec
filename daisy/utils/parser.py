@@ -103,7 +103,7 @@ def parse_args():
                         help='learning rate')
     parser.add_argument('--epochs', 
                         type=int, 
-                        default=20, 
+                        default=50, 
                         help='training epochs')
     parser.add_argument('--batch_size', 
                         type=int, 
