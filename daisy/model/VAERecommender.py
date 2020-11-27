@@ -198,7 +198,7 @@ class VAE(nn.Module):
         x_items = torch.tensor(self.rating_mat).float()
         self.prediction = self.forward(x_items)[0]
         self.prediction.clamp_(min=0, max=5)
-        self.prediction = self.prediction.detach().numpy()
+        self.prediction = self.prediction.cpu().detach().numpy()
 
     def predict(self, u, i):
         return self.prediction[u, i]
