@@ -19,7 +19,7 @@ def parse_args():
                         help='pair-wise or point-wise')
     parser.add_argument('--algo_name', 
                         type=str, 
-                        default='mf', 
+                        default='vae', 
                         help='algorithm to choose')
     parser.add_argument('--dataset', 
                         type=str, 

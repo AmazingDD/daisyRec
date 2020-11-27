@@ -115,7 +115,7 @@ class VAE(nn.Module):
         if self.training:
             std = torch.exp(0.5 * logvar)
             eps = torch.randn_like(std)
-            return eps.mul(std).add_(mu)
+            return eps.mul(std).add_(mu)  # core calculation for predicting the real distribution
         else:
             return mu
 
