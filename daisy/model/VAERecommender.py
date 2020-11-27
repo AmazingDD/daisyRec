@@ -45,7 +45,9 @@ class VAE(nn.Module):
         self.loss_type = loss_type
         self.early_stop = early_stop
 
-        os.environ['CUDA_VISIBLE_DEVICES'] = gpuid
+        # os.environ['CUDA_VISIBLE_DEVICES'] = gpuid  
+        torch.cuda.set_device(int(gpuid)) # if internal error, try this code instead
+
         cudnn.benchmark = True
 
         user_num, item_num = rating_mat.shape
