@@ -168,9 +168,6 @@ class VAE(nn.Module):
                 self.zero_grad()
                 ur = ur.float()
                 mask_ur = mask_ur.float()
-
-                print('mask_ur: ', mask_ur)
-
                 pred, mu, logvar = self.forward(mask_ur)
                 # BCE
                 # BCE = -torch.mean(torch.sum(F.log_softmax(pred, 1) * ur, -1))
@@ -213,14 +210,10 @@ class VAE(nn.Module):
 
         # get row number
         row_tmp = x_items.size()[0]
-        print('row_tmp: ', row_tmp)
         for idx in range(row_tmp):
             tmp = x_items[idx, :].unsqueeze(dim=0)
-            print(tmp)
             tmp_pred = self.forward(tmp)[0]
             tmp_pred.clamp_(min=0, max=5)
-            print(tmp_pred)
-            # print(tmp_pred.size())
             tmp_pred = tmp_pred.cpu().detach().numpy()
             if idx == 0:
                 self.prediction = tmp_pred
