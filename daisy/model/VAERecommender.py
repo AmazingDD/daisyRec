@@ -210,6 +210,10 @@ class VAE(nn.Module):
             tmp = x_items[idx, :].unsqueeze(dim=0)
             tmp_pred = self.forward(tmp)[0]
             tmp_pred.clamp_(min=0, max=5)
+            print(tmp_pred)
+            print(tmp_pred.size())
+            import pickle
+            pickle.dump(tmp_pred, open('./tmp.pkl', 'wb'))
             tmp_pred = tmp_pred.cpu().detach().numpy()
             if idx == 0:
                 self.prediction = tmp_pred
