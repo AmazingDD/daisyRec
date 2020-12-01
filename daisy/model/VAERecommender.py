@@ -204,21 +204,21 @@ class VAE(nn.Module):
             x_items = x_items.cpu()
 
         # consider there is no enough GPU memory to calculate, we must turn to other methods
-        # self.prediction = self.forward(x_items)[0]
-        # self.prediction.clamp_(min=0, max=5)
-        # self.prediction = self.prediction.cpu().detach().numpy()
+        self.prediction = self.forward(x_items)[0]
+        self.prediction.clamp_(min=0, max=5)
+        self.prediction = self.prediction.cpu().detach().numpy()
 
         # get row number
-        row_tmp = x_items.size()[0]
-        for idx in range(row_tmp):
-            tmp = x_items[idx, :].unsqueeze(dim=0)
-            tmp_pred = self.forward(tmp)[0]
-            tmp_pred.clamp_(min=0, max=5)
-            tmp_pred = tmp_pred.cpu().detach().numpy()
-            if idx == 0:
-                self.prediction = tmp_pred
-            else:
-                self.prediction = np.vstack((self.prediction, tmp_pred))
+        #row_tmp = x_items.size()[0]
+        #for idx in range(row_tmp):
+        #    tmp = x_items[idx, :].unsqueeze(dim=0)
+        #    tmp_pred = self.forward(tmp)[0]
+        #    tmp_pred.clamp_(min=0, max=5)
+        #    tmp_pred = tmp_pred.cpu().detach().numpy()
+        #    if idx == 0:
+        #        self.prediction = tmp_pred
+        #    else:
+        #        self.prediction = np.vstack((self.prediction, tmp_pred))
 
     def predict(self, u, i):
         return self.prediction[u, i]
