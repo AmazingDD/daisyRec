@@ -27,11 +27,16 @@ def split_test(df, test_method='fo', test_size=.2):
 
     train_set, test_set = pd.DataFrame(), pd.DataFrame()
     if test_method == 'ufo':
-        driver_ids = df['user']
-        _, driver_indices = np.unique(np.array(driver_ids), return_inverse=True)
-        gss = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=2020)
-        for train_idx, test_idx in gss.split(df, groups=driver_indices):
-            train_set, test_set = df.loc[train_idx, :].copy(), df.loc[test_idx, :].copy()
+        # driver_ids = df['user']
+        # _, driver_indices = np.unique(np.array(driver_ids), return_inverse=True)
+        # gss = GroupShuffleSplit(n_splits=1, test_size=test_size, random_state=2020)
+        # for train_idx, test_idx in gss.split(df, groups=driver_indices):
+        #     train_set, test_set = df.loc[train_idx, :].copy(), df.loc[test_idx, :].copy()
+        test_idx = df.groupby('user').apply(
+            lambda x: x.sample(frac=test_size).index
+        ).explode().values
+        train_set = df[~df.index.isin(test_idx)]
+        test_set = df.iloc[test_idx]
 
     elif test_method == 'utfo':
         df = df.sort_values(['user', 'timestamp']).reset_index(drop=True)
