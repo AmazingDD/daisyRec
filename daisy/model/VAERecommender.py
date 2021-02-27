@@ -18,6 +18,7 @@ class VAE(nn.Module):
                  lr=1e-3,
                  reg_1=0.,
                  reg_2=0.,
+                 beta=0.5,
                  loss_type='CL',
                  gpuid='0',
                  early_stop=True):
@@ -42,6 +43,7 @@ class VAE(nn.Module):
         self.lr = lr
         self.reg_1 = reg_1
         self.reg_2 = reg_2
+        self.beta = beta
         self.loss_type = loss_type
         self.early_stop = early_stop
 
@@ -142,9 +144,9 @@ class VAE(nn.Module):
             self.cpu()
 
         if self.loss_type == 'CL':
-            criterion = nn.BCEWithLogitsLoss(reduction='sum')
+            criterion = nn.BCEWithLogitsLoss(reduction='mean')
         elif self.loss_type == 'SL':
-            criterion = nn.MSELoss(reduction='sum')
+            criterion = nn.MSELoss(reduction='mean')
         else:
             raise ValueError('Invalid loss type')
 
@@ -172,7 +174,7 @@ class VAE(nn.Module):
                 # BCE
                 # BCE = -torch.mean(torch.sum(F.log_softmax(pred, 1) * ur, -1))
                 loss = criterion(pred * mask_ur, ur * mask_ur)
-                KLD = -0.5 * torch.mean(torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1))
+                KLD = -self.beta * torch.mean(torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1))
                 loss += KLD
 
                 for layer in self.q_layers:
