@@ -151,6 +151,7 @@ if __name__ == '__main__':
                 lr=args.lr,
                 reg_1=args.reg_1,
                 reg_2=args.reg_2,
+                beta=args.kl_reg,
                 loss_type=args.loss_type,
                 gpuid=args.gpu
             )
