@@ -39,6 +39,7 @@ if __name__ == '__main__':
         lr = space['lr'] if 'lr' in space.keys() else args.lr
         reg_1 = space['reg_1'] if 'reg_1' in space.keys() else args.reg_1
         reg_2 = space['reg_2'] if 'reg_2' in space.keys() else args.reg_2
+        kl_reg = space['kl_reg'] if 'kl_reg' in space.keys() else args.kl_reg
         num_layers = int(space['num_layers']) if 'num_layers' in space.keys() else args.num_layers
         dropout = space['dropout'] if 'dropout' in space.keys() else args.dropout
         # num_ng is a special paramter, not be used together with those above
@@ -158,6 +159,7 @@ if __name__ == '__main__':
                         lr=lr,
                         reg_1=reg_1,
                         reg_2=reg_2,
+                        beta=kl_reg,
                         loss_type=args.loss_type,
                         gpuid=args.gpu
                     )
