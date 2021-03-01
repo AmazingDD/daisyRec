@@ -93,6 +93,10 @@ def parse_args():
                         type=float, 
                         default=0.001, 
                         help='L2 regularization')
+    parser.add_argument('--kl_reg', 
+                    type=float, 
+                    default=0.5, 
+                    help='VAE KL regularization')
     parser.add_argument('--dropout', 
                         type=float, 
                         default=0.5, 
