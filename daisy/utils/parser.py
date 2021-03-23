@@ -12,6 +12,10 @@ def parse_args():
                         type=int, 
                         default=30, 
                         help='tuning epochs')
+    parser.add_argument('--tune_pack', 
+                        type=str, 
+                        default='{}', 
+                        help='Tuner parameter dictionary, type is JSON string')
     # common settings
     parser.add_argument('--problem_type', 
                         type=str, 

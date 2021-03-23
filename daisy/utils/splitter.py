@@ -123,12 +123,15 @@ def split_validation(train_set, val_method='fo', fold_num=1, val_size=.1):
     
     train_set_list, val_set_list = [], []
     if val_method == 'ufo':
-        driver_ids = train_set['user']
-        _, driver_indices = np.unique(np.array(driver_ids), return_inverse=True)
-        gss = GroupShuffleSplit(n_splits=fold_num, test_size=val_size, random_state=2020)
-        for train_idx, val_idx in gss.split(train_set, groups=driver_indices):
-            train_set_list.append(train_set.loc[train_idx, :])
-            val_set_list.append(train_set.loc[val_idx, :])
+        for _ in range(fold_num):
+            val_idx = train_set.groupby('user').apply(
+                lambda x: x.sample(frac=val_size).index
+            ).explode().values
+            train = train_set[~train_set.index.isin(val_idx)]
+            validation = train_set.iloc[val_idx]
+
+            train_set_list.append(train)
+            val_set_list.append(validation)
     if val_method == 'utfo':
         train_set = train_set.sort_values(['user', 'timestamp']).reset_index(drop=True)
         def time_split(grp):

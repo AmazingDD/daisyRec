@@ -1,5 +1,6 @@
 import os
 import time
+import json
 import argparse
 import numpy as np
 import pandas as pd
@@ -163,6 +164,22 @@ if __name__ == '__main__':
                         loss_type=args.loss_type,
                         gpuid=args.gpu
                     )
+                elif args.algo_name == 'userknn':
+                    pass
+                elif args.algo_name == 'itemknn':
+                    pass
+                elif args.algo_name == 'puresvd':
+                    pass
+                elif args.algo_name == 'afm':
+                    pass
+                elif args.algo_name == 'deepfm':
+                    pass
+                elif args.algo_name == 'item2vec':
+                    pass
+                elif args.algo_name == 'pop':
+                    pass
+                elif args.algo_name == 'slim':
+                    pass
                 else:
                     raise ValueError('Invalid algorithm name')
             elif args.problem_type == 'pair':
@@ -224,6 +241,10 @@ if __name__ == '__main__':
                         loss_type=args.loss_type,
                         gpuid=args.gpu
                     )
+                elif args.algo_name == 'deepfm':
+                    pass
+                elif args.algo_name == 'afm':
+                    pass
                 else:
                     raise ValueError('Invalid algorithm name')
             else:
@@ -355,8 +376,9 @@ if __name__ == '__main__':
     f.write('Pre,Rec,HR,MAP,MRR,NDCG,num_ng,factors,num_layers,dropout,lr,batch_size,reg_1,reg_2' + '\n')
     f.flush()
 
-    param_limit = param_extract(args)
-    param_dict = confirm_space(param_limit)
+    # param_limit = param_extract(args)
+    # param_dict = confirm_space(param_limit)
+    param_dict = json.loads(args.tune_pack)
 
     space = dict()
     for key, val in param_dict.items():
