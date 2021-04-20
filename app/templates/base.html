@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    {% if title %}
+    <title>{{ title }} - DaisyRec</title>
+    {% else %}
+    <title>DaisyRec</title>
+    {% endif %}
+</head>
+<body>
+    <div class="container" style="padding-top: 50px;">
+        <ol class='breadcrumb'>       
+            <li>DaisyRec</li>     
+            <li><a href="/main">main</a></li>
+            <li><a href="/hpo_tuner">hpo_tuner</a></li>
+        </ol>
+        <hr>
+        <div id='bs'>
+            <h2 class='alert alert-info'>Basic Settings</h2>
+            <form action="" method="post" novalidate="novalidate">
+                <div class="form-group col-xs-6">
+                    <label>Score metric</label>
+                    <select class='form-control' id='score_metric'>
+                        {% for sc in score_metric %}
+                        <option value="{{sc.name}}">{{sc.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Tune Epochs</label>
+                    <input type='text' class="form-control" id="tune_epochs" value='30'>
+                </div>
+
+                <div class="form-group col-xs-6">
+                    <label>Problem Type</label>
+                    <select class='form-control' id='problem_type'>
+                        {% for pt in problem_type %}
+                        <option value="{{pt.name}}">{{pt.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Algorithm Name</label>
+                    <select class='form-control' id='algo_name'>
+                        {% for an in algo_name %}
+                        <option id="{{an.name}}" value="{{an.name}}">{{an.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Dataset Name</label>
+                    <select class='form-control' id='dataset'>
+                        {% for dn in dataset_name %}
+                        <option id="{{dn.name}}" value="{{dn.name}}">{{dn.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Preprocess Method</label>
+                    <select class='form-control' id='preprocess'>
+                        {% for pm in preprocess_methods %}
+                        <option id="{{pm.name}}" value="{{pm.name}}">{{pm.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Top-K number</label>
+                    <input type='text' class="form-control" id="topk" value='50'>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Test Method</label>
+                    <select class='form-control' id='test_method'>
+                        {% for tm in test_methods %}
+                        <option id="{{tm.name}}" value="{{tm.name}}">{{tm.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Validation Method</label>
+                    <select class='form-control' id='val_method'>
+                        {% for vm in val_methods %}
+                        <option id="{{vm.name}}" value="{{vm.name}}">{{vm.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Test Size</label>
+                    <input type='text' class="form-control" id="test_size" value='0.2'>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Validation Size</label>
+                    <input type='text' class="form-control" id="val_size" value='0.1'>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Fold Number</label>
+                    <input type='text' class="form-control" id="fold_num" value='5'>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Candidates Number</label>
+                    <input type='text' class="form-control" id="cand_num" value='1000'>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Sample Method</label>
+                    <select class='form-control' id='sample_method'>
+                        {% for sm in sample_methods %}
+                        <option id="{{sm.name}}" value="{{sm.name}}">{{sm.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Sample Ratio</label>
+                    <input type='text' class="form-control" id="sample_ratio" value='0'>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>Weight Initializartion Method</label>
+                    <input type='text' class="form-control" id="init_method" value=''>
+                </div>
+                <div class="form-group col-xs-6">
+                    <label>GPU ID</label>
+                    <input type='text' class="form-control" id="gpu" value='0'>
+                </div>
+                <!-- <div class="form-group col-xs-6">
+                    <label>Negative Sampling Number</label>
+                    <input type='text' class="form-control" id="num_ng" value='0'>
+                </div> -->
+                <div class="form-group col-xs-6">
+                    <label>Loss Function Type</label>
+                    <select class='form-control' id='loss_type'>
+                        {% for lt in loss_types %}
+                        <option id="{{lt.name}}" value="{{lt.name}}">{{lt.name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>            
+            </form>
+            <div class="col-xs-12"><button class="btn btn-default btn-lg" id='bt1'>Submit</button></div>
+        </div>
+
+        <hr>
+    </div>
+    {% block content %}
+
+    {% endblock %}
+    <script>
+        $(document).ready(function(){
+            // --------- problem type event ---------
+            if($('#problem_type').val() == 'pair') {
+                    $('#vae').hide()
+                    $('#cdae').hide()
+                    $('#item2vec').hide()
+                    $('#knn').hide()
+                    $('#pop').hide()
+                    $('#slim').hide()
+        
+                    $('#CL').hide()
+                    $('#SL').hide()
+                    $('#BPR').show()
+                    $('#TL').show()
+                    $('#HL').show()
+                } else {
+                    $('#vae').show()
+                    $('#cdae').show()
+                    $('#item2vec').show()
+                    $('#knn').show()
+                    $('#pop').show()
+                    $('#slim').show()
+        
+                    $('#CL').show()
+                    $('#SL').show()
+                    $('#BPR').hide()
+                    $('#TL').hide()
+                    $('#HL').hide()
+                }
+        
+                $('#problem_type').change(function(){
+                    //point remove nothing
+                    //pair remove vae cdae item2vec knn pop slim
+                    if($('#problem_type').val() == 'pair') {
+                        $('#vae').hide()
+                        $('#cdae').hide()
+                        $('#item2vec').hide()
+                        $('#userknn').hide()
+                        $('#itemknn').hide()
+                        $('#pop').hide()
+                        $('#slim').hide()
+                        $('#puresvd').hide()
+        
+                        $('#CL').hide()
+                        $('#SL').hide()
+                        $('#BPR').show()
+                        $('#TL').show()
+                        $('#HL').show()
+                    } 
+                    else {
+                        $('#vae').show()
+                        $('#cdae').show()
+                        $('#item2vec').show()
+                        $('#userknn').show()
+                        $('#itemknn').show()
+                        $('#pop').show()
+                        $('#slim').show()
+                        $('#puresvd').show()
+        
+                        $('#CL').show()
+                        $('#SL').show()
+                        $('#BPR').hide()
+                        $('#TL').hide()
+                        $('#HL').hide()
+                    }
+                })
+            })
+    </script>
+</body>
+</html>
+

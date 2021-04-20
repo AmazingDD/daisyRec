@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container" style="padding-bottom: 20px; padding-top: 20px">
+    <h2 class='alert alert-info'>Algorithm Specific Settings</h2>
+    <h3>paramters needed to tune</h3>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="batch_size" value="batch_size"> Batch Size
+        </label>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="dropout" value="dropout"> Dropout Rate
+        </label>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="factors" value="factors"> Factors
+        </label>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="lr" value="lr"> Learning Rate
+        </label>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="num_layers" value="num_layers"> Number of Layers
+        </label>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="num_ng" value="num_ng"> Number of Negative Samplings
+        </label>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="reg_1" value="reg_1"> L1 Regularization
+        </label>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="reg_2" value="reg_2"> L2 Regularization
+        </label>
+        <label class="checkbox-inline col-xs-3">
+            <input type="checkbox" id="kl_reg" value="kl_reg"> KL Regularization
+        </label>
+    <div id='ass'>
+
+    </div>
+    <div class="col-xs-12">
+        <button class="btn btn-default btn-lg" id="bt2" disabled>Submit</button>
+        <button class="btn btn-primary btn-lg" id="bt3" disabled>Generate</button>
+    </div>
+</div>
+<div class="container" style="padding-bottom: 50px;">
+    <h2 class='alert alert-info'>hpo_tuner.py Script Command Result</h2>
+    <div class="jumbotro">
+        <textarea id='res' class="form-control" rows='8' style="resize: none"></textarea>
+    </div>
+</div>
+
+<script>
+    function contain(str, substr) {
+        return new RegExp(substr).test(str);
+    }
+
+    function check_param() {
+        var param_list = new Array()
+        check_list = [
+            "batch_size", "dropout", "factors", 
+            "lr", "num_layers", "num_ng",
+            "reg_1", "reg_2", "kl_reg"
+        ]
+        for(i = 0;i < check_list.length;i++) {
+            if($('#' + check_list[i]).is(":checked")) {
+                param_list.push(check_list[i])
+            } 
+        }
+
+        return param_list
+    }
+
+    function add_param_info(param_name) {
+        $('#ass').append(
+            '<h3 class="col-xs-12">' + param_name + '</h3>' + 
+            '<div class="form-group col-xs-3"><label>Type of Parameter</label>' + 
+            '<select class="form-control" id="' + param_name + '_tp">' + 
+            '<option>int choice</option><option>float choice</option>' +
+            '<option>int</option><option>float</option></select></div>' +
+            '<div class="form-group col-xs-3"><label>Min. Value</label>' + 
+            '<input class="form-control" type="text" id="' + param_name + '_min"></div>' +
+            '<div class="form-group col-xs-3"><label>Max. Value</label>' + 
+            '<input class="form-control" type="text" id="' + param_name + '_max"></div>' + 
+            '<div class="form-group col-xs-3"><label>choice set or step size</label>' +
+            '<input class="form-control" type="text" id="' + param_name + '_sp"></div>'
+        )
+    }
+
+    $(document).ready(function(){
+        $('#bt1').click(function(){
+            $('#bt2').attr('disabled', false)
+            switch($('#algo_name').val()) {
+                case 'vae':
+                    $('#batch_size').parent().show()
+                    $('#dropout').parent().show()
+                    $('#factors').parent().hide()
+                    $('#lr').parent().show()
+                    $('#num_layers').parent().hide()
+                    $('#num_ng').parent().hide()
+                    $('#reg_1').parent().show()
+                    $('#reg_2').parent().show()
+                    $('#kl_reg').parent().show()
+                    $('#ass').empty()
+                    break
+                case 'cdae':
+                    $('#batch_size').parent().show()
+                    $('#dropout').parent().show()
+                    $('#factors').parent().show()
+                    $('#lr').parent().show()
+                    $('#num_layers').parent().hide()
+                    $('#num_ng').parent().hide()
+                    $('#reg_1').parent().show()
+                    $('#reg_2').parent().show()
+                    $('#kl_reg').parent().hide()
+                    $('#ass').empty()
+                    break
+                case 'item2vec': 
+                    break
+                case 'userknn':
+                    break
+                case 'itemknn':
+                    break
+                case 'slim': 
+                    break
+                case 'pop':
+                    break
+                case 'mf': 
+                    $('#batch_size').parent().show()
+                    $('#dropout').parent().hide()
+                    $('#factors').parent().show()
+                    $('#lr').parent().show()
+                    $('#num_layers').parent().hide()
+                    $('#num_ng').parent().show()
+                    $('#reg_1').parent().show()
+                    $('#reg_2').parent().show()
+                    $('#kl_reg').parent().hide()
+                    $('#ass').empty()
+                    break 
+                case 'fm':
+                    $('#batch_size').parent().show()
+                    $('#dropout').parent().hide()
+                    $('#factors').parent().show()
+                    $('#lr').parent().show()
+                    $('#num_layers').parent().hide()
+                    $('#num_ng').parent().show()
+                    $('#reg_1').parent().show()
+                    $('#reg_2').parent().show()
+                    $('#kl_reg').parent().hide()
+                    $('#ass').empty()
+                    break
+                case 'neumf': 
+                    $('#batch_size').parent().show()
+                    $('#dropout').parent().show()
+                    $('#factors').parent().show()
+                    $('#lr').parent().show()
+                    $('#num_layers').parent().show()
+                    $('#num_ng').parent().show()
+                    $('#reg_1').parent().show()
+                    $('#reg_2').parent().show()
+                    $('#kl_reg').parent().hide()
+                    $('#ass').empty()
+                    break
+                case 'afm':
+                    break
+                case 'nfm':
+                    $('#batch_size').parent().show()
+                    $('#dropout').parent().show()
+                    $('#factors').parent().show()
+                    $('#lr').parent().show()
+                    $('#num_layers').parent().show()
+                    $('#num_ng').parent().show()
+                    $('#reg_1').parent().show()
+                    $('#reg_2').parent().show()
+                    $('#kl_reg').parent().hide()
+                    $('#ass').empty()
+                    break
+                case 'deepfm':
+                    break
+                case 'puresvd':
+                    break
+            }
+
+        })
+
+
+        $('#bt2').click(function() {
+            param_list = check_param()
+            // console.log(param_list)
+            $('#ass').empty()
+            for(i = 0;i < param_list.length;i++) {
+                add_param_info(param_list[i])
+            }
+
+            if (param_list.length > 0) {
+                $('#bt3').attr('disabled', false)
+            }
+
+        })
+
+        $('#bt3').click(function() {
+            base = 'python hpo_tuner.py'
+            tmp = $('#score_metric').val()
+            base += ' --score_metric=' + tmp
+            tmp = $('#tune_epochs').val()
+            base += ' --tune_epochs=' + tmp
+            tmp = $('#pronlem_type').val()
+            base += ' --problem_type=' + tmp
+            tmp = $('#algo_name').val()
+            base += ' --algo_name=' + tmp
+            tmp = $('#dataset').val()
+            base += ' --dataset=' + tmp
+            tmp = $('#preprocess').val()
+            base += ' --prepro=' + tmp
+            tmp = $('#topk').val()
+            base += ' --topk=' + tmp
+            tmp = $('#test_method').val()
+            base += ' --test_method=' + tmp
+            tmp = $('#val_method').val()
+            base += ' --val_method=' + tmp
+            tmp = $('#test_size').val()
+            base += ' --test_size=' + tmp
+            tmp = $('#val_size').val()
+            base += ' --val_size=' + tmp
+            tmp = $('#fold_num').val()
+            base += ' --fold_num=' + tmp
+            tmp = $('#cand_num').val()
+            base += ' --cand_num=' + tmp
+            tmp = $('#sample_method').val()
+            base += ' --sample_method=' + tmp
+            tmp = $('#sample_ratio').val()
+            base += ' --sample_ratio=' + tmp
+            // tmp = $('#init_method').val()
+            // base += ' --init_method=' + tmp
+            tmp = $('#gpu').val()
+            base += ' --gpu=' + tmp
+            tmp = $('#loss_type').val()
+            base += ' --loss_type=' + tmp
+
+            param_dict = {}
+
+            param_list = check_param()
+            for(i = 0;i < param_list.length;i++) {
+                pn = param_list[i]
+                console.log(pn)
+                tp = $('#' + pn + '_tp').val()
+
+                if(contain(tp, 'choice')){
+                    if(contain(tp, 'int')) {
+                        min = $('#' + pn + '_min').val().trim()
+                        max = $('#' + pn + '_max').val().trim()
+                        min = parseInt(min)
+                        max = parseInt(max)
+                        fnl_cs = $('#' + pn + '_sp').val().split(',')
+                        for(j = 0;j < fnl_cs.length;j++){
+                            fnl_cs[j] = parseInt(fnl_cs[j].trim())
+                        }
+
+                        param_dict[pn] = [min, max, fnl_cs, 'choice']
+                    } else {
+                        min = $('#' + pn + '_min').val().trim()
+                        max = $('#' + pn + '_max').val().trim()
+                        min = parseFloat(min)
+                        max = parseFloat(max)
+                        fnl_cs = $('#' + pn + '_sp').val().split(',')
+                        for(j = 0;j < fnl_cs.length;j++){
+                            fnl_cs[j] = parseFloat(fnl_cs[j].trim())
+                        }
+                        param_dict[pn] = [min, max, fnl_cs, 'choice']
+                    }
+                } else {
+                    if(contain(tp, 'int')){
+                        min = $('#' + pn + '_min').val().trim()
+                        max = $('#' + pn + '_max').val().trim()
+                        min = parseInt(min)
+                        max = parseInt(max)
+                        sp = $('#' + pn + '_sp').val().trim()
+                        if(sp.length == 0) {
+                            param_dict[pn] = [min, max, 0, 'int']
+                        } else {
+                            param_dict[pn] = [min, max, parseFloat(sp), 'int']
+                        }
+                    } else {
+                        min = $('#' + pn + '_min').val()
+                        max = $('#' + pn + '_max').val()
+                        min = parseFloat(min)
+                        max = parseFloat(max)
+                        sp = $('#' + pn + '_sp').val().trim()
+                        if(sp.length == 0) {
+                            param_dict[pn] = [min, max, 0, 'float']
+                        } else {
+                            param_dict[pn] = [min, max, parseFloat(sp), 'float']
+                        }
+                    }
+                }
+            }
+
+            param_dict_str = JSON.stringify(param_dict)
+            base += ' --tune_pack=' + param_dict_str
+            $('#res').val(base)
+        })
+
+    })
+</script>
+{% endblock %}

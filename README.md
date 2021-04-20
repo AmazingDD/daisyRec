@@ -60,7 +60,8 @@ All data are available in links below:
 - [x] user-level/item-level/user-item-level N-core
 - [x] distinguish N-filter and N-core preprocess method
 - [ ] weight initialization interface
-- [ ] a more friendly tuner
+- [x] a more friendly tuner
+- [ ] make sure Item2vec work as expected
 
 ## Cite
 

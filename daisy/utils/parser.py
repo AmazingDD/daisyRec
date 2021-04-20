@@ -12,6 +12,10 @@ def parse_args():
                         type=int, 
                         default=30, 
                         help='tuning epochs')
+    parser.add_argument('--tune_pack', 
+                        type=str, 
+                        default='{}', 
+                        help='Tuner parameter dictionary, type is JSON string')
     # common settings
     parser.add_argument('--problem_type', 
                         type=str, 
@@ -93,6 +97,10 @@ def parse_args():
                         type=float, 
                         default=0.001, 
                         help='L2 regularization')
+    parser.add_argument('--kl_reg', 
+                        type=float, 
+                        default=0.5, 
+                        help='VAE KL regularization')
     parser.add_argument('--dropout', 
                         type=float, 
                         default=0.5, 
