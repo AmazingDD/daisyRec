@@ -198,17 +198,37 @@ class VAE(nn.Module):
                 break
             else:
                 last_loss = current_loss
+        
+        # since there is not enough GPU memory to calculate, so we divide the data into
+        # some batches, and then calculate them.
+        row_size = self.rating_mat.shape[0]
+        row_batch_size = 100
+        for i in range(row_size // row_batch_size + 1):
+            tmp = self.rating_mat[i * row_batch_size : (i + 1) * row_batch_size, :]
+            tmp = torch.tensor(tmp).float()
 
-        x_items = torch.tensor(self.rating_mat).float()
-        if torch.cuda.is_available():
-            x_items = x_items.cuda()
-        else:
-            x_items = x_items.cpu()
+            if torch.cuda.is_available():
+                tmp = tmp.cuda()
+            else:
+                tmp = tmp.cpu()
+            tmp_pred = self.forward(tmp)[0]
+            tmp_pred.clamp_(min=0, max=5)
+            tmp_pred = tmp_pred.cpu().detach().numpy()
 
-        # consider there is no enough GPU memory to calculate, we must turn to other methods
-        self.prediction = self.forward(x_items)[0]
-        self.prediction.clamp_(min=0, max=5)
-        self.prediction = self.prediction.cpu().detach().numpy()
+            if i == 0:
+                self.prediction = tmp_pred
+            else:
+                self.prediction = np.vstack((self.prediction, tmp_pred))
+        # x_items = torch.tensor(self.rating_mat).float()
+        # if torch.cuda.is_available():
+        #     x_items = x_items.cuda()
+        # else:
+        #     x_items = x_items.cpu()
+
+        # # consider there is no enough GPU memory to calculate, we must turn to other methods
+        # self.prediction = self.forward(x_items)[0]
+        # self.prediction.clamp_(min=0, max=5)
+        # self.prediction = self.prediction.cpu().detach().numpy()
 
         # get row number
         #row_tmp = x_items.size()[0]
