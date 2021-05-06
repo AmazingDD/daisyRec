@@ -332,7 +332,7 @@ if __name__ == '__main__':
 
         # record all tuning result and settings
         fnl_metric = [f'{mt:.4f}' for mt in fnl_metric]
-        line = ','.join(fnl_metric) + f',{num_ng},{factors},{num_layers},{dropout},{lr},{batch_size},{reg_1},{reg_2}' + '\n'
+        line = ','.join(fnl_metric) + f',{num_ng},{factors},{num_layers},{dropout},{lr},{batch_size},{reg_1},{reg_2},{kl_reg}' + '\n'
         f.write(line)
         f.flush()
 
@@ -373,7 +373,7 @@ if __name__ == '__main__':
     f = open(tune_log_path + f'{args.loss_type}_{args.algo_name}_{args.dataset}_{args.prepro}_{args.val_method}.csv', 
             'w', 
             encoding='utf-8')
-    f.write('Pre,Rec,HR,MAP,MRR,NDCG,num_ng,factors,num_layers,dropout,lr,batch_size,reg_1,reg_2' + '\n')
+    f.write('Pre,Rec,HR,MAP,MRR,NDCG,num_ng,factors,num_layers,dropout,lr,batch_size,reg_1,reg_2,kl_reg' + '\n')
     f.flush()
 
     # param_limit = param_extract(args)

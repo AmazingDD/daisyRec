@@ -307,7 +307,7 @@ def build_feat_idx_dict(df:pd.DataFrame,
 
 def convert_npy_mat(user_num, item_num, df):
     """
-    method of convert dataframe to numoy matrix
+    method of convert dataframe to numpy matrix
     Parameters
     ----------
     user_num : int, the number of users
