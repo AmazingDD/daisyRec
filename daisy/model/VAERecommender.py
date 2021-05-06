@@ -199,8 +199,7 @@ class VAE(nn.Module):
             else:
                 last_loss = current_loss
         
-        # since there is not enough GPU memory to calculate, so we divide the data into
-        # some batches, and then calculate them.
+        # since there is not enough GPU memory to calculate, so we divide the data into batches, and then calculate them.
         row_size = self.rating_mat.shape[0]
         row_batch_size = 100
         for i in range(row_size // row_batch_size + 1):
