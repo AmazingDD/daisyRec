@@ -124,7 +124,7 @@ if __name__ == '__main__':
                     model = PointNFM(
                         user_num,
                         item_num,
-                        factors=args.factors,
+                        factors=factors,
                         act_function=args.act_func,
                         num_layers=num_layers,
                         batch_norm=args.no_batch_norm,
@@ -188,11 +188,11 @@ if __name__ == '__main__':
                     model = PairMF(
                         user_num, 
                         item_num,
-                        factors=args.factors,
+                        factors=factors,
                         epochs=args.epochs,
-                        lr=args.lr,
-                        reg_1=args.reg_1,
-                        reg_2=args.reg_2,
+                        lr=lr,
+                        reg_1=reg_1,
+                        reg_2=reg_2,
                         loss_type=args.loss_type,
                         gpuid=args.gpu
                     )
@@ -201,11 +201,11 @@ if __name__ == '__main__':
                     model = PairFM(
                         user_num, 
                         item_num,
-                        factors=args.factors,
+                        factors=factors,
                         epochs=args.epochs,
-                        lr=args.lr,
-                        reg_1=args.reg_1,
-                        reg_2=args.reg_2,
+                        lr=lr,
+                        reg_1=reg_1,
+                        reg_2=reg_2,
                         loss_type=args.loss_type,
                         gpuid=args.gpu
                     )
@@ -214,13 +214,13 @@ if __name__ == '__main__':
                     model = PairNeuMF(
                         user_num, 
                         item_num,
-                        factors=args.factors,
-                        num_layers=args.num_layers,
-                        q=args.dropout,
-                        lr=args.lr,
+                        factors=factors,
+                        num_layers=num_layers,
+                        q=dropout,
+                        lr=lr,
                         epochs=args.epochs,
-                        reg_1=args.reg_1,
-                        reg_2=args.reg_2,
+                        reg_1=reg_1,
+                        reg_2=reg_2,
                         loss_type=args.loss_type,
                         gpuid=args.gpu
                     )
@@ -229,15 +229,15 @@ if __name__ == '__main__':
                     model = PairNFM(
                         user_num, 
                         item_num,
-                        factors=args.factors,
+                        factors=factors,
                         act_function=args.act_func,
-                        num_layers=args.num_layers,
+                        num_layers=num_layers,
                         batch_norm=args.no_batch_norm,
-                        q=args.dropout,
+                        q=dropout,
                         epochs=args.epochs,
-                        lr=args.lr,
-                        reg_1=args.reg_1,
-                        reg_2=args.reg_2,
+                        lr=lr,
+                        reg_1=reg_1,
+                        reg_2=reg_2,
                         loss_type=args.loss_type,
                         gpuid=args.gpu
                     )
