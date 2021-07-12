@@ -189,9 +189,10 @@ class VAE(nn.Module):
                 
                 loss.backward()
                 optimizer.step()
+                
                 pbar.set_postfix(loss=loss.item())
                 current_loss += loss.item()
-                
+
             self.eval()
             delta_loss = float(current_loss - last_loss)
             if (abs(delta_loss) < 1e-5) and self.early_stop:
