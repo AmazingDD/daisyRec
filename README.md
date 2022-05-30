@@ -2,6 +2,10 @@
 
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/scikit-daisy) [![Version](https://img.shields.io/badge/version-v1.1.2-orange)](https://github.com/AmazingDD/daisyRec) ![GitHub repo size](https://img.shields.io/github/repo-size/amazingdd/daisyrec) ![GitHub](https://img.shields.io/github/license/amazingdd/daisyrec)
 
+## Notice
+
+This repository now is only for preserving the link validation of the paper's code. Our new **daisyRec** will be updated in this [**repository**](https://github.com/recsys-benchmark/DaisyRec-v2.0)
+
 ## Overview
 
 <!-- ![daisyRec's structure](pics/structure.png) -->
@@ -61,7 +65,7 @@ All data are available in links below:
 - [x] distinguish N-filter and N-core preprocess method
 - [ ] weight initialization interface
 - [x] a more friendly tuner
-- [ ] make sure Item2vec work as expected
+- [x] make sure Item2vec work as expected
 
 ## Cite
 
