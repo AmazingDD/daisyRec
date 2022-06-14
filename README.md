@@ -4,7 +4,7 @@
 
 ## Notice
 
-This repository now is only for preserving the link validation of the paper's code. Our new **daisyRec** will be updated in this [**repository**](https://github.com/recsys-benchmark/DaisyRec-v2.0)
+This repository will not be updated anymore. Our new **daisyRec-v2.0** has been released and updated in this [**repository**](https://github.com/recsys-benchmark/DaisyRec-v2.0)
 
 ## Overview
 
