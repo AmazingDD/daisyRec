@@ -3,16 +3,16 @@
 </p>
 
 ![PyPI - Python Version](https://img.shields.io/badge/pyhton-3.5%2B-blue) 
-[![Version](https://img.shields.io/badge/version-2.0-orange)](https://github.com/recsys-benchmark/DaisyRec-v2.0) 
-![GitHub repo size](https://img.shields.io/github/repo-size/recsys-benchmark/DaisyRec-v2.0) 
-![GitHub](https://img.shields.io/github/license/recsys-benchmark/DaisyRec-v2.0)
+[![Version](https://img.shields.io/badge/version-2.0-orange)](https://github.com/AmazingDD/daisyRec) 
+![GitHub repo size](https://img.shields.io/github/repo-size/AmazingDD/daisyRec) 
+![GitHub](https://img.shields.io/github/license/AmazingDD/daisyRec)
 [![arXiv](https://img.shields.io/badge/arXiv-daisyRec-%23B21B1B)](https://arxiv.org/abs/2206.10848)
 
 ## Overview
 
 <!-- ![daisyRec's structure](images/framework.png) -->
 
-DaisyRec-v2.0 is a Python toolkit developed for benchmarking top-N recommendation task. The name DAISY stands for multi-**D**imension f**A**irly compar**I**son for recommender **SY**stem. Note that the preliminary version of DaisyRec is available [here](https://github.com/AmazingDD/daisyRec), which will not be updated anymore. Please refer to DaisyRec-v2.0 for the latest version. ***(Please note that DaisyRec-v2.0 is still under testing. If there is any issue, please feel free to let us know)*** 
+daisyRec is a Python toolkit developed for benchmarking top-N recommendation task. The name DAISY stands for multi-**D**imension f**A**irly compar**I**son for recommender **SY**stem. ***(Please note that DaisyRec-v2.0 is still under testing. If there is any issue, please feel free to let us know)*** 
 
 The figure below shows the overall framework of DaisyRec-v2.0. 
 
@@ -38,8 +38,6 @@ python run_examples/fair_rec.py
 
 - The GUI Command Generator is available [here](http://DaisyRecGuiCommandGenerator.pythonanywhere.com).
 
-- Please refer to [DaisyRec-v2.0-Tutorial.ipynb](https://github.com/recsys-benchmark/DaisyRec-v2.0/blob/main/DaisyRec-v2.0-Tutorial.ipynb), which demontrates how to use DaisyRec-v2.0 to tune hyper-parameters and test the algorithms step by step.
-
 
 ## Documentation 
 
@@ -47,14 +45,14 @@ The documentation of DaisyRec-v2.0 is available [here](https://daisyrec.readthed
 
 ## Implemented Algorithms
 
-Below are the algorithms implemented in DaisyRec-v2.0. More baselines will be added later.
+Below are the algorithms implemented in daisyRec. More baselines will be added later.
 
 - **Memory-based Methods**
-    - MostPop, ItemKNN
+    - MostPop, ItemKNN, EASE
 - **Latent Factor Methods**
     - PureSVD, SLIM, MF, FM
 - **Deep Learning Methods**
-    - NeuMF, NFM, NGCF, Multi-VAE
+    - NeuMF, NFM, NGCF, Multi-VAE, ∞-AE
     
 
 ## Datasets
@@ -71,24 +69,6 @@ All data are available in links below:
   - [Amazon-Book/Electronic/Clothing/Music (ratings only)](http://jmcauley.ucsd.edu/data/amazon/links.html)
   - [Yelp Challenge](https://kaggle.com/yelp-dataset/yelp-dataset)
 
-
-
-## Ranking Results 
-
-- Please refer to [ranking_results](https://daisyrec-ranking-results.readthedocs.io/en/latest/) for the ranking performance of different baselines across six datasets (i.e., ML-1M, LastFM, Book-Crossing, Epinions, Yelp and AMZ-Electronic).
-    - Regarding ***Time-aware Split-by-Ratio (TSBR)***
-        - We adopt Bayesian HyperOpt to perform hyper-parameter optimization w.r.t. NDCG@10 for each baseline under three views (i.e., origin, 5-filer and 10-filter) on each dataset for 30 trails.
-        - We keep original objective functions for each baseline (bpr loss for MF, FM, NFM and NGCF; squre error loss for SLIM; cross-entropy loss for NeuMF and Multi-VAE), employ the uniform sampler, and adopt time-aware split-by-ratio (i.e., TSBR) at global level (rho=80%) as the data splitting method. Besides, 10% of the latest training set is held out as the validation set to tune the hyper-parameters. Once the optimal hyper-parameters are decided, we feed the whole training set to train the final model and report the performance on the test set.
-        - Note that we only have the 10-fiter results for SLIM due to its extremely high computational complexity on large-scale datasets, which is unable to complete in a reasonable amount of time; and NGCF on Yelp and AMZe under origin view is also omitted because of the same reason.
-    - Regarding ***Time-aware Leave-One-Out (TLOO)***
-        - We adopt Bayesian HyperOpt to perform hyper-parameter optimization w.r.t. NDCG@10 for each baseline under three views (i.e., origin, 5-filer and 10-filter) on each dataset for 30 trails.
-        - We keep original objective functions for each baseline (bpr loss for MF, FM, NFM and NGCF; squre error loss for SLIM; cross-entropy loss for NeuMF and Multi-VAE), employ the uniform sampler, and adopt time-aware leave-one-out (i.e., TLOO) as the data splitting method. In particular, for each user, his last interaction is kept as the test set, and the second last interaction is used as the validation set; and the rest intereactions are treated as training set. 
-        - Note that we only have the 10-fiter results for all the methods across the six datasets.
-
-- Please refer to [appendix.pdf](https://github.com/recsys-benchmark/DaisyRec-v2.0/blob/main/appendix.pdf) file for the optimal parameter settings and other information.
-    - Tables 16-18 show the best hyper-parameter settings for TSBR
-    - Table 19 shows the best hyper-parameter settings for TLOO
-    
 
 ## TODO List
 
@@ -119,7 +99,7 @@ All data are available in links below:
 
 ## Cite
 
-Please cite both of the following papers if you use **DaisyRec-v2.0** in a research paper in any way (e.g., code and ranking results):
+Please cite both of the following papers if you use **DaisyRec** in a research paper in any way (e.g., code and ranking results):
 
 ```
 @inproceedings{sun2020are,
