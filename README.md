@@ -53,6 +53,8 @@ Below are the algorithms implemented in daisyRec. More baselines will be added l
     - PureSVD, SLIM, MF, FM
 - **Deep Learning Methods**
     - NeuMF, NFM, NGCF, Multi-VAE, ∞-AE
+- **Representation Methods**
+    - Item2Vec
     
 
 ## Datasets
