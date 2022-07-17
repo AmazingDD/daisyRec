@@ -4,26 +4,21 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser(description='test recommender')
     # tuner settings
-    parser.add_argument('--score_metric', 
+    parser.add_argument('--optimization_metric', 
                         type=str, 
                         default='ndcg', 
-                        help='use which metric to define hyperopt score')
-    parser.add_argument('--tune_epochs', 
+                        help='the metric to be optimized for hyper-parameter tuning via HyperOpt')
+    parser.add_argument('--hyperopt_trail', 
                         type=int, 
                         default=30, 
-                        help='tuning epochs')
-    parser.add_argument('--tune_pack', 
+                        help='the number of trails of HyperOpt')
+    parser.add_argument('--hyperopt_pack', 
                         type=str, 
                         default='{}', 
-                        help='Tuner parameter dictionary, type is JSON string')
+                        help='record the searching space of hyper-parameters for HyperOpt')
     # common settings
-    parser.add_argument('--problem_type', 
-                        type=str, 
-                        default='point', 
-                        help='pair-wise or point-wise')
     parser.add_argument('--algo_name', 
                         type=str, 
-                        default='vae', 
                         help='algorithm to choose')
     parser.add_argument('--dataset', 
                         type=str, 
@@ -31,20 +26,20 @@ def parse_args():
                         help='select dataset')
     parser.add_argument('--prepro', 
                         type=str, 
-                        default='10core', 
-                        help='dataset preprocess op.: origin/Ncore')
+                        default='10filter', 
+                        help='dataset preprocess op.: origin/Nfilter')
     parser.add_argument('--topk', 
                         type=int, 
                         default=50, 
                         help='top number of recommend list')
     parser.add_argument('--test_method', 
                         type=str, 
-                        default='tfo', 
-                        help='method for split test,options: ufo/loo/fo/tfo/tloo')
+                        default='tsbr', 
+                        help='method for split test,options: tsbr/rsbr/tloo/rloo')
     parser.add_argument('--val_method', 
                         type=str, 
-                        default='tfo', 
-                        help='validation method, options: cv, tfo, loo, tloo')
+                        default='tsbr', 
+                        help='validation method, options: tsbr/rsbr/tloo/rloo')
     parser.add_argument('--test_size', 
                         type=float, 
                         default=.2, 
@@ -59,19 +54,19 @@ def parse_args():
     parser.add_argument('--cand_num', 
                         type=int, 
                         default=1000, 
-                        help='No. of candidates item for predict')
+                        help='the number of candidate items used for ranking')
     parser.add_argument('--sample_method', 
                         type=str, 
                         default='uniform', 
-                        help='negative sampling method mixed with uniform, options: item-ascd, item-desc')
+                        help='negative sampling method mixed with uniform, options: high-pop, low-pop')
     parser.add_argument('--sample_ratio', 
                         type=float, 
                         default=0, 
-                        help='mix sample method ratio, 0 for all uniform')
+                        help='control the ratio of popularity sampling for the hybrid sampling strategy in the range of (0,1)')
     parser.add_argument('--init_method', 
                         type=str, 
-                        default='', 
-                        help='weight initialization method')
+                        default='default', 
+                        help='weight initialization method: normal, uniform, xavier_normal, xavier_uniform')
     parser.add_argument('--gpu', 
                         type=str, 
                         default='0', 
@@ -84,6 +79,10 @@ def parse_args():
                         type=str, 
                         default='CL', 
                         help='loss function type')
+    parser.add_argument('--optimizer', 
+                        type=str, 
+                        default='default', 
+                        help='optimize method')
     # algo settings
     parser.add_argument('--factors', 
                         type=int, 
@@ -101,6 +100,36 @@ def parse_args():
                         type=float, 
                         default=0.5, 
                         help='VAE KL regularization')
+    parser.add_argument('--alpha', 
+                        type=float, 
+                        default=0.02, 
+                        help='constant to multiply the penalty terms for SLIM')
+    parser.add_argument('--elastic', 
+                        type=float, 
+                        default=0.5, 
+                        help='the ElasticNet mixing parameter for SLIM in the range of (0,1)')
+    parser.add_argument('--pop_n', 
+                        type=int, 
+                        default=100, 
+                        help='the preliminary selected top-n popular candidate items to reduce the time complexity for MostPop')
+    parser.add_argument('--maxk', 
+                        type=int, 
+                        default=40, 
+                        help='The (max) number of neighbors to take into account')
+    parser.add_argument('--node_dropout_flag', 
+                        type=int, 
+                        default=1,
+                        help='NGCF: 0: Disable node dropout, 1: Activate node dropout')
+    parser.add_argument('--node_dropout',
+                        type=float,  
+                        nargs='?', 
+                        default=0.1,
+                        help='NGCF: Keep probability w.r.t. node dropout (i.e., 1-dropout_ratio) for each deep layer. 1: no dropout.')
+    parser.add_argument('--mess_dropout', 
+                        type=float, 
+                        nargs='?', 
+                        default=0.1,
+                        help='NGCF: Keep probability w.r.t. message dropout (i.e., 1-dropout_ratio) for each deep layer. 1: no dropout.')
     parser.add_argument('--dropout', 
                         type=float, 
                         default=0.5, 
@@ -133,6 +162,14 @@ def parse_args():
                         action='store_false', 
                         default=True, 
                         help='whether do batch normalization in interior layers')
+    parser.add_argument("--tune_testset",
+                        action="store_true",
+                        default=False,
+                        help="whether to directly tune on testset")
+    parser.add_argument("--early_stop",
+                        action="store_false",
+                        default=True,
+                        help="whether to activate early stop mechanism")
     args = parser.parse_args()
 
     return args

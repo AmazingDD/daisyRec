@@ -1,0 +1,7 @@
+mlp_hidden_size: ~
+epochs: 10
+dropout: 0.5
+lr: 0.001
+latent_dim: 128
+total_anneal_steps: 100000
+anneal_cap: 0.2

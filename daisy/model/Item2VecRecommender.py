@@ -1,170 +1,109 @@
-import numpy as np
-from tqdm import tqdm
-
+'''
+@inproceedings{barkan2016item2vec,
+  title={Item2vec: neural item embedding for collaborative filtering},
+  author={Barkan, Oren and Koenigstein, Noam},
+  booktitle={2016 IEEE 26th International Workshop on Machine Learning for Signal Processing (MLSP)},
+  pages={1--6},
+  year={2016},
+  organization={IEEE}
+}
+'''
 import torch
 import torch.nn as nn
-import torch.optim as optim
 
+from daisy.model.AbstractRecommender import GeneralRecommender
 
-class Bundler(nn.Module):
-    def forward(self, data):
-        raise NotImplementedError
+class Item2Vec(GeneralRecommender):
+    def __init__(self, config):
+        '''
+        Item2Vec Recommender class
 
-    def forward_i(self, data):
-        raise NotImplementedError
-
-    def forward_o(self, data):
-        raise NotImplementedError
-
-
-class ItemEmb(Bundler):
-    def __init__(self, item_num=20000, factors=100, padding_idx=0):
-        super(ItemEmb, self).__init__()
-        self.item_num = item_num # item_num
-        self.factors = factors
-        self.ivectors = nn.Embedding(self.item_num, self.factors, padding_idx=padding_idx)
-        self.ovectors = nn.Embedding(self.item_num, self.factors, padding_idx=padding_idx)
-        self.ivectors.weight = nn.Parameter(torch.cat([torch.zeros(1, self.factors),
-                                                       torch.FloatTensor(
-                                                           self.item_num - 1, self.factors).uniform_(
-                                                           -0.5 / self.factors, 0.5 / self.factors)]))
-        self.ovectors.weight = nn.Parameter(torch.cat([torch.zeros(1, self.factors),
-                                                       torch.FloatTensor(self.item_num - 1,
-                                                                         self.factors).uniform_(-0.5 / self.factors,
-                                                                                                0.5 / self.factors)]))
-        self.ivectors.weight.requires_grad = True
-        self.ovectors.weight.requires_grad = True
-
-    def forward(self, data):
-        return self.forward_i(data)
-
-    def forward_i(self, data):
-        v = torch.LongTensor(data)
-        v = v.cuda() if self.ivectors.weight.is_cuda else v
-        return self.ivectors(v)
-
-    def forward_o(self, data):
-        v = torch.LongTensor(data)
-        v = v.cuda() if self.ovectors.weight.is_cuda else v
-        return self.ovectors(v)
-
-
-class Item2Vec(nn.Module):
-    def __init__(self, 
-                 item2idx,
-                 item_num=20000, 
-                 factors=100, 
-                 epochs=20,
-                 n_negs=20,
-                 padding_idx=0, 
-                 weights=None, 
-                 use_cuda=False, 
-                 early_stop=True):
-        """
-        Item2Vec Recommender Class with SGNS
         Parameters
         ----------
-        item2idx : Dict, {item : index code} relation mapping
-        item_num : int, total item number
-        factors : int, latent factor number
-        epochs : int, training epoch number
-        n_negs : int, number of negative samples
-        padding_idx : int, pads the output with the embedding vector at padding_idx (initialized to zeros)
-        weights : weight value to use
-        use_cuda : bool, whether to use CUDA enviroment
-        early_stop : bool, whether to activate early stop mechanism
-        """
-        super(Item2Vec, self).__init__()
-        self.item2idx = item2idx
-        self.embedding = ItemEmb(item_num, factors, padding_idx)
-        self.item_num = item_num
-        self.factors = factors
-        self.epochs = epochs
-        self.n_negs = n_negs
-        self.weights = None
-        if weights is not None:
-            wf = np.power(weights, 0.75)
-            wf = wf / wf.sum()
-            self.weights = torch.FloatTensor(wf)
+        factors : int
+            item embedding dimension
+        lr : float
+            learning rate
+        epochs : int
+            No. of training iterations
+        '''
+        super(Item2Vec, self).__init__(config)
 
-        self.use_cuda = use_cuda
-        self.early_stop = early_stop
+        self.user_embedding = nn.Embedding(config['user_num'], config['factors'])
+        self.ur = config['train_ur']
 
-        self.user_vec_dict = {}
-        self.item2vec = {}
+        self.shared_embedding = nn.Embedding(config['item_num'], config['factors'])
+        self.lr = config['lr']
+        self.epochs = config['epochs']
+        self.out_act = nn.Sigmoid()
 
-    def forward(self, iitem, oitems):
-        batch_size = iitem.size()[0]
-        context_size = oitems.size()[1]
-        if self.weights is not None:
-            nitems = torch.multinomial(self.weights, batch_size * context_size * self.n_negs, 
-                                       replacement=True).view(batch_size, -1)
-        else:
-            nitems = torch.FloatTensor(batch_size,
-                                       context_size * self.n_negs).uniform_(0, self.item_num - 1).long()
-        ivectors = self.embedding.forward_i(iitem).unsqueeze(2)
-        ovectors = self.embedding.forward_o(oitems)
-        nvectors = self.embedding.forward_o(nitems).neg()
-        oloss = torch.bmm(ovectors, ivectors).squeeze().sigmoid().log().mean(1)
-        nloss = torch.bmm(nvectors, ivectors).squeeze().sigmoid().log().view(-1, context_size, 
-                                                                             self.n_negs).sum(2).mean(1)
-        return -(oloss + nloss).mean()
+        # default loss function for item2vec is cross-entropy
+        self.loss_type = 'CL'
+        self.optimizer = config['optimizer'] if config['optimizer'] != 'default' else 'adam'
+        self.initializer = config['initializer'] if config['initializer'] != 'default' else 'normal'
+        self.early_stop = config['early_stop']
+
+        self.apply(self._init_weight)
+
+    def forward(self, target_i, context_j):
+        target_emb = self.shared_embedding(target_i) # batch_size * embedding_size
+        context_emb = self.shared_embedding(context_j) # batch_size * embedding_size
+        output = torch.sum(target_emb * context_emb, dim=1)
+        output = self.out_act(output)
+
+        return output.view(-1)
 
     def fit(self, train_loader):
-        item2idx = self.item2idx
-        if self.use_cuda and torch.cuda.is_available():
-            self.cuda()
-        else:
-            self.cpu()    
+        super().fit(train_loader)
 
-        optimizer = optim.Adam(self.parameters())
-        last_loss = 0.
-        for epoch in range(1, self.epochs + 1):
-            current_loss = 0.
-            # set process bar display
-            pbar = tqdm(train_loader)
-            pbar.set_description(f'[Epoch {epoch}]')
-            for iitem, oitems in pbar:
-                loss = self.forward(iitem, oitems)
+        print('Start building user embedding...')
+        for u in self.ur.keys():
+            uis = torch.tensor(list(self.ur[u]), device=self.device)
+            self.user_embedding.weight.data[u] = self.shared_embedding(uis).sum(dim=0)
 
-                if torch.isnan(loss):
-                    raise ValueError(f'Loss=Nan or Infinity: current settings does not fit the recommender')
-
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-
-                pbar.set_postfix(loss=loss.item())
-                current_loss += loss.item()
-            
-            delta_loss = float(current_loss - last_loss)
-            if (abs(delta_loss) < 1e-5) and self.early_stop:
-                print('Satisfy early stop mechanism')
-                break
-            else:
-                last_loss = current_loss
-
-        idx2vec = self.embedding.ivectors.weight.data.cpu().numpy()
-
-        self.item2vec = {k: idx2vec[v, :] for k, v in item2idx.items()}
-
-    def build_user_vec(self, ur):
-        for u in ur.keys():
-            self.user_vec_dict[u] = np.array([self.item2vec[i] for i in ur[u]]).mean(axis=0)
-
+    def calc_loss(self, batch):
+        target_i = batch[0].to(self.device)
+        context_j = batch[1].to(self.device)
+        label = batch[2].to(self.device)
+        prediction = self.forward(target_i, context_j)
+        loss = self.criterion(prediction, label)
+        
+        return loss
+    
     def predict(self, u, i):
-        if u in self.user_vec_dict.keys():
-            user_vec = self.user_vec_dict[u]
-        else:
-            return 0.
-        item_vec = self.item2vec[i]
+        u = torch.tensor(u, device=self.device)
+        i = torch.tensor(i, device=self.device)
+        
+        user_emb = self.user_embedding(u)
+        item_emb = self.shared_embedding(i)
+        pred = (user_emb * item_emb).sum(dim=-1)
+        
+        return pred.cpu()
 
-        return self._cos_sim(user_vec, item_vec)
+    def rank(self, test_loader):
+        rec_ids = torch.tensor([], device=self.device)
 
-    def _cos_sim(self, a, b):
-        numerator = np.multiply(a, b).sum()
-        denominator = np.linalg.norm(a) * np.linalg.norm(b)
-        if denominator == 0:
-            return 0
-        else:
-            return numerator / denominator
+        for us, cands_ids in test_loader:
+            us = us.to(self.device)
+            cands_ids = cands_ids.to(self.device)
+
+            user_emb = self.user_embedding(us).unsqueeze(dim=1) # batch * factor -> batch * 1 * factor
+            item_emb = self.shared_embedding(cands_ids).transpose(0, 2, 1) # batch * cand_num * factor -> batch * factor * cand_num 
+            scores = torch.bmm(user_emb, item_emb).squeeze() # batch * 1 * cand_num -> batch * cand_num
+
+            rank_ids = torch.argsort(scores, descending=True)
+            rank_list = torch.gather(cands_ids, 1, rank_ids)
+            rank_list = rank_list[:, :self.topk]
+
+            rec_ids = torch.cat((rec_ids, rank_list), 0)
+
+        return rec_ids.cpu().numpy()
+
+    def full_rank(self, u):
+        u = torch.tensor(u, self.device)
+
+        user_emb = self.user_embedding(u)
+        items_emb = self.shared_embedding.weight 
+        scores = torch.matmul(user_emb, items_emb.transpose(1, 0)) #  (item_num,)
+
+        return torch.argsort(scores, descending=True)[:self.topk].cpu().numpy()

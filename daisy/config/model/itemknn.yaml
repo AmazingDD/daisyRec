@@ -1,0 +1,4 @@
+maxk: 40
+shrink: 100
+similarity: cosine
+normalize: True

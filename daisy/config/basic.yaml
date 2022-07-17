@@ -1,0 +1,34 @@
+gpu: 0
+seed: 2022
+reproducibility: True
+optimization_metric: ndcg
+tune_trials: 20
+tune_testset: False
+algo_name: mf
+val_method: rsbr
+test_method: rsbr
+val_size: 0.1
+test_size: 0.2
+topk: 50
+cand_num: 1000
+sample_method: uniform
+sample_ratio: 0.1
+num_ng: 0
+
+batch_size: 256
+loss_type: BPR
+init_method: 'default'
+optimizer: 'default'
+early_stop: True
+
+dataset: ml-100k
+prepro: 5core
+level: ui
+UID_NAME: user
+IID_NAME: item
+INTER_NAME: rating
+TID_NAME: timestamp
+binary_inter: True
+positive_threshold: ~
+
+metrics: ["recall","mrr","ndcg","hit","precision"]

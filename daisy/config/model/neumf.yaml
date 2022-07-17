@@ -1,0 +1,10 @@
+factors: 24
+num_layers: 2
+dropout: 0.5
+lr: 0.001
+epochs: 30
+reg_1: 0.001
+reg_2: 0.001
+model_name: NeuMF
+GMF_model: ~
+MLP_model: ~
