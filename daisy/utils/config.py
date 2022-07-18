@@ -1,3 +1,4 @@
+import yaml
 import random
 import numpy as np
 
@@ -19,8 +20,9 @@ from daisy.model.EASERecommender import EASE
 from daisy.model.InfAERecommender import InfAE
 
 from daisy.utils.metrics import Precision, Recall, NDCG, MRR, MAP, HR, F1, AUC, Coverage, Diversity, Popularity
+from daisy.utils.parser import parse_args
 
-algo_config = {
+tune_params_config = {
     'mostpop': [],
     'itemknn': ['maxk'],
     'puresvd': ['factors'],
@@ -33,6 +35,28 @@ algo_config = {
     'multi-vae': ['latent_dim', 'dropout','batch_size', 'lr', 'anneal_cap'],
     'ease': ['reg'],
     'item2vec': ['context_window', 'rho', 'lr', 'factors'],
+    'infae': [],
+}
+
+param_type_config = {
+    'num_layers': 'int',
+    'maxk': 'int',
+    'factors': 'int',
+    'alpha': 'float',
+    'elastic': 'float',
+    'num_ng': 'int',
+    'lr': 'float',
+    'batch_size': 'int',
+    'reg_1': 'float',
+    'reg_2': 'float',
+    'dropout': 'float',
+    'node_dropout': 'float',
+    'mess_dropout': 'float',
+    'latent_dim': 'int',
+    'anneal_cap': 'float',
+    'reg': 'float',
+    'context_window': 'int',
+    'rho': 'float'
 }
 
 metrics_config = {
@@ -114,3 +138,26 @@ def init_seed(seed, reproducibility):
     else:
         torch.backends.cudnn.benchmark = True
         torch.backends.cudnn.deterministic = False
+
+def get_config(param_dict=None):
+        ''' 
+        summarize hyper-parameter part (basic yaml + args + model yaml) 
+        '''
+        config = dict()
+        basic_conf = yaml.load(open('./daisy/config/basic.yaml'), Loader=yaml.loader.SafeLoader)
+        config.update(basic_conf)
+
+        args = parse_args()
+        algo_name = config['algo_name'] if args.algo_name is None else args.algo_name
+
+        model_conf = yaml.load(
+            open(f'./daisy/config/model/{algo_name}.yaml'), Loader=yaml.loader.SafeLoader)
+        config.update(model_conf)
+
+        args_conf = vars(args)
+        config.update(args_conf)
+
+        if param_dict is not None:
+            config.update(param_dict)
+
+        return config

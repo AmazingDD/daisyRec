@@ -1,9 +1,7 @@
 import time
-import yaml
 
-from daisy.utils.parser import parse_args
 from daisy.utils.splitter import TestSplitter
-from daisy.utils.config import init_seed, model_config
+from daisy.utils.config import init_seed, get_config,model_config
 from daisy.utils.loader import RawDataReader, Preprocessor
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 from daisy.utils.dataset import get_dataloader, BasicDataset, CandidatesDataset, AEDataset
@@ -12,19 +10,7 @@ from daisy.utils.utils import get_ur, get_history_matrix, build_candidates_set, 
 
 if __name__ == '__main__':
     ''' summarize hyper-parameter part (basic yaml + args + model yaml) '''
-    config = dict()
-    basic_conf = yaml.load(open('./daisy/config/basic.yaml'), Loader=yaml.loader.SafeLoader)
-    config.update(basic_conf)
-
-    args = parse_args()
-    algo_name = config['algo_name'] if args.algo_name is None else args.algo_name
-
-    model_conf = yaml.load(
-        open(f'./daisy/config/model/{algo_name}.yaml'), Loader=yaml.loader.SafeLoader)
-    config.update(model_conf)
-
-    args_conf = vars(args)
-    config.update(args_conf)
+    config = get_config()
 
     ''' init seed for reproducibility '''
     init_seed(config['seed'], config['reproducibility'])

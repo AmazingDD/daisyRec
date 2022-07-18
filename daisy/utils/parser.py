@@ -2,7 +2,7 @@ import argparse
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='test recommender')
+    parser = argparse.ArgumentParser(description='arguments for daisy')
     # tuner settings
     parser.add_argument('--optimization_metric', 
                         type=str, 
@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--prepro', 
                         type=str, 
                         default='10filter', 
-                        help='dataset preprocess op.: origin/Nfilter')
+                        help='dataset preprocess op.: origin/Nfilter/Ncore')
     parser.add_argument('--topk', 
                         type=int, 
                         default=50, 
@@ -108,10 +108,6 @@ def parse_args():
                         type=float, 
                         default=0.5, 
                         help='the ElasticNet mixing parameter for SLIM in the range of (0,1)')
-    parser.add_argument('--pop_n', 
-                        type=int, 
-                        default=100, 
-                        help='the preliminary selected top-n popular candidate items to reduce the time complexity for MostPop')
     parser.add_argument('--maxk', 
                         type=int, 
                         default=40, 
