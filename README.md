@@ -75,29 +75,10 @@ All data are available in links below:
 ## TODO List
 
 - [ ] A more friendly GUI command generator
-- [ ] change hyperopt to optuna
 - [ ] Add [∞-AE](https://arxiv.org/pdf/2206.02626.pdf) (with [code](https://github.com/noveens/infinite_ae_cf)) 
-- [x] Add [EASE](https://arxiv.org/abs/1905.03375) algorithms
 - [ ] add logger
 - [ ] release to Pypi
 - [ ] add download function in RawDataReader
-- [x] Reconstruct convert_npy_mat() and UAEData class in Multi-VAE
-- [x] full rank interface
-- [x] predict, rank interface
-- [x] modify split_test to Splitter
-- [x] metrics to class and add coverage, popularity, and diversity
-- [x] optimize mostpop
-- [x] Improve the efficiency of the negative sample process
-- [x] Optimize the part of building candidate set
-- [x] Improve the modularity and scalability of the code (e.g., initializer, optimizer, loss function)  
-- [x] A more flexible way to pass parameters
-- [x] Implement 5-core and 10-core
-- [x] Reduce too much CPU usage in dataloader
-- [x] Check [Item2vec](https://github.com/AmazingDD/item2vec-pytorch) (add predict interface)
-- [x] Reconstruct DaisyRec with a new framework (YD's team to do)
-- [x] Simplify SLIM and KNN-CF (YD's team to do)
-- [x] ~~A new GUI to generate results without any command (YD's team to do)~~
-- [x] ~~Update SVDpp, WRMF with torch, torch.linalg.solve~~
 
 ## Cite
 
