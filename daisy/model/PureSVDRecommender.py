@@ -34,9 +34,9 @@ class PureSVD(GeneralRecommender):
         self.topk = config['topk']
 
     def fit(self, train_set):
-        print(" Computing SVD decomposition...")
+        self.logger.info(" Computing SVD decomposition...")
         train_set = self._convert_df(self.user_num, self.item_num, train_set)
-        print('Finish build train matrix for decomposition')
+        self.logger.info('Finish build train matrix for decomposition')
         U, sigma, Vt = randomized_svd(train_set,
                                       n_components=self.factors,
                                       random_state=2019)
@@ -44,7 +44,7 @@ class PureSVD(GeneralRecommender):
 
         self.user_vec = U
         self.item_vec = s_Vt.T
-        print('Done!')
+        self.logger.info('Done!')
 
     def _convert_df(self, user_num, item_num, df):
         """Process Data to make WRMF available"""

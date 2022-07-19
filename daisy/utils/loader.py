@@ -15,6 +15,7 @@ class RawDataReader(object):
         self.iid_name = config['IID_NAME']
         self.tid_name = config['TID_NAME']
         self.inter_name = config['INTER_NAME']
+        self.logger = config['logger']
 
         self.ds_path = f'./data/{self.src}/'
 
@@ -46,7 +47,7 @@ class RawDataReader(object):
             for f in os.listdir(f'{self.ds_path}training_set/'):
                 cnt += 1
                 if cnt % 5000 == 0:
-                    print(f'Finish Process {cnt} file......')
+                    self.logger.info(f'Finish Process {cnt} file......')
                 txt_file = open(f'{self.ds_path}training_set/{f}', 'r')
                 contents = txt_file.readlines()
                 item = contents[0].strip().split(':')[0]
@@ -160,6 +161,7 @@ class Preprocessor(object):
         self.binary = config['binary_inter']
         self.pos_threshold = config['positive_threshold']
         self.level = config['level'] # ui, u, i
+        self.logger = config['logger']
 
         self.get_pop = True if 'popularity' in config['metrics'] else False
 
@@ -177,7 +179,7 @@ class Preprocessor(object):
         if self.get_pop:
             self.__get_item_popularity(df)
 
-        print(f'Finish loading [{self.src}]-[{self.prepro}] dataset')
+        self.logger.info(f'Finish loading [{self.src}]-[{self.prepro}] dataset')
 
         return df
 

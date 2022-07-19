@@ -56,7 +56,7 @@ class Item2Vec(GeneralRecommender):
     def fit(self, train_loader):
         super().fit(train_loader)
 
-        print('Start building user embedding...')
+        self.logger.info('Start building user embedding...')
         for u in self.ur.keys():
             uis = torch.tensor(list(self.ur[u]), device=self.device)
             self.user_embedding.weight.data[u] = self.shared_embedding(uis).sum(dim=0)

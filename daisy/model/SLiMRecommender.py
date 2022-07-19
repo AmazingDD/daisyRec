@@ -52,7 +52,7 @@ class SLiM(GeneralRecommender):
         self.w_sparse = None
         self.A_tilde = None
 
-        print(f'user num: {self.user_num}, item num: {self.item_num}')
+        self.logger.info(f'user num: {self.user_num}, item num: {self.item_num}')
 
     def fit(self, train_set, verbose=True):
         train = self._convert_df(self.user_num, self.item_num, train_set)
@@ -107,7 +107,7 @@ class SLiM(GeneralRecommender):
             train.data[start_pos:end_pos] = current_item_data_backup
 
             if verbose and (time.time() - start_time_print_batch > 300 or (current_item + 1) % 1000 == 0 or current_item == self.item_num - 1):
-                print(f'SLIM-ElasticNet-Recommender: Processed {current_item + 1} ( {100.0 * float(current_item + 1) / self.item_num:.2f}% ) in {(time.time() - start_time) / 60:.2f} minutes. Items per second: {float(current_item) / (time.time() - start_time):.0f}')
+                self.logger.info(f'SLIM-ElasticNet-Recommender: Processed {current_item + 1} ( {100.0 * float(current_item + 1) / self.item_num:.2f}% ) in {(time.time() - start_time) / 60:.2f} minutes. Items per second: {float(current_item) / (time.time() - start_time):.0f}')
 
                 sys.stdout.flush()
                 sys.stderr.flush()

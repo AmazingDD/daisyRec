@@ -360,7 +360,7 @@ class Similarity:
             if time.time() - start_time_print_batch >= 30 or end_col_block == end_col_local:
                 column_per_sec = processed_items / (time.time() - start_time + 1e-9)
 
-                print(f"Similarity column {processed_items} ( {processed_items / (end_col_local - start_col_local) * 100:2.0f} % ), {column_per_sec:.2f} column/sec, elapsed time {(time.time() - start_time) / 60:.2f} min")
+                self.logger.info(f"Similarity column {processed_items} ( {processed_items / (end_col_local - start_col_local) * 100:2.0f} % ), {column_per_sec:.2f} column/sec, elapsed time {(time.time() - start_time) / 60:.2f} min")
 
                 sys.stdout.flush()
                 sys.stderr.flush()
@@ -415,7 +415,7 @@ class ItemKNNCF(GeneralRecommender):
 
         cold_items_mask = np.ediff1d(train.tocsc().indptr) == 0
         if cold_items_mask.any():
-            print(f"ItemKNNCFRecommender: Detected {cold_items_mask.sum()} ({cold_items_mask.sum() / len(cold_items_mask) * 100:.2f} %) cold items.")
+            self.logger.info(f"ItemKNNCFRecommender: Detected {cold_items_mask.sum()} ({cold_items_mask.sum() / len(cold_items_mask) * 100:.2f} %) cold items.")
 
         similarity = Similarity(train, 
                                 shrink=self.shrink, 
@@ -490,7 +490,7 @@ class UserKNNCF(GeneralRecommender):
 
         cold_user_mask = np.ediff1d(train.tocsc().indptr) == 0
         if cold_user_mask.any():
-            print(f"UserKNNCFRecommender: Detected {cold_user_mask.sum()} ({cold_user_mask.sum()/len(cold_user_mask) * 100:.2f} %) cold users.")
+            self.logger.info(f"UserKNNCFRecommender: Detected {cold_user_mask.sum()} ({cold_user_mask.sum()/len(cold_user_mask) * 100:.2f} %) cold users.")
 
         similarity = Similarity(train.T, 
                                 shrink=self.shrink, 

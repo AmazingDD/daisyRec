@@ -1,21 +1,27 @@
-import os
 import json
 import optuna
 import numpy as np
+from logging import getLogger
 
-from daisy.utils.config import init_seed, get_config, tune_params_config, param_type_config, model_config, metrics_config
+from daisy.utils.config import init_seed, init_config, init_logger, tune_params_config, param_type_config, model_config, metrics_config
 from daisy.utils.loader import RawDataReader, Preprocessor
 from daisy.utils.dataset import AEDataset, BasicDataset, CandidatesDataset, get_dataloader
 from daisy.utils.splitter import TestSplitter, ValidationSplitter
-from daisy.utils.utils import get_history_matrix, get_adj_mat, get_ur, build_candidates_set
+from daisy.utils.utils import get_history_matrix, get_adj_mat, get_ur, build_candidates_set, ensure_dir
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 
 if __name__ == '__main__':
     ''' summarize hyper-parameter part (basic yaml + args + model yaml) '''
-    config = get_config()
+    config = init_config()
 
     ''' init seed for reproducibility '''
     init_seed(config['seed'], config['reproducibility'])
+
+    ''' init logger '''
+    init_logger(config)
+    logger = getLogger()
+    logger.info(config)
+    config['logger'] = logger
 
     ''' unpack hyperparameters to tune '''
     param_dict = json.loads(config['hyperopt_pack'])
@@ -25,9 +31,8 @@ if __name__ == '__main__':
 
     ''' open logfile to record tuning process '''
     # begin tuning here
-    tune_log_path = './tune_log/'
-    if not os.path.exists(tune_log_path):
-        os.makedirs(tune_log_path)
+    tune_log_path = './tune_res/'
+    ensure_dir(tune_log_path)
 
     f = open(tune_log_path + f"best_params_{config['loss_type']}_{config['algo_name']}_{config['dataset']}_{config['prepro']}_{config['val_method']}.csv", 'w', encoding='utf-8')
     line = ','.join(tune_param_names) + f',{kpi_name}'
@@ -104,17 +109,17 @@ if __name__ == '__main__':
                 model.fit(train_loader)
             else:
                 raise NotImplementedError('Something went wrong when building and training...')
-            print(f'Finish {cnt} train-validation experiment(s)...')
+            logger.info(f'Finish {cnt} train-validation experiment(s)...')
             cnt += 1
 
             ''' build candidates set '''
-            print('Start Calculating Metrics...')
+            logger.info('Start Calculating Metrics...')
             val_u, val_ucands = build_candidates_set(val_ur, train_ur, config)
 
             ''' get predict result '''
-            print('')
-            print('Generate recommend list...')
-            print('')
+            logger.info('==========================')
+            logger.info('Generate recommend list...')
+            logger.info('==========================')
             val_dataset = CandidatesDataset(val_ucands)
             val_loader = get_dataloader(val_dataset, batch_size=128, shuffle=False, num_workers=0)
             preds = model.rank(val_loader) 
@@ -122,14 +127,14 @@ if __name__ == '__main__':
             ''' calculating KPIs '''
             kpi = metrics_config[kpi_name](val_ur, preds, val_u)
             kpis.append(kpi)
-        print('Finish one trial...')
+        logger.info('Finish one trial...')
 
         return np.mean(kpis)
 
     study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=2022))
     study.optimize(objective, n_trials=config['hyperopt_trail'])
 
-    print(f'Trial {study.best_trial.number} get the best {kpi_name}({study.best_trial.value}) with params: {study.best_trial.params}')
+    logger.info(f'Trial {study.best_trial.number} get the best {kpi_name}({study.best_trial.value}) with params: {study.best_trial.params}')
     line = ','.join([study.best_params[param] for param in tune_param_names]) + f',{study.best_value:.4f}\n'
     f.write(line)
     f.flush()

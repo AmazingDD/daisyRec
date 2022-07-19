@@ -1,6 +1,7 @@
 gpu: 0
 seed: 2022
 reproducibility: True
+state: ~
 
 optimization_metric: ndcg
 tune_trials: 20

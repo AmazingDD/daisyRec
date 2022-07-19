@@ -1,6 +1,11 @@
+import os
+import re
 import yaml
 import random
+import logging
+import colorlog
 import numpy as np
+from colorama import init
 
 import torch
 import torch.nn as nn
@@ -17,10 +22,17 @@ from daisy.model.NFMRecommender import NFM
 from daisy.model.NGCFRecommender import NGCF
 from daisy.model.VAECFRecommender import VAECF
 from daisy.model.EASERecommender import EASE
-from daisy.model.InfAERecommender import InfAE
 
 from daisy.utils.metrics import Precision, Recall, NDCG, MRR, MAP, HR, F1, AUC, Coverage, Diversity, Popularity
 from daisy.utils.parser import parse_args
+from daisy.utils.utils import ensure_dir, get_local_time
+
+log_colors_config = {
+    'DEBUG': 'cyan',
+    'WARNING': 'yellow',
+    'ERROR': 'red',
+    'CRITICAL': 'red',
+}
 
 tune_params_config = {
     'mostpop': [],
@@ -35,7 +47,6 @@ tune_params_config = {
     'multi-vae': ['latent_dim', 'dropout','batch_size', 'lr', 'anneal_cap'],
     'ease': ['reg'],
     'item2vec': ['context_window', 'rho', 'lr', 'factors'],
-    'infae': [],
 }
 
 param_type_config = {
@@ -99,7 +110,6 @@ model_config = {
     'multi-vae': VAECF,
     'item2vec': Item2Vec,
     'ease': EASE,
-    'infae': InfAE
 }
 
 initializer_param_config = {
@@ -139,7 +149,7 @@ def init_seed(seed, reproducibility):
         torch.backends.cudnn.benchmark = True
         torch.backends.cudnn.deterministic = False
 
-def get_config(param_dict=None):
+def init_config(param_dict=None):
         ''' 
         summarize hyper-parameter part (basic yaml + args + model yaml) 
         '''
@@ -161,3 +171,53 @@ def get_config(param_dict=None):
             config.update(param_dict)
 
         return config
+
+class RemoveColorFilter(logging.Filter):
+    def filter(self, record):
+        if record:
+            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+            record.msg = ansi_escape.sub('', str(record.msg))
+        return True
+
+def init_logger(config):
+    init(autoreset=True)
+    log_root = './log/'
+    dir_name = os.path.dirname(log_root)
+    ensure_dir(dir_name)
+    model_name = os.path.join(dir_name, config['algo_name'])
+    ensure_dir(model_name)
+
+    logfilename = f'{config["algo_name"]}/{get_local_time()}.log'
+    logfilepath = os.path.join(log_root, logfilename)
+
+    filefmt = "%(asctime)-10s %(levelname)s - %(message)s"
+    filedatefmt = "%a %d %b %Y %H:%M:%S"
+    fileformatter = logging.Formatter(filefmt, filedatefmt)
+
+    sfmt = "%(log_color)s%(asctime)-10s %(levelname)s - %(message)s"
+    sdatefmt = "%d %b %H:%M"
+    sformatter = colorlog.ColoredFormatter(sfmt, sdatefmt, log_colors=log_colors_config)
+    if config['state'] is None or config['state'].lower() == 'info':
+        level = logging.INFO
+    elif config['state'].lower() == 'debug':
+        level = logging.DEBUG
+    elif config['state'].lower() == 'error':
+        level = logging.ERROR
+    elif config['state'].lower() == 'warning':
+        level = logging.WARNING
+    elif config['state'].lower() == 'critical':
+        level = logging.CRITICAL
+    else:
+        level = logging.INFO
+
+    fh = logging.FileHandler(logfilepath)
+    fh.setLevel(level)
+    fh.setFormatter(fileformatter)
+    remove_color_filter = RemoveColorFilter()
+    fh.addFilter(remove_color_filter)
+
+    sh = logging.StreamHandler()
+    sh.setLevel(level)
+    sh.setFormatter(sformatter)
+
+    logging.basicConfig(level=level, handlers=[sh, fh])

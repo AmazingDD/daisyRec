@@ -1,7 +1,8 @@
 import time
+from logging import getLogger
 
 from daisy.utils.splitter import TestSplitter
-from daisy.utils.config import init_seed, get_config,model_config
+from daisy.utils.config import init_seed, init_config, init_logger, model_config
 from daisy.utils.loader import RawDataReader, Preprocessor
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 from daisy.utils.dataset import get_dataloader, BasicDataset, CandidatesDataset, AEDataset
@@ -10,10 +11,16 @@ from daisy.utils.utils import get_ur, get_history_matrix, build_candidates_set, 
 
 if __name__ == '__main__':
     ''' summarize hyper-parameter part (basic yaml + args + model yaml) '''
-    config = get_config()
+    config = init_config()
 
     ''' init seed for reproducibility '''
     init_seed(config['seed'], config['reproducibility'])
+
+    ''' init logger '''
+    init_logger(config)
+    logger = getLogger()
+    logger.info(config)
+    config['logger'] = logger
     
     ''' Test Process for Metrics Exporting '''
     reader, processor = RawDataReader(config), Preprocessor(config)
@@ -71,22 +78,22 @@ if __name__ == '__main__':
     else:
         raise NotImplementedError('Something went wrong when building and training...')
     elapsed_time = time.time() - s_time
-    print(f"Finish training: {config['dataset']} {config['prepro']} {config['algo_name']} with {config['loss_type']} and {config['sample_method']} sampling, {elapsed_time:.4f}")
+    logger.info(f"Finish training: {config['dataset']} {config['prepro']} {config['algo_name']} with {config['loss_type']} and {config['sample_method']} sampling, {elapsed_time:.4f}")
 
     ''' build candidates set '''
-    print('Start Calculating Metrics...')
+    logger.info('Start Calculating Metrics...')
     test_u, test_ucands = build_candidates_set(test_ur, total_train_ur, config)
 
     ''' get predict result '''
-    print('')
-    print('Generate recommend list...')
-    print('')
+    logger.info('==========================')
+    logger.info('Generate recommend list...')
+    logger.info('==========================')
     test_dataset = CandidatesDataset(test_ucands)
     test_loader = get_dataloader(test_dataset, batch_size=128, shuffle=False, num_workers=0)
     preds = model.rank(test_loader) # np.array (u, topk)
 
     ''' calculating KPIs '''
-    print('Save metric@k result to res folder...')
+    logger.info('Save metric@k result to res folder...')
     result_save_path = f"./res/{config['dataset']}/{config['prepro']}/{config['test_method']}/"
     algo_prefix = f"{config['loss_type']}_{config['algo_name']}"
     common_prefix = f"with_{config['sample_ratio']}{config['sample_method']}"

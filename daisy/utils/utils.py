@@ -1,5 +1,7 @@
 import os
 import torch
+import logging
+import datetime
 import numpy as np
 import pandas as pd
 import scipy.sparse as sp
@@ -7,6 +9,16 @@ from collections import defaultdict
 
 from daisy.utils.metrics import Metric
 from daisy.utils.config import metrics_name_config
+
+def ensure_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+def get_local_time():
+    cur = datetime.datetime.now()
+    cur = cur.strftime('%b-%d-%Y_%H-%M-%S')
+
+    return cur
 
 def calc_ranking_results(test_ur, pred_ur, test_u, config):
     '''
@@ -21,9 +33,9 @@ def calc_ranking_results(test_ur, pred_ur, test_u, config):
     test_u : list
         the user in order from test set
     '''    
+    logger = config['logger']
     path = config['res_path']
-    if not os.path.exists(path):
-        os.makedirs(path)
+    ensure_dir(path)
 
     metric = Metric(config)
     res = pd.DataFrame({
@@ -42,7 +54,7 @@ def calc_ranking_results(test_ur, pred_ur, test_u, config):
             if topk == 10:
                 for kpi_name, kpi_res in zip(config['metrics'], kpis):
                     kpi_name = metrics_name_config[kpi_name]
-                    print(f'{kpi_name}@{topk}: {kpi_res:.4f}')
+                    logger.info(f'{kpi_name}@{topk}: {kpi_res:.4f}')
 
             res[topk] = np.array(kpis)
 
@@ -130,6 +142,7 @@ def get_adj_mat(n_users, n_items):
     norm_adj_mat: normal adjacency matrix
     mean_adj_mat: mean adjacency matrix
     """
+    logger = logging.getLogger()
     R = sp.dok_matrix((n_users, n_items), dtype=np.float32)
     adj_mat = sp.dok_matrix((n_users + n_items, n_users + n_items), dtype=np.float32)
     adj_mat = adj_mat.tolil()
@@ -138,7 +151,7 @@ def get_adj_mat(n_users, n_items):
     adj_mat[:n_users, n_users:] = R
     adj_mat[n_users:, :n_users] = R.T
     adj_mat = adj_mat.todok()
-    print('already create adjacency matrix', adj_mat.shape)
+    logger.info('already create adjacency matrix', adj_mat.shape)
 
     def mean_adj_single(adj):
         # D^-1 * A
@@ -150,7 +163,7 @@ def get_adj_mat(n_users, n_items):
 
         norm_adj = d_mat_inv.dot(adj)
         # norm_adj = adj.dot(d_mat_inv)
-        print('generate single-normalized adjacency matrix.')
+        logger.info('generate single-normalized adjacency matrix.')
         return norm_adj.tocoo()
 
     def normalized_adj_single(adj):
@@ -170,17 +183,18 @@ def get_adj_mat(n_users, n_items):
         degree = np.sum(dense_A, axis=1, keepdims=False)
 
         temp = np.dot(np.diag(np.power(degree, -1)), dense_A)
-        print('check normalized adjacency matrix whether equal to this laplacian matrix.')
+        logger.info('check normalized adjacency matrix whether equal to this laplacian matrix.')
         return temp
 
     norm_adj_mat = mean_adj_single(adj_mat + sp.eye(adj_mat.shape[0]))
     # norm_adj_mat = normalized_adj_single(adj_mat + sp.eye(adj_mat.shape[0]))
     mean_adj_mat = mean_adj_single(adj_mat)
 
-    print('already normalize adjacency matrix')
+    logger.info('already normalize adjacency matrix')
     return adj_mat.tocsr(), norm_adj_mat.tocsr(), mean_adj_mat.tocsr()
 
 def get_history_matrix(df, config, row='user', use_config_value_name=False):
+    logger = logging.getLogger()
     assert row in df.columns, f'invalid name {row}: not in columns of history dataframe'
     uid_name, iid_name  = config['UID_NAME'], config['IID_NAME']
     user_ids, item_ids = df[uid_name].values, df[iid_name].values
@@ -202,7 +216,7 @@ def get_history_matrix(df, config, row='user', use_config_value_name=False):
 
     col_num = np.max(history_len)
     if col_num > max_col_num * 0.2:
-        print(f'Max value of {row}\'s history interaction records has reached: {col_num / max_col_num * 100:.4f}% of the total.')
+        logger.info(f'Max value of {row}\'s history interaction records has reached: {col_num / max_col_num * 100:.4f}% of the total.')
 
     history_matrix = np.zeros((row_num, col_num), dtype=np.int64)
     history_value = np.zeros((row_num, col_num))
