@@ -56,12 +56,13 @@ if __name__ == '__main__':
     ''' define optimization target function '''
     def objective(trial):
         for param in tune_param_names:
-            if param_type_config[param] == 'int':
+            if param_type_config[param] == 'int' and param_type_config[param]['step'] is None:
+                step = param_dict[param]['step']
                 config[param] = trial.suggest_int(
-                    param, param_dict[param]['min'], param_dict[param]['max'])
+                    param, param_dict[param]['min'], param_dict[param]['max'], 1 if step is None else step)
             elif param_type_config[param] == 'float':
                 config[param] = trial.suggest_float(
-                    param, param_dict[param]['min'], param_dict[param]['max'])
+                    param, param_dict[param]['min'], param_dict[param]['max'], param_dict[param]['step'])
             else:
                 raise ValueError(f'Invalid parameter type for {param}...')
         
