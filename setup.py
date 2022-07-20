@@ -3,11 +3,11 @@ from setuptools import setup, find_packages
 
 classifiers = ["License :: OSI Approved :: MIT License"]
 
-
-long_description = 'daisyRec is a Python toolkit developed for benchmarking top-N recommendation task.' \
-                   'The name DAISY stands for multi-Dimension fAirly comparIson for recommender SYstem.'
-
 here = path.abspath(path.dirname(__file__))
+
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
+
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
     all_reqs = f.read().split('\n')
 
