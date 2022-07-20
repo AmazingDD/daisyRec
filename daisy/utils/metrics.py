@@ -1,7 +1,6 @@
 import numpy as np
-import pandas as pd
 
-from daisy.utils.config import metrics_config
+from .config import metrics_config
 
 class Metric(object):
     def __init__(self, config) -> None:

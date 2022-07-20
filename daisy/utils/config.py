@@ -10,22 +10,22 @@ from colorama import init
 import torch
 import torch.nn as nn
 
-from daisy.model.KNNCFRecommender import ItemKNNCF
-from daisy.model.PureSVDRecommender import PureSVD
-from daisy.model.SLiMRecommender import SLiM
-from daisy.model.PopRecommender import MostPop
-from daisy.model.MFRecommender import MF
-from daisy.model.FMRecommender import FM
-from daisy.model.Item2VecRecommender import Item2Vec
-from daisy.model.NeuMFRecommender import NeuMF
-from daisy.model.NFMRecommender import NFM
-from daisy.model.NGCFRecommender import NGCF
-from daisy.model.VAECFRecommender import VAECF
-from daisy.model.EASERecommender import EASE
+from ..model.KNNCFRecommender import ItemKNNCF
+from ..model.PureSVDRecommender import PureSVD
+from ..model.SLiMRecommender import SLiM
+from ..model.PopRecommender import MostPop
+from ..model.MFRecommender import MF
+from ..model.FMRecommender import FM
+from ..model.Item2VecRecommender import Item2Vec
+from ..model.NeuMFRecommender import NeuMF
+from ..model.NFMRecommender import NFM
+from ..model.NGCFRecommender import NGCF
+from ..model.VAECFRecommender import VAECF
+from ..model.EASERecommender import EASE
 
-from daisy.utils.metrics import Precision, Recall, NDCG, MRR, MAP, HR, F1, AUC, Coverage, Diversity, Popularity
-from daisy.utils.parser import parse_args
-from daisy.utils.utils import ensure_dir, get_local_time
+from .metrics import Precision, Recall, NDCG, MRR, MAP, HR, F1, AUC, Coverage, Diversity, Popularity
+from .parser import parse_args
+from .utils import ensure_dir, get_local_time
 
 log_colors_config = {
     'DEBUG': 'cyan',

@@ -8,7 +8,7 @@ import pandas as pd
 import scipy.io as sio
 from collections import Counter
 
-from daisy.utils.utils import ensure_dir
+from .utils import ensure_dir
 
 class RawDataReader(object):
     def __init__(self, config):

@@ -4,8 +4,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from daisy.utils.config import initializer_param_config, initializer_config
-from daisy.utils.loss import BPRLoss, TOP1Loss, HingeLoss
+from ..utils.config import initializer_param_config, initializer_config
+from ..utils.loss import BPRLoss, TOP1Loss, HingeLoss
 
 class AbstractRecommender(nn.Module):
     def __init__(self):
