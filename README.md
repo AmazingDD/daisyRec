@@ -10,8 +10,6 @@
 
 ## Overview
 
-<!-- ![daisyRec's structure](images/framework.png) -->
-
 daisyRec is a Python toolkit developed for benchmarking top-N recommendation task. The name DAISY stands for multi-**D**imension f**A**irly compar**I**son for recommender **SY**stem. ***(Please note that DaisyRec is still under testing. If there is any issue, please feel free to let us know)*** 
 
 The figure below shows the overall framework of DaisyRec. 
@@ -20,12 +18,18 @@ The figure below shows the overall framework of DaisyRec.
 <img src="images/framework.png" align="center" width="90%" style="margin: 0 auto">
 </p>
 
+This repository is used for publishing. If you are interested in details about our experiments ranking results, try to reach this [repo](https://github.com/recsys-benchmark/DaisyRec-v2.0). 
+
+We really appreciate these repositories to help us improve our code efficiency:
+  - [RecSys2019_DeepLearning_Evaluation](https://github.com/MaurizioFD/RecSys2019_DeepLearning_Evaluation)
+  - [NGCF-PyTorch](https://github.com/huangtinglin/NGCF-PyTorch)
+  - [RecBole](https://github.com/RUCAIBox/RecBole)
+
 
 ### Pre-requisits
 
 Make sure you have a **CUDA** enviroment to accelarate since the deep-learning models could be based on it. 
 
-<!--<img src="pics/algos.png" width="40%" height="30%" style="margin: auto; cursor:default" />-->
 
 ### How to Run
 
@@ -47,23 +51,22 @@ Below are the algorithms implemented in daisyRec. More baselines will be added l
 - **Latent Factor Methods**
     - PureSVD, SLIM, MF, FM
 - **Deep Learning Methods**
-    - NeuMF, NFM, NGCF, Multi-VAE, ∞-AE
-- **Representation Methods**
+    - NeuMF, NFM, NGCF, Multi-VAE
+- **Representation Learning Methods**
     - Item2Vec
-    
 
 ## Datasets
 
 You can download experiment data, and put them into the `data` folder.
 All data are available in links below: 
 
-  - [MovieLens 100K](https://grouplens.org/datasets/movielens/100k/), [MovieLens 1M](https://grouplens.org/datasets/movielens/1m/), [MovieLens 10M](https://grouplens.org/datasets/movielens/10m/), [MovieLens 20M](https://grouplens.org/datasets/movielens/20m/)
+  - MovieLens-[100K](https://grouplens.org/datasets/movielens/100k/) / [1M](https://grouplens.org/datasets/movielens/1m/) / [10M](https://grouplens.org/datasets/movielens/10m/) / [20M](https://grouplens.org/datasets/movielens/20m/)
   - [Netflix Prize Data](https://archive.org/download/nf_prize_dataset.tar)
   - [Last.fm](https://grouplens.org/datasets/hetrec-2011/)
   - [Book Crossing](https://grouplens.org/datasets/book-crossing/)
   - [Epinions](http://www.cse.msu.edu/~tangjili/trust.html)
   - [CiteULike](https://github.com/js05212/citeulike-a)
-  - [Amazon-Book/Electronic/Clothing/Music (ratings only)](http://jmcauley.ucsd.edu/data/amazon/links.html)
+  - [Amazon-Book/Electronic/Clothing/Music ](http://jmcauley.ucsd.edu/data/amazon/links.html)(ratings only)
   - [Yelp Challenge](https://kaggle.com/yelp-dataset/yelp-dataset)
 
 
@@ -89,10 +92,3 @@ Please cite both of the following papers if you use **DaisyRec** in a research p
   year={2022}
 }
 ```
-
-## Acknowledgements
-
-We refer to the following repositories to improve our code:
-
- - SLIM and KNN-CF parts with [RecSys2019_DeepLearning_Evaluation](https://github.com/MaurizioFD/RecSys2019_DeepLearning_Evaluation)
- - NGCF part with [NGCF-PyTorch](https://github.com/huangtinglin/NGCF-PyTorch)
