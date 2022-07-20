@@ -20,7 +20,7 @@ extras_require = {
 }
 
 setup(
-    name = 'daisy',
+    name = 'daisyRec',
     packages = [package for package in find_packages() if package.startswith('daisy')],
     version = 'v2.0.0',  # Ideally should be same as your GitHub release tag varsion
     long_description = long_description,
