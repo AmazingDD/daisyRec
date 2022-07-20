@@ -32,7 +32,7 @@ setup(
     author = 'Yu Di',
     author_email = 'di.yu.2021@mitb.smu.edu.sg',
     url = 'https://github.com/AmazingDD/daisyRec',
-    download_url = 'https://github.com/AmazingDD/daisyRec/archive/refs/tags/v2.0.1.tar.gz',
+    download_url = 'https://github.com/AmazingDD/daisyRec/archive/refs/tags/v2.0.2.tar.gz',
     keywords = ['ranking', 'recommendation'],
     include_package_data=True,
     install_requires=install_requires,
