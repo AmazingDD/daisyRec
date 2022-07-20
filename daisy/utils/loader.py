@@ -8,6 +8,8 @@ import pandas as pd
 import scipy.io as sio
 from collections import Counter
 
+from daisy.utils.utils import ensure_dir
+
 class RawDataReader(object):
     def __init__(self, config):
         self.src = config['dataset']
@@ -17,7 +19,9 @@ class RawDataReader(object):
         self.inter_name = config['INTER_NAME']
         self.logger = config['logger']
 
-        self.ds_path = f'./data/{self.src}/'
+        self.ds_path = f"{config['data_path']}{self.src}/"
+        ensure_dir(self.ds_path)
+        self.logger.info(f'Current data path is: {self.ds_path}, make sure you put the right raw data into it...')
 
     def get_data(self):
         df = pd.DataFrame()
