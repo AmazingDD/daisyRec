@@ -23,8 +23,9 @@ extras_require = {
 
 setup(
     name = 'daisyRec',
-    packages = [package for package in find_packages() if package.startswith('daisy')],
-    version = 'v2.0.1',  # Ideally should be same as your GitHub release tag varsion
+    # packages = [package for package in find_packages() if package.startswith('daisy')],
+    packages = find_packages(exclude=['tests*']),
+    version = 'v2.0.2',  # Ideally should be same as your GitHub release tag varsion
     description=('An easy-to-use library for recommender systems.'),
     long_description = long_description,
     # long_description_content_type="text/markdown",
@@ -41,3 +42,4 @@ setup(
     classifiers = classifiers,
 )
 
+# python setup.py sdist upload -r pypi
