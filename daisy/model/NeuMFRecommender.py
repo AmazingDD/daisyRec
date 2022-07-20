@@ -13,6 +13,7 @@ import torch.nn as nn
 from daisy.model.AbstractRecommender import GeneralRecommender
 from daisy.utils.config import initializer_param_config, initializer_config
 
+
 class NeuMF(GeneralRecommender):
     def __init__(self, config):
         """

@@ -1,11 +1,11 @@
-from .config import *
-from .dataset import *
-from .loader import *
-from .metrics import *
-from .parser import *
-from .sampler import *
-from .splitter import *
-from .utils import *
+from daisy.utils.config import *
+from daisy.utils.dataset import *
+from daisy.utils.loader import *
+from daisy.utils.metrics import *
+from daisy.utils.parser import *
+from daisy.utils.sampler import *
+from daisy.utils.splitter import *
+from daisy.utils.utils import *
 
 __all__ = [
     'log_colors_config', 'tune_params_config', 'param_type_config', 'metrics_config',

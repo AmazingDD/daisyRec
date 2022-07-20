@@ -13,6 +13,7 @@ import torch.nn as nn
 
 from daisy.model.AbstractRecommender import GeneralRecommender
 
+
 class FM(GeneralRecommender):
     def __init__(self, config):
         """

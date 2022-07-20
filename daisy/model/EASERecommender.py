@@ -12,6 +12,7 @@ import scipy.sparse as sp
 
 from daisy.model.AbstractRecommender import GeneralRecommender
 
+
 class EASE(GeneralRecommender):
     def __init__(self, config):
         super(EASE, self).__init__(config)

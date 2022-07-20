@@ -12,6 +12,7 @@ import numpy as np
 
 from daisy.model.AbstractRecommender import GeneralRecommender
 
+
 class MostPop(GeneralRecommender):
     def __init__(self, config):
         """

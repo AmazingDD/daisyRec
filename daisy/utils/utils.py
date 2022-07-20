@@ -7,8 +7,8 @@ import pandas as pd
 import scipy.sparse as sp
 from collections import defaultdict
 
-from .metrics import Metric
-from .config import metrics_name_config
+from daisy.utils.metrics import Metric
+from daisy.utils.config import metrics_name_config
 
 def ensure_dir(path):
     if not os.path.exists(path):

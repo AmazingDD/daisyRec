@@ -16,11 +16,11 @@
   year={2012}
 }
 '''
-
 import torch
 import torch.nn as nn
 
 from daisy.model.AbstractRecommender import GeneralRecommender
+
 
 class MF(GeneralRecommender):
     def __init__(self, config):

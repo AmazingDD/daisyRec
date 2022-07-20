@@ -14,6 +14,7 @@ from sklearn.utils.extmath import randomized_svd
 
 from daisy.model.AbstractRecommender import GeneralRecommender
 
+
 class PureSVD(GeneralRecommender):
     def __init__(self, config):
         """

@@ -23,6 +23,7 @@ from sklearn.linear_model import ElasticNet
 
 from daisy.model.AbstractRecommender import GeneralRecommender
 
+
 class SLiM(GeneralRecommender):
     def __init__(self, config):
         """

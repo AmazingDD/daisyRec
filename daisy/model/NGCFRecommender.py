@@ -12,7 +12,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from daisy.model.AbstractRecommender import GeneralRecommender
-from daisy.utils.config import initializer_param_config, initializer_config
+from daisy.utils.config import initializer_config
+
 
 class NGCF(GeneralRecommender):
     def __init__(self, config):

@@ -1,6 +1,6 @@
-from . import utils
-from . import model
-from . import config
+from daisy import utils
+from daisy import model
+from daisy import config
 
 
 __all__ = [
@@ -8,4 +8,4 @@ __all__ = [
 ]
 
 
-__version__ = 'v2.0.6'
+__version__ = 'v2.0.7'

@@ -1,9 +1,11 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 
+
 def get_dataloader(ds, batch_size, shuffle, num_workers=4):  
     return DataLoader(
         ds, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+
 
 class BasicDataset(Dataset):
     def __init__(self, samples):

@@ -28,6 +28,7 @@ import scipy.sparse as sp
 
 from daisy.model.AbstractRecommender import GeneralRecommender
 
+
 def convert_df(user_num, item_num, df):
     """ 
     Convert DataFrame to make matrix to make similarity calculation available
