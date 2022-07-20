@@ -41,14 +41,14 @@ setup(
     name = 'daisyRec',
     packages = [package for package in find_packages() if package.startswith('daisy')],
     # packages = find_packages(exclude=['tests*']),
-    version = 'v2.0.5',  # Ideally should be same as your GitHub release tag varsion
+    version = 'v2.0.6',  # Ideally should be same as your GitHub release tag varsion
     description=('An easy-to-use library for recommender systems.'),
     long_description = long_description,
     # long_description_content_type="text/markdown",
     author = 'Yu Di',
     author_email = 'di.yu.2021@mitb.smu.edu.sg',
     url = 'https://github.com/AmazingDD/daisyRec',
-    download_url = 'https://github.com/AmazingDD/daisyRec/archive/refs/tags/v2.0.5.tar.gz',
+    download_url = 'https://github.com/AmazingDD/daisyRec/archive/refs/tags/v2.0.6.tar.gz',
     keywords = ['ranking', 'recommendation'],
     include_package_data=True,
     install_requires=install_requires,
