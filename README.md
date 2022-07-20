@@ -12,17 +12,14 @@
 
 <!-- ![daisyRec's structure](images/framework.png) -->
 
-daisyRec is a Python toolkit developed for benchmarking top-N recommendation task. The name DAISY stands for multi-**D**imension f**A**irly compar**I**son for recommender **SY**stem. ***(Please note that DaisyRec-v2.0 is still under testing. If there is any issue, please feel free to let us know)*** 
+daisyRec is a Python toolkit developed for benchmarking top-N recommendation task. The name DAISY stands for multi-**D**imension f**A**irly compar**I**son for recommender **SY**stem. ***(Please note that DaisyRec is still under testing. If there is any issue, please feel free to let us know)*** 
 
-The figure below shows the overall framework of DaisyRec-v2.0. 
+The figure below shows the overall framework of DaisyRec. 
 
 <p align="center">
 <img src="images/framework.png" align="center" width="90%" style="margin: 0 auto">
 </p>
 
-
-
-## Tutorial - How to use DaisyRec-v2.0
 
 ### Pre-requisits
 
@@ -32,16 +29,14 @@ Make sure you have a **CUDA** enviroment to accelarate since the deep-learning m
 
 ### How to Run
 
-```
-python run_examples/fair_rec.py
-```
+- Example codes are listed in `run_examples`, try to refer them and find out how to use daisy
 
-- The GUI Command Generator is available [here](http://DaisyRecGuiCommandGenerator.pythonanywhere.com).
+- The GUI Command Generator for `fair_rec` and `fair_hpo` is available [here](http://DaisyRecGuiCommandGenerator.pythonanywhere.com).
 
 
 ## Documentation 
 
-The documentation of DaisyRec-v2.0 is available [here](https://daisyrec.readthedocs.io/en/latest/), which provides detailed explainations for all commands.
+The documentation of DaisyRec is available [here](https://daisyrec.readthedocs.io/en/latest/), which provides detailed explainations for all commands.
 
 ## Implemented Algorithms
 
@@ -71,14 +66,6 @@ All data are available in links below:
   - [Amazon-Book/Electronic/Clothing/Music (ratings only)](http://jmcauley.ucsd.edu/data/amazon/links.html)
   - [Yelp Challenge](https://kaggle.com/yelp-dataset/yelp-dataset)
 
-
-## TODO List
-
-- [ ] A more friendly GUI command generator
-- [ ] Add [∞-AE](https://arxiv.org/pdf/2206.02626.pdf) (with [code](https://github.com/noveens/infinite_ae_cf)) 
-- [ ] add logger
-- [ ] release to Pypi
-- [ ] add download function in RawDataReader
 
 ## Cite
 
