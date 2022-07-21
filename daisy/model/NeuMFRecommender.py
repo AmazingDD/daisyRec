@@ -11,7 +11,6 @@ import torch
 import torch.nn as nn
 
 from daisy.model.AbstractRecommender import GeneralRecommender
-from daisy.utils.config import initializer_param_config, initializer_config
 
 
 class NeuMF(GeneralRecommender):
@@ -80,17 +79,17 @@ class NeuMF(GeneralRecommender):
 
     def _init_weight(self):
         if not self.model == 'NeuMF-pre':
-            initializer_config[self.initializer](self.embed_user_GMF.weight, **initializer_param_config[self.initializer])
-            initializer_config[self.initializer](self.embed_item_GMF.weight, **initializer_param_config[self.initializer])
-            initializer_config[self.initializer](self.embed_user_MLP.weight, **initializer_param_config[self.initializer])
-            initializer_config[self.initializer](self.embed_item_MLP.weight, **initializer_param_config[self.initializer])
+            self.initializer_config[self.initializer](self.embed_user_GMF.weight, **self.initializer_param_config[self.initializer])
+            self.initializer_config[self.initializer](self.embed_item_GMF.weight, **self.initializer_param_config[self.initializer])
+            self.initializer_config[self.initializer](self.embed_user_MLP.weight, **self.initializer_param_config[self.initializer])
+            self.initializer_config[self.initializer](self.embed_item_MLP.weight, **self.initializer_param_config[self.initializer])
 
             for m in self.MLP_layers:
                 if isinstance(m, nn.Linear):
-                    initializer_config[self.initializer](m.weight)
-            initializer_config[self.initializer](
+                    self.initializer_config[self.initializer](m.weight)
+            self.initializer_config[self.initializer](
                 self.predict_layer.weight, 
-                **initializer_param_config[self.initializer])
+                **self.initializer_param_config[self.initializer])
             for m in self.modules():
                 if isinstance(m, nn.Linear) and m.bias is not None:
                     m.bias.data.zero_()

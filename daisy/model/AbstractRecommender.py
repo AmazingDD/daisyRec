@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-from daisy.utils.config import initializer_param_config, initializer_config
 from daisy.utils.loss import BPRLoss, TOP1Loss, HingeLoss
 
 
@@ -16,6 +15,20 @@ class AbstractRecommender(nn.Module):
         self.loss_type = None
         self.lr = 0.01
         self.logger = None
+
+        self.initializer_param_config = {
+            'normal': {'mean':0.0, 'std':0.01},
+            'uniform': {'a':0.0, 'b':1.0},
+            'xavier_normal': {'gain':1.0},
+            'xavier_uniform': {'gain':1.0}
+        }
+
+        self.initializer_config = {
+            'normal': nn.init.normal_,
+            'uniform': nn.init.uniform_,
+            'xavier_normal': nn.init.xavier_normal_,
+            'xavier_uniform': nn.init.xavier_uniform_
+        }
 
     def calc_loss(self, batch):
         raise NotImplementedError
@@ -55,11 +68,11 @@ class AbstractRecommender(nn.Module):
 
     def _init_weight(self, m):
         if isinstance(m, nn.Linear):
-            initializer_config[self.initializer](m.weight, **initializer_param_config[self.initializer])
+            self.initializer_config[self.initializer](m.weight, **self.initializer_param_config[self.initializer])
             if m.bias is not None:
                 nn.init.constant_(m.bias.data, 0.)
         elif isinstance(m, nn.Embedding):
-            initializer_config[self.initializer](m.weight, **initializer_param_config[self.initializer])
+            self.initializer_config[self.initializer](m.weight, **self.initializer_param_config[self.initializer])
         else:
             pass
 

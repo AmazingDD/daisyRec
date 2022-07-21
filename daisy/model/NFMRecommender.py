@@ -11,8 +11,6 @@ import torch
 import torch.nn as nn
 
 from daisy.model.AbstractRecommender import GeneralRecommender
-from daisy.utils.config import initializer_param_config, initializer_config
-
 
 class NFM(GeneralRecommender):
     def __init__(self, config):
@@ -93,8 +91,8 @@ class NFM(GeneralRecommender):
         self._init_weight()
 
     def _init_weight(self):
-        initializer_config[self.initializer](self.embed_user.weight, **initializer_param_config[self.initializer])
-        initializer_config[self.initializer](self.embed_item.weight, **initializer_param_config[self.initializer])
+        self.initializer_config[self.initializer](self.embed_user.weight, **self.initializer_param_config[self.initializer])
+        self.initializer_config[self.initializer](self.embed_item.weight, **self.initializer_param_config[self.initializer])
         nn.init.constant_(self.u_bias.weight, 0.0)
         nn.init.constant_(self.i_bias.weight, 0.0)
 
@@ -102,8 +100,8 @@ class NFM(GeneralRecommender):
         if self.num_layers > 0:  # len(self.layers)
             for m in self.deep_layers:
                 if isinstance(m, nn.Linear):
-                    initializer_config[self.initializer](m.weight, **initializer_param_config[self.initializer])
-            initializer_config[self.initializer](self.prediction.weight, **initializer_param_config[self.initializer])
+                    self.initializer_config[self.initializer](m.weight, **self.initializer_param_config[self.initializer])
+            self.initializer_config[self.initializer](self.prediction.weight, **self.initializer_param_config[self.initializer])
         else:
             nn.init.constant_(self.prediction.weight, 1.0)
 

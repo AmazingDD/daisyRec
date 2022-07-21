@@ -3,12 +3,9 @@ import torch
 import logging
 import datetime
 import numpy as np
-import pandas as pd
 import scipy.sparse as sp
 from collections import defaultdict
 
-from daisy.utils.metrics import Metric
-from daisy.utils.config import metrics_name_config
 
 def ensure_dir(path):
     if not os.path.exists(path):
@@ -19,46 +16,6 @@ def get_local_time():
     cur = cur.strftime('%b-%d-%Y_%H-%M-%S')
 
     return cur
-
-def calc_ranking_results(test_ur, pred_ur, test_u, config):
-    '''
-    calculate metrics with prediction results and candidates sets
-
-    Parameters
-    ----------
-    test_ur : defaultdict(set)
-        groud truths for user in test set
-    pred_ur : np.array
-        rank list for user in test set
-    test_u : list
-        the user in order from test set
-    '''    
-    logger = config['logger']
-    path = config['res_path']
-    ensure_dir(path)
-
-    metric = Metric(config)
-    res = pd.DataFrame({
-        'KPI@K': [metrics_name_config[kpi_name] for kpi_name in config['metrics']]
-    })
-
-    common_ks = [1, 5, 10, 20, 30, 50]
-    if config['topk'] not in common_ks:
-        common_ks.append(config['topk'])
-    for topk in common_ks:
-        if topk > config['topk']:
-            continue
-        else:
-            rank_list = pred_ur[:, :topk]
-            kpis = metric.run(test_ur, rank_list, test_u)
-            if topk == 10:
-                for kpi_name, kpi_res in zip(config['metrics'], kpis):
-                    kpi_name = metrics_name_config[kpi_name]
-                    logger.info(f'{kpi_name}@{topk}: {kpi_res:.4f}')
-
-            res[topk] = np.array(kpis)
-
-    return res
 
 def get_ur(df):
     """
