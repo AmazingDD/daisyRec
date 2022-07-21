@@ -20,7 +20,7 @@ The figure below shows the overall framework of DaisyRec.
 
 This repository is used for publishing. If you are interested in details about our experiments ranking results, try to reach this [repo](https://github.com/recsys-benchmark/DaisyRec-v2.0). 
 
-We really appreciate these repositories to help us improve our code efficiency:
+We really appreciate these repositories to help us improve the code efficiency:
   - [RecSys2019_DeepLearning_Evaluation](https://github.com/MaurizioFD/RecSys2019_DeepLearning_Evaluation)
   - [NGCF-PyTorch](https://github.com/huangtinglin/NGCF-PyTorch)
   - [RecBole](https://github.com/RUCAIBox/RecBole)
