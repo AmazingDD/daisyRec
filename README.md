@@ -43,7 +43,7 @@ pip install daisyRec
 git clone https://github.com/AmazingDD/daisyRec.git && cd daisyRec
 ```
 
-- Example codes are listed in `run_examples`, try to refer them and find out how to use daisy; you can also implement these code by moving them into `daisy/`
+- Example codes are listed in `run_examples`, try to refer them and find out how to use daisy; you can also implement these codes by moving them into `daisy/`
   ```
   python fair_rec.py
   python fair_hpo.py
