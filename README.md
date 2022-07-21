@@ -1,5 +1,5 @@
 <p align="left">
-<img src="images/logo.png" align="center" width="45%" style="margin: 0 auto">
+<img src="images/logo.png" align="center" width="40%" style="margin: 0 auto">
 </p>
 
 ![PyPI - Python Version](https://img.shields.io/badge/pyhton-3.5%2B-blue) 
@@ -8,7 +8,7 @@
 ![GitHub](https://img.shields.io/github/license/AmazingDD/daisyRec)
 [![arXiv](https://img.shields.io/badge/arXiv-daisyRec-%23B21B1B)](https://arxiv.org/abs/2206.10848)
 
-## Overview
+### Overview
 
 daisyRec is a Python toolkit developed for benchmarking top-N recommendation task. The name DAISY stands for multi-**D**imension f**A**irly compar**I**son for recommender **SY**stem. ***(Please note that DaisyRec is still under testing. If there is any issue, please feel free to let us know)*** 
 
@@ -18,20 +18,16 @@ The figure below shows the overall framework of DaisyRec.
 <img src="images/framework.png" align="center" width="90%" style="margin: 0 auto">
 </p>
 
-This repository is used for publishing. If you are interested in details about our experiments ranking results, try to reach this [repo](https://github.com/recsys-benchmark/DaisyRec-v2.0). 
+This repository is used for publishing. If you are interested in details of our _experiments ranking results_, try to reach this [**repo file**](https://github.com/recsys-benchmark/DaisyRec-v2.0/blob/dev/appendix.pdf). 
 
 We really appreciate these repositories to help us improve the code efficiency:
   - [RecSys2019_DeepLearning_Evaluation](https://github.com/MaurizioFD/RecSys2019_DeepLearning_Evaluation)
   - [NGCF-PyTorch](https://github.com/huangtinglin/NGCF-PyTorch)
   - [RecBole](https://github.com/RUCAIBox/RecBole)
 
-
-### Pre-requisits
+### How to Run
 
 Make sure you have a **CUDA** enviroment to accelarate since the deep-learning models could be based on it. 
-
-
-### How to Run
 
 #### 1. Install from pip
 ```
@@ -48,14 +44,14 @@ git clone https://github.com/AmazingDD/daisyRec.git && cd daisyRec
   python fair_rec.py
   python fair_hpo.py
   ```
-- The GUI Command Generator for `fair_rec` and `fair_hpo`, which can assist you to quikly write arguments, is now available [**here**](http://DaisyRecGuiCommandGenerator.pythonanywhere.com). 
+- The GUI Command Generator for `fair_rec.py` and `fair_hpo.py`, which can assist you to quikly write arguments and run the fair comparison experiments, is now available [**here**](http://DaisyRecGuiCommandGenerator.pythonanywhere.com). 
 
 
-## Documentation 
+### Documentation 
 
-The documentation of DaisyRec is available [here](https://daisyrec.readthedocs.io/en/latest/), which provides detailed explainations for all commands.
+The documentation of DaisyRec is available [here](https://daisyrec.readthedocs.io/en/latest/), which provides detailed explanations for all arguments.
 
-## Implemented Algorithms
+### Implemented Algorithms
 
 Below are the algorithms implemented in daisyRec. More baselines will be added later.
 
@@ -68,7 +64,7 @@ Below are the algorithms implemented in daisyRec. More baselines will be added l
 - **Representation Learning Methods**
     - Item2Vec
 
-## Datasets
+### Datasets
 
 You can download experiment data, and put them into the `data` folder.
 All data are available in links below: 
@@ -83,7 +79,7 @@ All data are available in links below:
   - [Yelp Challenge](https://kaggle.com/yelp-dataset/yelp-dataset)
 
 
-## Cite
+### Cite
 
 Please cite both of the following papers if you use **DaisyRec** in a research paper in any way (e.g., code and ranking results):
 
