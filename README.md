@@ -3,7 +3,7 @@
 </p>
 
 ![PyPI - Python Version](https://img.shields.io/badge/pyhton-3.5%2B-blue) 
-[![Version](https://img.shields.io/badge/version-2.0-orange)](https://github.com/AmazingDD/daisyRec) 
+[![Version](https://img.shields.io/badge/version-2.1.0-orange)](https://github.com/AmazingDD/daisyRec) 
 ![GitHub repo size](https://img.shields.io/github/repo-size/AmazingDD/daisyRec) 
 ![GitHub](https://img.shields.io/github/license/AmazingDD/daisyRec)
 [![arXiv](https://img.shields.io/badge/arXiv-daisyRec-%23B21B1B)](https://arxiv.org/abs/2206.10848)
@@ -33,9 +33,22 @@ Make sure you have a **CUDA** enviroment to accelarate since the deep-learning m
 
 ### How to Run
 
-- Example codes are listed in `run_examples`, try to refer them and find out how to use daisy
+#### 1. Install from pip
+```
+pip install daisyRec
+```
 
-- The GUI Command Generator for `fair_rec` and `fair_hpo` is available [here](http://DaisyRecGuiCommandGenerator.pythonanywhere.com).
+#### 2. Clone from github
+```
+git clone https://github.com/AmazingDD/daisyRec.git && cd daisyRec
+```
+
+- Example codes are listed in `run_examples`, try to refer them and find out how to use daisy; you can also implement these code by moving them into `daisy/`
+  ```
+  python fair_rec.py
+  python fair_hpo.py
+  ```
+- The GUI Command Generator for `fair_rec` and `fair_hpo`, which can assist you to quikly write arguments, is now available [**here**](http://DaisyRecGuiCommandGenerator.pythonanywhere.com). 
 
 
 ## Documentation 
