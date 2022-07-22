@@ -88,10 +88,30 @@ def parse_args():
                         type=int, 
                         default=32, 
                         help='latent factors numbers in the model')
+    parser.add_argument('--latent_dim', 
+                        type=int, 
+                        default=128, 
+                        help='bottleneck layer size for autoencoder')
+    parser.add_argument('--context_window', 
+                        type=int, 
+                        default=2, 
+                        help='the one-side window size of skip-gram')
+    parser.add_argument('--rho', 
+                        type=float, 
+                        default=0.5, 
+                        help='discard threshold for sequence in item2vec')
+    parser.add_argument('--reg', 
+                        type=float, 
+                        default=200, 
+                        help='EASE regularization term')        
     parser.add_argument('--reg_1', 
                         type=float, 
                         default=0., 
                         help='L1 regularization')
+    parser.add_argument('--anneal_cap', 
+                        type=float, 
+                        default=0.2, 
+                        help='Anneal penalty for VAE KL loss')
     parser.add_argument('--reg_2', 
                         type=float, 
                         default=0.001, 
