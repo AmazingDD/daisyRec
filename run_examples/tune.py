@@ -173,10 +173,6 @@ if __name__ == '__main__':
                 model.fit(train_loader)
 
             elif config['algo_name'].lower() in ['mf', 'fm', 'neumf', 'nfm', 'ngcf']:
-                if config['algo_name'].lower() == 'ngcf':
-                    _, norm_adj, _ = get_adj_mat(user_num,item_num)
-                    config['norm_adj'] = norm_adj
-
                 model = model_config[config['algo_name']](config)
                 sampler = BasicNegtiveSampler(train, config)
                 train_samples = sampler.sampling()

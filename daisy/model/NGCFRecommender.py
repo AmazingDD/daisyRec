@@ -11,6 +11,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import numpy as np
+import scipy.sparse as sp
+
 from daisy.model.AbstractRecommender import GeneralRecommender
 
 
@@ -43,7 +46,7 @@ class NGCF(GeneralRecommender):
         self.mess_dropout = [config['mess_dropout'], config['mess_dropout'], config['mess_dropout']]
         self.layers = [config['factors'], config['factors'], config['factors']]
 
-        self.norm_adj = config['norm_adj']
+        _, self.norm_adj, _ = self._get_adj_mat(self.n_user, self.n_item)
         
         self.reg_1 = config['reg_1']
         self.reg_2 = config['reg_2']
@@ -212,3 +215,67 @@ class NGCF(GeneralRecommender):
         scores = torch.matmul(user_emb, items_emb.transpose(1, 0))
 
         return torch.argsort(scores, descending=True)[:self.topk].cpu().numpy()
+
+    def _get_adj_mat(self, n_users, n_items):
+        """
+        method of get Adjacency matrix
+        Parameters
+        --------
+        n_users : int, the number of users
+        n_items : int, the number of items
+
+        Returns
+        -------
+        adj_mat: adjacency matrix
+        norm_adj_mat: normal adjacency matrix
+        mean_adj_mat: mean adjacency matrix
+        """
+        R = sp.dok_matrix((n_users, n_items), dtype=np.float32)
+        adj_mat = sp.dok_matrix((n_users + n_items, n_users + n_items), dtype=np.float32)
+        adj_mat = adj_mat.tolil()
+        R = R.tolil()
+
+        adj_mat[:n_users, n_users:] = R
+        adj_mat[n_users:, :n_users] = R.T
+        adj_mat = adj_mat.todok()
+        self.logger.info('already create adjacency matrix', adj_mat.shape)
+
+        def mean_adj_single(adj):
+            # D^-1 * A
+            rowsum = np.array(adj.sum(1))
+
+            d_inv = np.power(rowsum, -1).flatten()
+            d_inv[np.isinf(d_inv)] = 0.
+            d_mat_inv = sp.diags(d_inv)
+
+            norm_adj = d_mat_inv.dot(adj)
+            # norm_adj = adj.dot(d_mat_inv)
+            self.logger.info('generate single-normalized adjacency matrix.')
+            return norm_adj.tocoo()
+
+        def normalized_adj_single(adj):
+            # D^-1/2 * A * D^-1/2
+            rowsum = np.array(adj.sum(1))
+
+            d_inv_sqrt = np.power(rowsum, -0.5).flatten()
+            d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
+            d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
+
+            # bi_lap = adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
+            bi_lap = d_mat_inv_sqrt.dot(adj).dot(d_mat_inv_sqrt)
+            return bi_lap.tocoo()
+
+        def check_adj_if_equal(adj):
+            dense_A = np.array(adj.todense())
+            degree = np.sum(dense_A, axis=1, keepdims=False)
+
+            temp = np.dot(np.diag(np.power(degree, -1)), dense_A)
+            self.logger.info('check normalized adjacency matrix whether equal to this laplacian matrix.')
+            return temp
+
+        norm_adj_mat = mean_adj_single(adj_mat + sp.eye(adj_mat.shape[0]))
+        # norm_adj_mat = normalized_adj_single(adj_mat + sp.eye(adj_mat.shape[0]))
+        mean_adj_mat = mean_adj_single(adj_mat)
+
+        self.logger.info('already normalize adjacency matrix')
+        return adj_mat.tocsr(), norm_adj_mat.tocsr(), mean_adj_mat.tocsr()

@@ -3,7 +3,6 @@ import torch
 import logging
 import datetime
 import numpy as np
-import scipy.sparse as sp
 from collections import defaultdict
 
 
@@ -84,71 +83,6 @@ def build_candidates_set(test_ur, train_ur, config, drop_past_inter=True):
         test_u.append(u)
     
     return test_u, test_ucands
-
-def get_adj_mat(n_users, n_items):
-    """
-    method of get Adjacency matrix
-    Parameters
-    --------
-    n_users : int, the number of users
-    n_items : int, the number of items
-
-    Returns
-    -------
-    adj_mat: adjacency matrix
-    norm_adj_mat: normal adjacency matrix
-    mean_adj_mat: mean adjacency matrix
-    """
-    logger = logging.getLogger()
-    R = sp.dok_matrix((n_users, n_items), dtype=np.float32)
-    adj_mat = sp.dok_matrix((n_users + n_items, n_users + n_items), dtype=np.float32)
-    adj_mat = adj_mat.tolil()
-    R = R.tolil()
-
-    adj_mat[:n_users, n_users:] = R
-    adj_mat[n_users:, :n_users] = R.T
-    adj_mat = adj_mat.todok()
-    logger.info('already create adjacency matrix', adj_mat.shape)
-
-    def mean_adj_single(adj):
-        # D^-1 * A
-        rowsum = np.array(adj.sum(1))
-
-        d_inv = np.power(rowsum, -1).flatten()
-        d_inv[np.isinf(d_inv)] = 0.
-        d_mat_inv = sp.diags(d_inv)
-
-        norm_adj = d_mat_inv.dot(adj)
-        # norm_adj = adj.dot(d_mat_inv)
-        logger.info('generate single-normalized adjacency matrix.')
-        return norm_adj.tocoo()
-
-    def normalized_adj_single(adj):
-        # D^-1/2 * A * D^-1/2
-        rowsum = np.array(adj.sum(1))
-
-        d_inv_sqrt = np.power(rowsum, -0.5).flatten()
-        d_inv_sqrt[np.isinf(d_inv_sqrt)] = 0.
-        d_mat_inv_sqrt = sp.diags(d_inv_sqrt)
-
-        # bi_lap = adj.dot(d_mat_inv_sqrt).transpose().dot(d_mat_inv_sqrt)
-        bi_lap = d_mat_inv_sqrt.dot(adj).dot(d_mat_inv_sqrt)
-        return bi_lap.tocoo()
-
-    def check_adj_if_equal(adj):
-        dense_A = np.array(adj.todense())
-        degree = np.sum(dense_A, axis=1, keepdims=False)
-
-        temp = np.dot(np.diag(np.power(degree, -1)), dense_A)
-        logger.info('check normalized adjacency matrix whether equal to this laplacian matrix.')
-        return temp
-
-    norm_adj_mat = mean_adj_single(adj_mat + sp.eye(adj_mat.shape[0]))
-    # norm_adj_mat = normalized_adj_single(adj_mat + sp.eye(adj_mat.shape[0]))
-    mean_adj_mat = mean_adj_single(adj_mat)
-
-    logger.info('already normalize adjacency matrix')
-    return adj_mat.tocsr(), norm_adj_mat.tocsr(), mean_adj_mat.tocsr()
 
 def get_history_matrix(df, config, row='user', use_config_value_name=False):
     logger = logging.getLogger()
