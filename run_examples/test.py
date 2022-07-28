@@ -19,7 +19,7 @@ from daisy.utils.loader import RawDataReader, Preprocessor
 from daisy.utils.config import init_seed, init_config, init_logger
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 from daisy.utils.dataset import get_dataloader, BasicDataset, CandidatesDataset, AEDataset
-from daisy.utils.utils import ensure_dir, get_ur, get_history_matrix, build_candidates_set, get_adj_mat
+from daisy.utils.utils import ensure_dir, get_ur, get_history_matrix, build_candidates_set
 
 model_config = {
     'mostpop': MostPop,

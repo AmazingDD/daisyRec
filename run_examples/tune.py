@@ -21,7 +21,7 @@ from daisy.utils.config import init_seed, init_config, init_logger
 from daisy.utils.metrics import MAP, NDCG, Recall, Precision, HR, MRR
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 from daisy.utils.dataset import AEDataset, BasicDataset, CandidatesDataset, get_dataloader
-from daisy.utils.utils import get_history_matrix, get_adj_mat, get_ur, build_candidates_set, ensure_dir
+from daisy.utils.utils import get_history_matrix, get_ur, build_candidates_set, ensure_dir
 
 model_config = {
     'mostpop': MostPop,
