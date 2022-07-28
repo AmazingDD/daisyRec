@@ -1,26 +1,25 @@
 import time
 from logging import getLogger
 
+from daisy.model.MFRecommender import MF
+from daisy.model.FMRecommender import FM
+from daisy.model.NFMRecommender import NFM
+from daisy.model.NGCFRecommender import NGCF
+from daisy.model.EASERecommender import EASE
+from daisy.model.SLiMRecommender import SLiM
+from daisy.model.VAECFRecommender import VAECF
+from daisy.model.NeuMFRecommender import NeuMF
+from daisy.model.PopRecommender import MostPop
+from daisy.model.KNNCFRecommender import ItemKNNCF
+from daisy.model.PureSVDRecommender import PureSVD
+from daisy.model.Item2VecRecommender import Item2Vec
 from daisy.utils.splitter import TestSplitter
-from daisy.utils.config import init_seed, init_config, init_logger
+from daisy.utils.metrics import calc_ranking_results
 from daisy.utils.loader import RawDataReader, Preprocessor
+from daisy.utils.config import init_seed, init_config, init_logger
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 from daisy.utils.dataset import get_dataloader, BasicDataset, CandidatesDataset, AEDataset
 from daisy.utils.utils import ensure_dir, get_ur, get_history_matrix, build_candidates_set, get_adj_mat
-from daisy.utils.metrics import calc_ranking_results
-
-from daisy.model.KNNCFRecommender import ItemKNNCF
-from daisy.model.PureSVDRecommender import PureSVD
-from daisy.model.SLiMRecommender import SLiM
-from daisy.model.PopRecommender import MostPop
-from daisy.model.MFRecommender import MF
-from daisy.model.FMRecommender import FM
-from daisy.model.Item2VecRecommender import Item2Vec
-from daisy.model.NeuMFRecommender import NeuMF
-from daisy.model.NFMRecommender import NFM
-from daisy.model.NGCFRecommender import NGCF
-from daisy.model.VAECFRecommender import VAECF
-from daisy.model.EASERecommender import EASE
 
 model_config = {
     'mostpop': MostPop,

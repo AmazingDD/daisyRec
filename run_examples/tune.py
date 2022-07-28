@@ -3,25 +3,25 @@ import optuna
 import numpy as np
 from logging import getLogger
 
-from daisy.utils.config import init_seed, init_config, init_logger
-from daisy.utils.loader import RawDataReader, Preprocessor
-from daisy.utils.dataset import AEDataset, BasicDataset, CandidatesDataset, get_dataloader
-from daisy.utils.splitter import TestSplitter, ValidationSplitter
-from daisy.utils.utils import get_history_matrix, get_adj_mat, get_ur, build_candidates_set, ensure_dir
-from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
-from daisy.utils.metrics import MAP, NDCG, Recall, Precision, HR, MRR
-from daisy.model.KNNCFRecommender import ItemKNNCF
-from daisy.model.PureSVDRecommender import PureSVD
-from daisy.model.SLiMRecommender import SLiM
-from daisy.model.PopRecommender import MostPop
 from daisy.model.MFRecommender import MF
 from daisy.model.FMRecommender import FM
-from daisy.model.Item2VecRecommender import Item2Vec
-from daisy.model.NeuMFRecommender import NeuMF
 from daisy.model.NFMRecommender import NFM
 from daisy.model.NGCFRecommender import NGCF
-from daisy.model.VAECFRecommender import VAECF
 from daisy.model.EASERecommender import EASE
+from daisy.model.SLiMRecommender import SLiM
+from daisy.model.VAECFRecommender import VAECF
+from daisy.model.NeuMFRecommender import NeuMF
+from daisy.model.PopRecommender import MostPop
+from daisy.model.KNNCFRecommender import ItemKNNCF
+from daisy.model.PureSVDRecommender import PureSVD
+from daisy.model.Item2VecRecommender import Item2Vec
+from daisy.utils.loader import RawDataReader, Preprocessor
+from daisy.utils.splitter import TestSplitter, ValidationSplitter
+from daisy.utils.config import init_seed, init_config, init_logger
+from daisy.utils.metrics import MAP, NDCG, Recall, Precision, HR, MRR
+from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
+from daisy.utils.dataset import AEDataset, BasicDataset, CandidatesDataset, get_dataloader
+from daisy.utils.utils import get_history_matrix, get_adj_mat, get_ur, build_candidates_set, ensure_dir
 
 model_config = {
     'mostpop': MostPop,
@@ -83,6 +83,8 @@ param_type_config = {
     'rho': 'float'
 }
 
+TRIAL_CNT = 0
+
 if __name__ == '__main__':
     ''' summarize hyper-parameter part (basic yaml + args + model yaml) '''
     config = init_config()
@@ -129,16 +131,24 @@ if __name__ == '__main__':
     ''' define optimization target function '''
     def objective(trial):
         for param in tune_param_names:
-            if param_type_config[param] == 'int' and param_type_config[param]['step'] is None:
-                step = param_dict[param]['step']
-                config[param] = trial.suggest_int(
-                    param, param_dict[param]['min'], param_dict[param]['max'], 1 if step is None else step)
-            elif param_type_config[param] == 'float':
-                config[param] = trial.suggest_float(
-                    param, param_dict[param]['min'], param_dict[param]['max'], param_dict[param]['step'])
+            if param not in param_dict.keys(): continue
+                
+            if isinstance(param_dict[param], list):
+                config[param] = trial.suggest_categorical(param, param_dict[param])
+            elif isinstance(param_dict[param], dict):
+                if param_type_config[param] == 'int':
+                    step = param_dict[param]['step']
+                    config[param] = trial.suggest_int(
+                        param, param_dict[param]['min'], param_dict[param]['max'], 1 if step is None else step)
+                elif param_type_config[param] == 'float':
+                    config[param] = trial.suggest_float(
+                        param, param_dict[param]['min'], param_dict[param]['max'], param_dict[param]['step'])
+                else:
+                    raise ValueError(f'Invalid parameter type for {param}...')
             else:
-                raise ValueError(f'Invalid parameter type for {param}...')
+                raise ValueError(f'Invalid parameter settings for {param}, Current is {param_dict[param]}...')
         
+        ''' user train set to get validation combinations and build model for each dataset '''
         splitter = ValidationSplitter(config)
         cnt, kpis = 1, []
         for train_index, val_index in splitter.split(train_set):
@@ -201,13 +211,17 @@ if __name__ == '__main__':
             ''' calculating KPIs '''
             kpi = metrics_config[kpi_name](val_ur, preds, val_u)
             kpis.append(kpi)
-        logger.info('Finish one trial...')
+        
+        TRIAL_CNT += 1
+        logger.info(f'Finish {TRIAL_CNT} trial...')
 
         return np.mean(kpis)
 
+    ''' init optuna workspace '''
     study = optuna.create_study(direction="maximize", sampler=optuna.samplers.TPESampler(seed=2022))
     study.optimize(objective, n_trials=config['hyperopt_trail'])
 
+    ''' record the best choices '''
     logger.info(f'Trial {study.best_trial.number} get the best {kpi_name}({study.best_trial.value}) with params: {study.best_trial.params}')
     line = ','.join([study.best_params[param] for param in tune_param_names]) + f',{study.best_value:.4f}\n'
     f.write(line)
