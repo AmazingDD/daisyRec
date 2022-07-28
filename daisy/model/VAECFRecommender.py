@@ -42,8 +42,8 @@ class VAECF(AERecommender):
         self.user_num = config['user_num']
         self.item_num = config['item_num']
 
-        self.history_item_id = self.history_item_id.to(self.device)
-        self.history_item_value = self.history_item_value.to(self.device)
+        self.history_item_id = config['history_item_id'].to(self.device)
+        self.history_item_value = config['history_item_value'].to(self.device)
         self.update = 0
 
         self.encode_layer_dims = [self.item_num] + self.layers + [self.lat_dim]
