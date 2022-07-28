@@ -53,16 +53,23 @@ The documentation of DaisyRec is available [here](https://daisyrec.readthedocs.i
 
 ### Implemented Algorithms
 
+Current model in daisyRec only take user-item-interactions into account, so FM-related models will be specialized.
 Below are the algorithms implemented in daisyRec. More baselines will be added later.
 
-- **Memory-based Methods**
-    - MostPop, ItemKNN, EASE
-- **Latent Factor Methods**
-    - PureSVD, SLIM, MF, FM
-- **Deep Learning Methods**
-    - NeuMF, NFM, NGCF, Multi-VAE
-- **Representation Learning Methods**
-    - Item2Vec
+| **Model** | **Publication** |
+|-----------|-----------------|
+| MostPop   | A re-visit of the popularity baseline in recommender systems |
+| ItemKNN   | Item-based top-N recommendation algorithms |
+| EASE      | Embarrassingly Shallow Autoencoders for Sparse Data |
+| PureSVD   | Top-n recommender system via matrix completion |
+| SLIM      | SLIM: Sparse Linear Methods for Top-N Recommender Systems |
+| MF        | Matrix factorization techniques for recommender systems |
+| FM        | Factorization Machines |
+| NeuMF     | Neural Collaborative Filtering |
+| NFM       | Neural Factorization Machines for Sparse Predictive Analytics |
+| NGCF      | Neural Graph Collaborative Filtering |
+| Multi-VAE | Variational Autoencoders for Collaborative Filtering |
+| Item2Vec  | Item2vec: neural item embedding for collaborative filtering |
 
 ### Datasets
 
