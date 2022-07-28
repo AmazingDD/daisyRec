@@ -6,7 +6,7 @@ from daisy.utils.config import init_seed, init_config, init_logger
 from daisy.utils.loader import RawDataReader, Preprocessor
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 from daisy.utils.dataset import get_dataloader, BasicDataset, CandidatesDataset, AEDataset
-from daisy.utils.utils import get_ur, get_history_matrix, build_candidates_set, get_adj_mat
+from daisy.utils.utils import ensure_dir, get_ur, get_history_matrix, build_candidates_set, get_adj_mat
 from daisy.utils.metrics import calc_ranking_results
 
 from daisy.model.KNNCFRecommender import ItemKNNCF
@@ -125,6 +125,8 @@ if __name__ == '__main__':
     result_save_path = f"./res/{config['dataset']}/{config['prepro']}/{config['test_method']}/"
     algo_prefix = f"{config['loss_type']}_{config['algo_name']}"
     common_prefix = f"with_{config['sample_ratio']}{config['sample_method']}"
+
+    ensure_dir(result_save_path)
 
     results = calc_ranking_results(test_ur, preds, test_u, config)
     results.to_csv(f'{result_save_path}{algo_prefix}_{common_prefix}_kpi_results.csv')

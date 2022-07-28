@@ -33,23 +33,27 @@ extras_require = {
 }
 
 print('=============================================')
-print([package for package in find_packages() if package.startswith('daisy')])
+# print([package for package in find_packages() if package.startswith('daisy')])
+print(find_packages(where="daisy"))
 print('=============================================')
 
 setup(
     name='daisyRec',
     packages=[package for package in find_packages() if package.startswith('daisy')],
+    # packages=find_packages(where="daisy"),
+    # package_dir={"": "daisy"},
+    package_data={"": ["*.yaml"]},
     # packages = find_packages(exclude=['tests*']),
-    version='v2.1.1',  # Ideally should be same as your GitHub release tag varsion
+    version='v2.1.3',  # Ideally should be same as your GitHub release tag varsion
     description=('An easy-to-use library for recommender systems.'),
     long_description=long_description,
     # long_description_content_type="text/markdown",
     author='Yu Di',
     author_email='di.yu.2021@mitb.smu.edu.sg',
     url='https://github.com/AmazingDD/daisyRec',
-    download_url='https://github.com/AmazingDD/daisyRec/archive/refs/tags/v2.1.1.tar.gz',
+    download_url='https://github.com/AmazingDD/daisyRec/archive/refs/tags/v2.1.3.tar.gz',
     keywords=['ranking', 'recommendation'],
-    include_package_data=True,
+    # include_package_data=True,
     install_requires=install_requires,
     setup_requires=setup_requires,
     extras_require=extras_require,
