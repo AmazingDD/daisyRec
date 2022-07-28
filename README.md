@@ -3,7 +3,7 @@
 </p>
 
 ![PyPI - Python Version](https://img.shields.io/badge/pyhton-3.5%2B-blue) 
-[![Version](https://img.shields.io/badge/version-2.1.0-orange)](https://github.com/AmazingDD/daisyRec) 
+[![Version](https://img.shields.io/badge/version-2.1.1-orange)](https://github.com/AmazingDD/daisyRec) 
 ![GitHub repo size](https://img.shields.io/github/repo-size/AmazingDD/daisyRec) 
 ![GitHub](https://img.shields.io/github/license/AmazingDD/daisyRec)
 [![arXiv](https://img.shields.io/badge/arXiv-daisyRec-%23B21B1B)](https://arxiv.org/abs/2206.10848)
@@ -39,12 +39,12 @@ pip install daisyRec
 git clone https://github.com/AmazingDD/daisyRec.git && cd daisyRec
 ```
 
-- Example codes are listed in `run_examples`, try to refer them and find out how to use daisy; you can also implement these codes by moving them into `daisy/`
+- Example codes are listed in `run_examples`, try to refer them and find out how to use daisy; you can also implement these codes by moving them into `daisyRec/`.
   ```
-  python fair_rec.py
-  python fair_hpo.py
+  python test.py
+  python tune.py
   ```
-- The GUI Command Generator for `fair_rec.py` and `fair_hpo.py`, which can assist you to quikly write arguments and run the fair comparison experiments, is now available [**here**](http://DaisyRecGuiCommandGenerator.pythonanywhere.com). 
+- The GUI Command Generator for `test.py` and `tune.py`, which can assist you to quikly write arguments and run the fair comparison experiments, is now available [**here**](http://DaisyRecGuiCommandGenerator.pythonanywhere.com).
 
 
 ### Documentation 

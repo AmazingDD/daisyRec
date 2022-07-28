@@ -46,14 +46,19 @@ def init_config(param_dict=None):
         summarize hyper-parameter part (basic yaml + args + model yaml) 
         '''
         config = dict()
-        basic_conf = yaml.load(open('./daisy/config/basic.yaml'), Loader=yaml.loader.SafeLoader)
+
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        basic_init_file = os.path.join(current_path, '../config/basic.yaml')
+        
+        basic_conf = yaml.load(open(basic_init_file), Loader=yaml.loader.SafeLoader)
         config.update(basic_conf)
 
         args = parse_args()
         algo_name = config['algo_name'] if args.algo_name is None else args.algo_name
+        model_init_file = os.path.join(current_path, f'../config/model/{algo_name}.yaml')
 
         model_conf = yaml.load(
-            open(f'./daisy/config/model/{algo_name}.yaml'), Loader=yaml.loader.SafeLoader)
+            open(model_init_file), Loader=yaml.loader.SafeLoader)
         config.update(model_conf)
 
         args_conf = vars(args)
