@@ -22,7 +22,6 @@ This repository is used for publishing. If you are interested in details of our 
 
 We really appreciate these repositories to help us improve the code efficiency:
   - [RecSys2019_DeepLearning_Evaluation](https://github.com/MaurizioFD/RecSys2019_DeepLearning_Evaluation)
-  - [NGCF-PyTorch](https://github.com/huangtinglin/NGCF-PyTorch)
   - [RecBole](https://github.com/RUCAIBox/RecBole)
 
 ### How to Run
