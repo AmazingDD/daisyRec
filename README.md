@@ -3,7 +3,7 @@
 </p>
 
 ![PyPI - Python Version](https://img.shields.io/badge/pyhton-3.5%2B-blue) 
-[![Version](https://img.shields.io/badge/version-2.1.3-orange)](https://github.com/AmazingDD/daisyRec) 
+[![Version](https://img.shields.io/badge/version-2.1.4-orange)](https://github.com/AmazingDD/daisyRec) 
 ![GitHub repo size](https://img.shields.io/github/repo-size/AmazingDD/daisyRec) 
 ![GitHub](https://img.shields.io/github/license/AmazingDD/daisyRec)
 [![arXiv](https://img.shields.io/badge/arXiv-daisyRec-%23B21B1B)](https://arxiv.org/abs/2206.10848)
@@ -44,7 +44,7 @@ git clone https://github.com/AmazingDD/daisyRec.git && cd daisyRec
   python test.py
   python tune.py
   ```
-- The GUI Command Generator for `test.py` and `tune.py`, which can assist you to quikly write arguments and run the fair comparison experiments, is now available [**here**](http://DaisyRecGuiCommandGenerator.pythonanywhere.com).
+- The GUI Command Generator for `test.py` and `tune.py`, which can assist you to quikly write arguments and run the fair comparison experiments, is now available [**here**](https://daisyrec.netlify.app/).
 
 
 ### Documentation 
@@ -53,7 +53,7 @@ The documentation of DaisyRec is available [here](https://daisyrec.readthedocs.i
 
 ### Implemented Algorithms
 
-Current model in daisyRec only take user-item-interactions into account, so FM-related models will be specialized.
+Models in daisyRec only take triples _<user, item, rating>_ into account, so FM-related models will be specialized accrodingly.
 Below are the algorithms implemented in daisyRec. More baselines will be added later.
 
 | **Model** | **Publication** |
@@ -70,6 +70,7 @@ Below are the algorithms implemented in daisyRec. More baselines will be added l
 | NGCF      | Neural Graph Collaborative Filtering |
 | Multi-VAE | Variational Autoencoders for Collaborative Filtering |
 | Item2Vec  | Item2vec: neural item embedding for collaborative filtering |
+| LightGCN  | LightGCN: Simplifying and Powering Graph Convolution Network for Recommendation |
 
 ### Datasets
 

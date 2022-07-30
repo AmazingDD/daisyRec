@@ -13,13 +13,14 @@ from daisy.model.PopRecommender import MostPop
 from daisy.model.KNNCFRecommender import ItemKNNCF
 from daisy.model.PureSVDRecommender import PureSVD
 from daisy.model.Item2VecRecommender import Item2Vec
+from daisy.model.LightGCNRecommender import LightGCN
 from daisy.utils.splitter import TestSplitter
 from daisy.utils.metrics import calc_ranking_results
 from daisy.utils.loader import RawDataReader, Preprocessor
 from daisy.utils.config import init_seed, init_config, init_logger
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 from daisy.utils.dataset import get_dataloader, BasicDataset, CandidatesDataset, AEDataset
-from daisy.utils.utils import ensure_dir, get_ur, get_history_matrix, build_candidates_set
+from daisy.utils.utils import ensure_dir, get_ur, get_history_matrix, build_candidates_set, get_inter_matrix
 
 model_config = {
     'mostpop': MostPop,
@@ -34,6 +35,7 @@ model_config = {
     'multi-vae': VAECF,
     'item2vec': Item2Vec,
     'ease': EASE,
+    'lightgcn': LightGCN,
 }
 
 if __name__ == '__main__':
@@ -82,7 +84,9 @@ if __name__ == '__main__':
         train_loader = get_dataloader(train_dataset, batch_size=config['batch_size'], shuffle=True, num_workers=4)
         model.fit(train_loader)
 
-    elif config['algo_name'].lower() in ['mf', 'fm', 'neumf', 'nfm', 'ngcf']:
+    elif config['algo_name'].lower() in ['mf', 'fm', 'neumf', 'nfm', 'ngcf', 'lightgcn']:
+        if config['algo_name'].lower() in ['lightgcn', 'ngcf']:
+            config['inter_matrix'] = get_inter_matrix(train_set, config)
         model = model_config[config['algo_name']](config)
         sampler = BasicNegtiveSampler(train_set, config)
         train_samples = sampler.sampling()

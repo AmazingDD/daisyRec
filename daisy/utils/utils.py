@@ -1,8 +1,8 @@
 import os
 import torch
-import logging
 import datetime
 import numpy as np
+import scipy.sparse as sp
 from collections import defaultdict
 
 
@@ -85,7 +85,10 @@ def build_candidates_set(test_ur, train_ur, config, drop_past_inter=True):
     return test_u, test_ucands
 
 def get_history_matrix(df, config, row='user', use_config_value_name=False):
-    logger = logging.getLogger()
+    '''
+    get the history interactions by user/item
+    '''
+    logger = config['logger']
     assert row in df.columns, f'invalid name {row}: not in columns of history dataframe'
     uid_name, iid_name  = config['UID_NAME'], config['IID_NAME']
     user_ids, item_ids = df[uid_name].values, df[iid_name].values
@@ -118,3 +121,25 @@ def get_history_matrix(df, config, row='user', use_config_value_name=False):
         history_len[row_id] += 1
 
     return torch.LongTensor(history_matrix), torch.FloatTensor(history_value), torch.LongTensor(history_len)
+
+def get_inter_matrix(df, config, form='coo'):
+    '''
+    get the whole sparse interaction matrix
+    '''
+    logger = config['logger']
+    value_field = config['INTER_NAME']
+    src_field, tar_field = config['UID_NAME'], config['IID_NAME']
+    user_num, item_num = config['user_num'], config['item_num']
+
+    src, tar = df[src_field].values, df[tar_field].values
+    data = df[value_field].values
+
+    mat = sp.coo_matrix((data, (src, tar)), shape=(user_num, item_num))
+
+    if form == 'coo':
+        return mat
+    elif form == 'csr':
+        return mat.tocsr()
+    else:
+        raise NotImplementedError(f'Sparse matrix format [{form}] has not been implemented...')
+

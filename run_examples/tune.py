@@ -15,13 +15,14 @@ from daisy.model.PopRecommender import MostPop
 from daisy.model.KNNCFRecommender import ItemKNNCF
 from daisy.model.PureSVDRecommender import PureSVD
 from daisy.model.Item2VecRecommender import Item2Vec
+from daisy.model.LightGCNRecommender import LightGCN
 from daisy.utils.loader import RawDataReader, Preprocessor
 from daisy.utils.splitter import TestSplitter, ValidationSplitter
 from daisy.utils.config import init_seed, init_config, init_logger
 from daisy.utils.metrics import MAP, NDCG, Recall, Precision, HR, MRR
 from daisy.utils.sampler import BasicNegtiveSampler, SkipGramNegativeSampler
 from daisy.utils.dataset import AEDataset, BasicDataset, CandidatesDataset, get_dataloader
-from daisy.utils.utils import get_history_matrix, get_ur, build_candidates_set, ensure_dir
+from daisy.utils.utils import get_history_matrix, get_ur, build_candidates_set, ensure_dir, get_inter_matrix
 
 model_config = {
     'mostpop': MostPop,
@@ -36,6 +37,7 @@ model_config = {
     'multi-vae': VAECF,
     'item2vec': Item2Vec,
     'ease': EASE,
+    'lightgcn': LightGCN,
 }
 
 metrics_config = {
@@ -60,6 +62,7 @@ tune_params_config = {
     'multi-vae': ['latent_dim', 'dropout','batch_size', 'lr', 'anneal_cap'],
     'ease': ['reg'],
     'item2vec': ['context_window', 'rho', 'lr', 'factors'],
+    'lightgcn': ['num_ng', 'factors', 'batch_size', 'lr', 'reg_1', 'reg_2', 'num_layers'],
 }
 
 param_type_config = {
@@ -172,7 +175,9 @@ if __name__ == '__main__':
                 train_loader = get_dataloader(train_dataset, batch_size=config['batch_size'], shuffle=True, num_workers=4)
                 model.fit(train_loader)
 
-            elif config['algo_name'].lower() in ['mf', 'fm', 'neumf', 'nfm', 'ngcf']:
+            elif config['algo_name'].lower() in ['mf', 'fm', 'neumf', 'nfm', 'ngcf', 'lightgcn']:
+                if config['algo_name'].lower() in ['lightgcn', 'ngcf']:
+                    config['inter_matrix'] = get_inter_matrix(train, config)
                 model = model_config[config['algo_name']](config)
                 sampler = BasicNegtiveSampler(train, config)
                 train_samples = sampler.sampling()

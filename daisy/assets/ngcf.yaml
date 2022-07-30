@@ -1,8 +1,8 @@
 factors: 36
-node_dropout: 0.5
-mess_dropout: 0.5
+node_dropout: 0.0
+mess_dropout: 0.1
 lr: 0.01
 reg_1: 0
 reg_2: 0
 epochs: 30
-node_dropout_flag: 1
+hidden_size_list: ~

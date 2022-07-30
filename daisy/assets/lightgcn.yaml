@@ -1,0 +1,6 @@
+factors: 64
+lr: 0.01
+reg_1: 0
+reg_2: 0
+epochs: 30
+num_layers: 2

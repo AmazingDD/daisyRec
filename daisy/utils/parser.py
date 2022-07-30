@@ -132,10 +132,6 @@ def parse_args():
                         type=int, 
                         default=40, 
                         help='The (max) number of neighbors to take into account')
-    parser.add_argument('--node_dropout_flag', 
-                        type=int, 
-                        default=1,
-                        help='NGCF: 0: Disable node dropout, 1: Activate node dropout')
     parser.add_argument('--node_dropout',
                         type=float,  
                         nargs='?', 
