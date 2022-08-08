@@ -63,10 +63,10 @@ def init_config(param_dict=None):
         args_conf = vars(args)
 
         for k, v in config.items():
-            if k not in args_conf.keys() and args_conf[k] is None:
-                config[k] = v
-            else:
+            if k in args_conf.keys() and args_conf[k] is not None:
                 config[k] = args_conf[k]
+            else:
+                config[k] = v
 
         if param_dict is not None:
             config.update(param_dict)

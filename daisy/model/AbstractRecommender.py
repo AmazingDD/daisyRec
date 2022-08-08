@@ -103,7 +103,10 @@ class GeneralRecommender(AbstractRecommender):
     def fit(self, train_loader):
         self.to(self.device)
         optimizer = self._build_optimizer(optimizer=self.optimizer, lr=self.lr)
-        self.criterion = self._build_criterion(self.loss_type)
+        if self.loss_type is not None:
+            self.criterion = self._build_criterion(self.loss_type)
+        else:
+            self.criterion = None
 
         last_loss = 0.
         for epoch in range(1, self.epochs + 1):

@@ -175,7 +175,12 @@ class NFM(GeneralRecommender):
                 fm = self.deep_layers(fm) # (batch * cand_num) * factor
             
             fm = fm.reshape(batch_dim, cand_dim, factor_dim) # batch * cand_num * factor
-            fm += self.u_bias(us) + self.i_bias(cands_ids) + self.bias_ # batch * cand_num * factor
+
+            ubs = self.u_bias(us)
+            ubs = ubs.repeat_interleave(cand_dim * factor_dim, dim=1).reshape(-1, cand_dim, factor_dim)
+            ibs = self.i_bias(cands_ids)
+
+            fm += ubs+ ibs + self.bias_ # batch * cand_num * factor
             scores = self.prediction(fm).squeeze() # batch * cand_num * 1 -> # batch * cand_num
 
             rank_ids = torch.argsort(scores, descending=True)

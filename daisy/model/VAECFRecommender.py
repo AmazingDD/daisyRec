@@ -77,7 +77,7 @@ class VAECF(AERecommender):
 
     def forward(self, rating_matrix):
         h = F.normalize(rating_matrix)
-        h = F.dropout(h, self.drop_out, training=self.training)
+        h = F.dropout(h, self.dropout, training=self.training)
         h = self.encoder(h)
 
         mu = h[:, :int(self.lat_dim / 2)]
@@ -89,7 +89,7 @@ class VAECF(AERecommender):
         return z, mu, logvar
 
     def calc_loss(self, batch):
-        user = batch[0].to(self.device)
+        user = batch.to(self.device).long()
         rating_matrix = self.get_user_rating_matrix(user)
 
         self.update += 1
