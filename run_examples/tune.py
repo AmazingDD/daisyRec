@@ -163,7 +163,7 @@ if __name__ == '__main__':
             config['train_ur'] = train_ur
 
             ''' build and train model '''
-            if config['algo_name'].lower() in ['itemknn', 'puresvd', 'slim', 'mostpop']:
+            if config['algo_name'].lower() in ['itemknn', 'puresvd', 'slim', 'mostpop', 'ease']:
                 model = model_config[config['algo_name']](config)
                 model.fit(train)
             

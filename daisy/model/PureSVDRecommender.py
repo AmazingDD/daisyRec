@@ -25,6 +25,7 @@ class PureSVD(GeneralRecommender):
         item_num : int, the number of items
         factors : int, latent factor number
         """
+        super(PureSVD, self).__init__(config)
         self.user_num = config['user_num']
         self.item_num = config['item_num']
         self.factors = config['factors']
@@ -35,7 +36,7 @@ class PureSVD(GeneralRecommender):
         self.topk = config['topk']
 
     def fit(self, train_set):
-        self.logger.info(" Computing SVD decomposition...")
+        self.logger.info("Computing SVD decomposition...")
         train_set = self._convert_df(self.user_num, self.item_num, train_set)
         self.logger.info('Finish build train matrix for decomposition')
         U, sigma, Vt = randomized_svd(train_set,
@@ -60,7 +61,7 @@ class PureSVD(GeneralRecommender):
         return self.user_vec[u, :].dot(self.item_vec[i, :])
 
     def rank(self, test_loader):
-        rec_ids = np.array([])
+        rec_ids = None
 
         for us, cands_ids in test_loader:
             us = us.numpy()
@@ -70,9 +71,9 @@ class PureSVD(GeneralRecommender):
             items_emb = self.item_vec[cands_ids, :].transpose(0, 2, 1)  # batch * cand_num * factor -> batch * factor * cand_num
             scores = np.einsum('BNi,BiM -> BNM', user_emb, items_emb).squeeze() # batch * 1 * cand_num -> batch * cand_num
             rank_ids = np.argsort(-scores)[:, :self.topk]
-            rank_list = cands_ids[:, rank_ids]
+            rank_list = cands_ids[np.repeat(np.arange(len(rank_ids)).reshape(-1, 1), rank_ids.shape[1], axis=1), rank_ids]
             
-            rec_ids = np.vstack([rec_ids, rank_list])
+            rec_ids = rank_list if rec_ids is None else np.vstack([rec_ids, rank_list])
 
         return rec_ids
 

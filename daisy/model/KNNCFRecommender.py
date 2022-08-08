@@ -72,7 +72,7 @@ def check_matrix(X, format='csc', dtype=np.float32):
 class Similarity:
     def __init__(self, data_matrix, topK=100, shrink=0, normalize=True,
                  asymmetric_alpha=0.5, tversky_alpha=1.0, tversky_beta=1.0,
-                 similarity="cosine", row_weights=None):  
+                 similarity="cosine", row_weights=None, logger=None):  
         '''
         Computes the cosine similarity on the columns of data_matrix
         If it is computed on URM=|users|x|items|, pass the URM as is.
@@ -106,7 +106,7 @@ class Similarity:
             Multiply the values in each row by a specified value. Array, by default None
         '''
         super(Similarity, self).__init__()
-
+        self.logger = logger
         self.shrink = shrink
         self.normalize = normalize
 
@@ -399,6 +399,7 @@ class ItemKNNCF(GeneralRecommender):
                     by default "cosine"
         normalize : bool, whether calculate similarity with normalized value
         """
+        super(ItemKNNCF, self).__init__(config)
         self.user_num = config['user_num']
         self.item_num = config['item_num']
 
@@ -422,7 +423,8 @@ class ItemKNNCF(GeneralRecommender):
                                 shrink=self.shrink, 
                                 topK=self.k,
                                 normalize=self.normalize, 
-                                similarity=self.similarity)
+                                similarity=self.similarity, 
+                                logger=self.logger)
         
         w_sparse = similarity.compute_similarity()
         w_sparse = w_sparse.tocsc()
@@ -436,16 +438,16 @@ class ItemKNNCF(GeneralRecommender):
         return self.pred_mat[u, i]
 
     def rank(self, test_loader):
-        rec_ids = np.array([])
+        rec_ids = None
 
         for us, cands_ids in test_loader:
             us = us.numpy()
             cands_ids = cands_ids.numpy()
-            scores = self.pred_mat[us, cands_ids].A
+            scores = self.pred_mat[us[:, np.newaxis], cands_ids].A
             rank_ids = np.argsort(-scores)[:, :self.topk]
-            rank_list = cands_ids[:, rank_ids]
+            rank_list = cands_ids[np.repeat(np.arange(len(rank_ids)).reshape(-1, 1), rank_ids.shape[1], axis=1), rank_ids]
 
-            rec_ids = np.vstack([rec_ids, rank_list])
+            rec_ids = rank_list if rec_ids is None else np.vstack([rec_ids, rank_list])
 
         return rec_ids
 
@@ -476,6 +478,7 @@ class UserKNNCF(GeneralRecommender):
                     by default "cosine"
         normalize : bool, whether calculate similarity with normalized value
         """
+        super(UserKNNCF, self).__init__(config)
         self.user_num = config['user_num']
         self.item_num = config['item_num']
 
@@ -498,7 +501,8 @@ class UserKNNCF(GeneralRecommender):
                                 shrink=self.shrink, 
                                 topK=self.k,
                                 normalize=self.normalize, 
-                                similarity = self.similarity)
+                                similarity = self.similarity, 
+                                logger=self.logger)
 
         w_sparse = similarity.compute_similarity()
         w_sparse = w_sparse.tocsc()
@@ -512,16 +516,16 @@ class UserKNNCF(GeneralRecommender):
         return self.pred_mat[u, i]
 
     def rank(self, test_loader):
-        rec_ids = np.array([])
+        rec_ids = None
 
         for us, cands_ids in test_loader:
             us = us.numpy()
             cands_ids = cands_ids.numpy()
-            scores = self.pred_mat[us, cands_ids].A
+            scores = self.pred_mat[us[:, np.newaxis], cands_ids].A
             rank_ids = np.argsort(-scores)[:, :self.topk]
-            rank_list = cands_ids[:, rank_ids]
+            rank_list = cands_ids[np.repeat(np.arange(len(rank_ids)).reshape(-1, 1), rank_ids.shape[1], axis=1), rank_ids]
 
-            rec_ids = np.vstack([rec_ids, rank_list])
+            rec_ids = rank_list if rec_ids is None else np.vstack([rec_ids, rank_list])
 
         return rec_ids
 

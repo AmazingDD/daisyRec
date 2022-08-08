@@ -73,7 +73,7 @@ class MF(GeneralRecommender):
         pos_pred = self.forward(user, pos_item)
 
         if self.loss_type.upper() in ['CL', 'SL']:
-            label = batch[2].to(self.device)
+            label = batch[2].to(self.device).float()
             loss = self.criterion(pos_pred, label)
 
             # add regularization term

@@ -37,6 +37,7 @@ class SLiM(GeneralRecommender):
         alpha : float, Constant that multiplies the penalty terms
         positive_only : bool, When set to True, forces the coefficients to be positive
         """
+        super(SLiM, self).__init__(config)
         self.md = ElasticNet(alpha=config['alpha'], 
                              l1_ratio=config['elastic'], 
                              positive=True, 
@@ -85,9 +86,9 @@ class SLiM(GeneralRecommender):
             nonzero_model_coef_index = self.md.sparse_coef_.indices
             nonzero_model_coef_value = self.md.sparse_coef_.data
 
-            # local_topk = min(len(nonzero_model_coef_value) - 1, self.topk)
+            local_topk = min(len(nonzero_model_coef_value) - 1, self.topk)
             # just keep all nonzero coef value for ranking, if you want improve speed, use code above
-            local_topk = len(nonzero_model_coef_value) - 1
+            # local_topk = len(nonzero_model_coef_value) - 1
 
             relevant_items_partition = (-nonzero_model_coef_value).argpartition(local_topk)[0:local_topk]
             relevant_items_partition_sorting = np.argsort(-nonzero_model_coef_value[relevant_items_partition])
@@ -126,16 +127,16 @@ class SLiM(GeneralRecommender):
         return self.A_tilde[u, i]
 
     def rank(self, test_loader):
-        rec_ids = np.array([])
+        rec_ids = None
 
         for us, cands_ids in test_loader:
             us = us.numpy()
             cands_ids = cands_ids.numpy()
-            scores = self.A_tilde[us, cands_ids].A
+            scores = self.A_tilde[us[:, np.newaxis], cands_ids].A
             rank_ids = np.argsort(-scores)[:, :self.topk]
-            rank_list = cands_ids[:, rank_ids]
+            rank_list = cands_ids[np.repeat(np.arange(len(rank_ids)).reshape(-1, 1), rank_ids.shape[1], axis=1), rank_ids]
 
-            rec_ids = np.vstack([rec_ids, rank_list])
+            rec_ids = rank_list if rec_ids is None else np.vstack([rec_ids, rank_list])
 
         return rec_ids
 

@@ -65,7 +65,7 @@ class Item2Vec(GeneralRecommender):
     def calc_loss(self, batch):
         target_i = batch[0].to(self.device)
         context_j = batch[1].to(self.device)
-        label = batch[2].to(self.device)
+        label = batch[2].to(self.device).float()
         prediction = self.forward(target_i, context_j)
         loss = self.criterion(prediction, label)
         

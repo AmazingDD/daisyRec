@@ -104,7 +104,7 @@ class NGCF(GeneralRecommender):
         self.embed_item = nn.Embedding(self.item_num, self.embedding_size)
         self.gnn_layers = torch.nn.ModuleList()
         for _, (in_size, out_size) in enumerate(zip(self.hidden_size_list[:-1], self.hidden_size_list[1:])):
-            self.GNNlayers.append(BiGNN(in_size, out_size))
+            self.gnn_layers.append(BiGNN(in_size, out_size))
         
         # storage variables for evaluation acceleration
         self.restore_user_e = None
@@ -175,8 +175,8 @@ class NGCF(GeneralRecommender):
         if self.restore_user_e is not None or self.restore_item_e is not None:
             self.restore_user_e, self.restore_item_e = None, None
 
-        user = batch[0].to(self.device)
-        pos_item = batch[1].to(self.device)
+        user = batch[0].to(self.device).long()
+        pos_item = batch[1].to(self.device).long()
 
         embed_user, embed_item = self.forward()
 
@@ -188,16 +188,16 @@ class NGCF(GeneralRecommender):
         pos_ego_embeddings = self.embed_item(pos_item)
 
         if self.loss_type.upper() in ['CL', 'SL']:
-            label = batch[2].to(self.device)
+            label = batch[2].to(self.device).float()
             loss = self.criterion(pos_pred, label)
             # add regularization term
             loss += self.reg_1 * (u_ego_embeddings.norm(p=1) + pos_ego_embeddings.norm(p=1))
             loss += self.reg_2 * (u_ego_embeddings.norm() + pos_ego_embeddings.norm())
         elif self.loss_type.upper() in ['BPR', 'TL', 'HL']:
-            neg_item = batch[2].to(self.device)
+            neg_item = batch[2].to(self.device).long()
             neg_embeddings = embed_item[neg_item]
             neg_pred = torch.mul(u_embeddings, neg_embeddings).sum(dim=1)
-            neg_ego_embeddings = self.item_embedding(neg_item)
+            neg_ego_embeddings = self.embed_item(neg_item)
 
             loss = self.criterion(pos_pred, neg_pred)
 

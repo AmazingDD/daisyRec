@@ -43,13 +43,14 @@ class EASE(GeneralRecommender):
         np.fill_diagonal(B, 0.)
 
         self.item_similarity = B # item_num * item_num
+        self.item_similarity = np.array(self.item_similarity)
         self.interaction_matrix = X # user_num * item_num
 
     def predict(self, u, i):
         self.interaction_matrix[u, :].multiply(self.item_similarity[:, i].T).sum(axis=1).getA1()
 
     def rank(self, test_loader):
-        rec_ids = np.array([])
+        rec_ids = None
 
         for us, cands_ids in test_loader:
             us = us.numpy()
@@ -59,9 +60,9 @@ class EASE(GeneralRecommender):
             sims = self.item_similarity[cands_ids, :].transpose(0, 2, 1) # batch * cand_num * item_num -> batch * item_num * cand_num
             scores = np.einsum('BNi,BiM -> BNM', slims, sims).squeeze() # batch * 1 * cand_num -> batch * cand_num
             rank_ids = np.argsort(-scores)[:, :self.topk]
-            rank_list = cands_ids[:, rank_ids]
+            rank_list = cands_ids[np.repeat(np.arange(len(rank_ids)).reshape(-1, 1), rank_ids.shape[1], axis=1), rank_ids]
 
-            rec_ids = np.vstack([rec_ids, rank_list])
+            rec_ids = rank_list if rec_ids is None else np.vstack([rec_ids, rank_list])
 
         return rec_ids
 

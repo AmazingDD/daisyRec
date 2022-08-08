@@ -58,7 +58,8 @@ def init_config(param_dict=None):
         model_init_file = os.path.join(current_path, f'../assets/{algo_name}.yaml')
         model_conf = yaml.load(
             open(model_init_file), Loader=yaml.loader.SafeLoader)
-        config.update(model_conf)
+        if model_conf is not None:
+            config.update(model_conf)
 
         args_conf = vars(args)
 

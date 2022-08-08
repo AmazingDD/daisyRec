@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
     ''' build and train model '''
     s_time = time.time()
-    if config['algo_name'].lower() in ['itemknn', 'puresvd', 'slim', 'mostpop']:
+    if config['algo_name'].lower() in ['itemknn', 'puresvd', 'slim', 'mostpop', 'ease']:
         model = model_config[config['algo_name']](config)
         model.fit(train_set)
 

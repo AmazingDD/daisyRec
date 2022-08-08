@@ -20,12 +20,14 @@ class MostPop(GeneralRecommender):
         Parameters
         ----------
         """
+        super(MostPop, self).__init__(config)
         self.item_num = config['item_num']
         self.item_cnt_ref = np.zeros(self.item_num)
         self.topk = config['topk']
+        self.cnt_col = config['IID_NAME']
 
     def fit(self, train_set):
-        item_cnt = train_set['item'].size()
+        item_cnt = train_set[self.cnt_col].value_counts()
         idx, cnt = item_cnt.index, item_cnt.values
         self.item_cnt_ref[idx] = cnt
         self.item_score =  self.item_cnt_ref / (1 + self.item_cnt_ref)
