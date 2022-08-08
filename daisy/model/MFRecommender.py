@@ -55,7 +55,7 @@ class MF(GeneralRecommender):
 
         self.loss_type = config['loss_type']
         self.optimizer = config['optimizer'] if config['optimizer'] != 'default' else 'sgd'
-        self.initializer = config['initializer'] if config['initializer'] != 'default' else 'normal'
+        self.initializer = config['init_method'] if config['init_method'] != 'default' else 'normal'
         self.early_stop = config['early_stop']
 
         self.apply(self._init_weight)
@@ -77,22 +77,22 @@ class MF(GeneralRecommender):
             loss = self.criterion(pos_pred, label)
 
             # add regularization term
-            loss += self.reg_1 * (self.embed_item(pos_item).weight.norm(p=1))
-            loss += self.reg_2 * (self.embed_item(pos_item).weight.norm())
+            loss += self.reg_1 * (self.embed_item(pos_item).norm(p=1))
+            loss += self.reg_2 * (self.embed_item(pos_item).norm())
         elif self.loss_type.upper() in ['BPR', 'TL', 'HL']:
             neg_item = batch[2].to(self.device)
             neg_pred = self.forward(user, neg_item)
             loss = self.criterion(pos_pred, neg_pred)
 
             # add regularization term
-            loss += self.reg_1 * (self.embed_item(pos_item).weight.norm(p=1) + self.embed_item(neg_item).weight.norm(p=1))
-            loss += self.reg_2 * (self.embed_item(pos_item).weight.norm() + self.embed_item(neg_item).weight.norm())
+            loss += self.reg_1 * (self.embed_item(pos_item).norm(p=1) + self.embed_item(neg_item).norm(p=1))
+            loss += self.reg_2 * (self.embed_item(pos_item).norm() + self.embed_item(neg_item).norm())
         else:
             raise NotImplementedError(f'Invalid loss type: {self.loss_type}')
 
         # add regularization term
-        loss += self.reg_1 * (self.embed_user(user).weight.norm(p=1))
-        loss += self.reg_2 * (self.embed_user(user).weight.norm())
+        loss += self.reg_1 * (self.embed_user(user).norm(p=1))
+        loss += self.reg_2 * (self.embed_user(user).norm())
 
         return loss
 
@@ -111,7 +111,7 @@ class MF(GeneralRecommender):
             cands_ids = cands_ids.to(self.device)
 
             user_emb = self.embed_user(us).unsqueeze(dim=1) # batch * factor -> batch * 1 * factor
-            item_emb = self.embed_item(cands_ids).transpose(0, 2, 1) # batch * cand_num * factor -> batch * factor * cand_num 
+            item_emb = self.embed_item(cands_ids).transpose(1, 2) # batch * cand_num * factor -> batch * factor * cand_num 
             scores = torch.bmm(user_emb, item_emb).squeeze() # batch * 1 * cand_num -> batch * cand_num
 
             rank_ids = torch.argsort(scores, descending=True)

@@ -1,23 +1,24 @@
-gpu: 0
+gpu: '0'
 seed: 2022
 reproducibility: True
 state: ~
 
 optimization_metric: 'ndcg'
-tune_trials: 20
+hyperopt_trail: 20
 tune_testset: False
 hyperopt_pack: '{}'
 
 algo_name: 'mf'
-val_method: 'rsbr'
-test_method: 'rsbr'
+val_method: 'tsbr'
+test_method: 'tsbr'
+fold_num: 1
 val_size: 0.1
 test_size: 0.2
 topk: 50
 cand_num: 1000
 sample_method: 'uniform'
-sample_ratio: 0.1
-num_ng: 0
+sample_ratio: 0
+num_ng: 4
 
 batch_size: 256
 loss_type: 'BPR'
@@ -26,8 +27,9 @@ optimizer: 'default'
 early_stop: True
 
 data_path: 'data/'
+res_path: ~
 dataset: 'ml-100k'
-prepro: 5core
+prepro: 10filter
 level: ui
 UID_NAME: user
 IID_NAME: item

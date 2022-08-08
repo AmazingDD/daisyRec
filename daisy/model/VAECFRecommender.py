@@ -53,7 +53,7 @@ class VAECF(AERecommender):
         self.decoder = self.mlp_layers(self.decode_layer_dims)
         
         self.optimizer = config['optimizer'] if config['optimizer'] != 'default' else 'adam'
-        self.initializer = config['initializer'] if config['initializer'] != 'default' else 'xavier_normal'
+        self.initializer = config['init_method'] if config['init_method'] != 'default' else 'xavier_normal'
         self.early_stop = config['early_stop']
 
         self.apply(self._init_weight)

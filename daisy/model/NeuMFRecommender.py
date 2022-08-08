@@ -72,8 +72,9 @@ class NeuMF(GeneralRecommender):
 
         self.loss_type = config['loss_type']
         self.optimizer = config['optimizer'] if config['optimizer'] != 'default' else 'adam'
-        self.initializer = config['initializer'] if config['initializer'] != 'default' else 'xavier_normal'
+        self.initializer = config['init_method'] if config['init_method'] != 'default' else 'xavier_normal'
         self.early_stop = config['early_stop']
+        self.topk = config['topk']
 
         self._init_weight()
 
@@ -144,26 +145,26 @@ class NeuMF(GeneralRecommender):
             label = batch[2].to(self.device)
             loss = self.criterion(pos_pred, label)
 
-            loss += self.reg_1 * (self.embed_item_GMF(pos_item).weight.norm(p=1))
-            loss += self.reg_1 * (self.embed_item_MLP(pos_item).weight.norm(p=1))
-            loss += self.reg_2 * (self.embed_item_GMF(pos_item).weight.norm())
-            loss += self.reg_2 * (self.embed_item_MLP(pos_item).weight.norm())
+            loss += self.reg_1 * (self.embed_item_GMF(pos_item).norm(p=1))
+            loss += self.reg_1 * (self.embed_item_MLP(pos_item).norm(p=1))
+            loss += self.reg_2 * (self.embed_item_GMF(pos_item).norm())
+            loss += self.reg_2 * (self.embed_item_MLP(pos_item).norm())
         elif self.loss_type.upper() in ['BPR', 'TL', 'HL']:
             neg_item = batch[2].to(self.device)
             neg_pred = self.forward(user, neg_item)
             loss = self.criterion(pos_pred, neg_pred)
 
-            loss += self.reg_1 * (self.embed_item_GMF(pos_item).weight.norm(p=1) + self.embed_item_GMF(neg_item).weight.norm(p=1))
-            loss += self.reg_1 * (self.embed_item_MLP(pos_item).weight.norm(p=1) + self.embed_item_GMF(neg_item).weight.norm(p=1))
-            loss += self.reg_2 * (self.embed_item_GMF(pos_item).weight.norm() + self.embed_item_GMF(neg_item).weight.norm())
-            loss += self.reg_2 * (self.embed_item_MLP(pos_item).weight.norm() + self.embed_item_GMF(neg_item).weight.norm())
+            loss += self.reg_1 * (self.embed_item_GMF(pos_item).norm(p=1) + self.embed_item_GMF(neg_item).norm(p=1))
+            loss += self.reg_1 * (self.embed_item_MLP(pos_item).norm(p=1) + self.embed_item_GMF(neg_item).norm(p=1))
+            loss += self.reg_2 * (self.embed_item_GMF(pos_item).norm() + self.embed_item_GMF(neg_item).norm())
+            loss += self.reg_2 * (self.embed_item_MLP(pos_item).norm() + self.embed_item_GMF(neg_item).norm())
         else:
             raise NotImplementedError(f'Invalid loss type: {self.loss_type}')
 
-        loss += self.reg_1 * (self.embed_user_GMF(user).weight.norm(p=1))
-        loss += self.reg_1 * (self.embed_user_MLP(user).weight.norm(p=1))
-        loss += self.reg_2 * (self.embed_user_GMF(user).weight.norm())
-        loss += self.reg_2 * (self.embed_user_MLP(user).weight.norm())
+        loss += self.reg_1 * (self.embed_user_GMF(user).norm(p=1))
+        loss += self.reg_1 * (self.embed_user_MLP(user).norm(p=1))
+        loss += self.reg_2 * (self.embed_user_GMF(user).norm())
+        loss += self.reg_2 * (self.embed_user_MLP(user).norm())
 
         return loss
 

@@ -6,7 +6,7 @@ metrics_name_config = {
     "recall": 'Recall',
     "mrr": 'MRR',
     "ndcg": 'NDCG',
-    "hr": 'Hit Ratio',
+    "hit": 'Hit Ratio',
     "precision": 'Precision',
     "f1": 'F1-score',
     "auc": 'AUC',
@@ -80,7 +80,7 @@ class Metric(object):
                 kpi = Recall(test_ur, pred_ur, test_u)
             elif mc == 'precision':
                 kpi = Precision(test_ur, pred_ur, test_u)
-            elif mc == 'hr':
+            elif mc == 'hit':
                 kpi = HR(test_ur, pred_ur, test_u)
             elif mc == 'map':
                 kpi = MAP(test_ur, pred_ur, test_u)
@@ -175,6 +175,7 @@ def MRR(test_ur, pred_ur, test_u):
         u = test_u[idx]
         gt = test_ur[u]
         pred = pred_ur[idx]
+        mrr = 0.
         for index, item in enumerate(pred):
             if item in gt:
                 mrr = 1 / (index + 1)
@@ -217,8 +218,9 @@ def NDCG(test_ur, pred_ur, test_u):
 
         idcg = DCG(sorted(r, reverse=True))
         if not idcg:
-            return 0.
-        ndcg = DCG(r) / idcg
+            ndcg = 0.
+        else:
+            ndcg = DCG(r) / idcg
 
         res.append(ndcg)
 

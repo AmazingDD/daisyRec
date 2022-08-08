@@ -126,6 +126,7 @@ if __name__ == '__main__':
     common_prefix = f"with_{config['sample_ratio']}{config['sample_method']}"
 
     ensure_dir(result_save_path)
+    config['res_path'] = result_save_path
 
     results = calc_ranking_results(test_ur, preds, test_u, config)
-    results.to_csv(f'{result_save_path}{algo_prefix}_{common_prefix}_kpi_results.csv')
+    results.to_csv(f'{result_save_path}{algo_prefix}_{common_prefix}_kpi_results.csv', index=False)

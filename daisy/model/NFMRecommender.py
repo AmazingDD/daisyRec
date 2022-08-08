@@ -35,6 +35,7 @@ class NFM(GeneralRecommender):
         gpuid : str, GPU ID
         early_stop : bool, whether to activate early stop mechanism
         """
+        super(NFM, self).__init__(config)
         self.factors = config['factors']
         self.act_function = config['act_function']
         self.num_layers = config['num_layers']
@@ -47,9 +48,10 @@ class NFM(GeneralRecommender):
         self.epochs = config['epochs']
 
         self.loss_type = config['loss_type']
-        self.initializer = config['initializer'] if config['initializer'] != 'default' else 'xavier_normal'
+        self.initializer = config['init_method'] if config['init_method'] != 'default' else 'xavier_normal'
         self.optimizer = config['optimizer'] if config['optimizer'] != 'default' else 'sgd'
         self.early_stop = config['early_stop']
+        self.topk = config['topk']
 
         self.embed_user = nn.Embedding(config['user_num'], config['factors'])
         self.embed_item = nn.Embedding(config['item_num'], config['factors'])
@@ -129,20 +131,20 @@ class NFM(GeneralRecommender):
             label = batch[2].to(self.device)
             loss = self.criterion(pos_pred, label)
 
-            loss += self.reg_1 * (self.embed_item(pos_item).weight.norm(p=1))
-            loss += self.reg_2 * (self.embed_item(pos_item).weight.norm())
+            loss += self.reg_1 * (self.embed_item(pos_item).norm(p=1))
+            loss += self.reg_2 * (self.embed_item(pos_item).norm())
         elif self.loss_type.upper() in ['BPR', 'TL', 'HL']:
             neg_item = batch[2].to(self.device)
             neg_pred = self.forward(user, neg_item)
             loss = self.criterion(pos_pred, neg_pred)
 
-            loss += self.reg_1 * (self.embed_item(pos_item).weight.norm(p=1) + self.embed_item(neg_item).weight.norm(p=1))
-            loss += self.reg_2 * (self.embed_item(pos_item).weight.norm() + self.embed_item(neg_item).weight.norm())
+            loss += self.reg_1 * (self.embed_item(pos_item).norm(p=1) + self.embed_item(neg_item).norm(p=1))
+            loss += self.reg_2 * (self.embed_item(pos_item).norm() + self.embed_item(neg_item).norm())
         else:
             raise NotImplementedError(f'Invalid loss type: {self.loss_type}')
 
-        loss += self.reg_1 * (self.embed_user(user).weight.norm(p=1))
-        loss += self.reg_2 * (self.embed_user(user).weight.norm())
+        loss += self.reg_1 * (self.embed_user(user).norm(p=1))
+        loss += self.reg_2 * (self.embed_user(user).norm())
 
         return loss
 
@@ -164,9 +166,15 @@ class NFM(GeneralRecommender):
             item_emb = self.embed_item(cands_ids) # batch * cand_num * factor
 
             fm = user_emb * item_emb # batch * cand_num * factor
-            fm = self.FM_layers(fm) # batch * cand_num * factor
+
+            batch_dim, cand_dim, factor_dim = fm.size()
+            fm = fm.reshape(batch_dim * cand_dim, factor_dim)
+
+            fm = self.FM_layers(fm) # (batch * cand_num) * factor
             if self.num_layers:
-                fm = self.deep_layers(fm) # batch * cand_num * factor
+                fm = self.deep_layers(fm) # (batch * cand_num) * factor
+            
+            fm = fm.reshape(batch_dim, cand_dim, factor_dim) # batch * cand_num * factor
             fm += self.u_bias(us) + self.i_bias(cands_ids) + self.bias_ # batch * cand_num * factor
             scores = self.prediction(fm).squeeze() # batch * cand_num * 1 -> # batch * cand_num
 

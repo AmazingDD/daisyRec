@@ -40,8 +40,9 @@ class Item2Vec(GeneralRecommender):
         # default loss function for item2vec is cross-entropy
         self.loss_type = 'CL'
         self.optimizer = config['optimizer'] if config['optimizer'] != 'default' else 'adam'
-        self.initializer = config['initializer'] if config['initializer'] != 'default' else 'normal'
+        self.initializer = config['init_method'] if config['init_method'] != 'default' else 'normal'
         self.early_stop = config['early_stop']
+        self.topk = config['topk']
 
         self.apply(self._init_weight)
 
@@ -88,7 +89,7 @@ class Item2Vec(GeneralRecommender):
             cands_ids = cands_ids.to(self.device)
 
             user_emb = self.user_embedding(us).unsqueeze(dim=1) # batch * factor -> batch * 1 * factor
-            item_emb = self.shared_embedding(cands_ids).transpose(0, 2, 1) # batch * cand_num * factor -> batch * factor * cand_num 
+            item_emb = self.shared_embedding(cands_ids).transpose(1, 2) # batch * cand_num * factor -> batch * factor * cand_num 
             scores = torch.bmm(user_emb, item_emb).squeeze() # batch * 1 * cand_num -> batch * cand_num
 
             rank_ids = torch.argsort(scores, descending=True)

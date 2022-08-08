@@ -483,6 +483,7 @@ class UserKNNCF(GeneralRecommender):
         self.shrink = config['shrink']
         self.normalize = config['normalize']
         self.similarity = config['similarity']
+        self.topk = config['topk']
 
         self.pred_mat = None
 

@@ -57,7 +57,7 @@ class LightGCN(GeneralRecommender):
 
         self.loss_type = config['loss_type']
         self.optimizer = config['optimizer'] if config['optimizer'] != 'default' else 'adam'
-        self.initializer = config['initializer'] if config['initializer'] != 'default' else 'xavier_uniform'
+        self.initializer = config['init_method'] if config['init_method'] != 'default' else 'xavier_uniform'
         self.early_stop = config['early_stop']
 
         # storage variables for rank evaluation acceleration
@@ -149,8 +149,8 @@ class LightGCN(GeneralRecommender):
             label = batch[2].to(self.device)
             loss = self.criterion(pos_pred, label)
             # add regularization term
-            loss += self.reg_1 * (u_ego_embeddings.weight.norm(p=1) + pos_ego_embeddings.weight.norm(p=1))
-            loss += self.reg_2 * (u_ego_embeddings.weight.norm() + pos_ego_embeddings.weight.norm())
+            loss += self.reg_1 * (u_ego_embeddings.norm(p=1) + pos_ego_embeddings.norm(p=1))
+            loss += self.reg_2 * (u_ego_embeddings.norm() + pos_ego_embeddings.norm())
 
         elif self.loss_type.upper() in ['BPR', 'TL', 'HL']:
             neg_item = batch[2].to(self.device)
@@ -160,8 +160,8 @@ class LightGCN(GeneralRecommender):
 
             loss = self.criterion(pos_pred, neg_pred)
 
-            loss += self.reg_1 * (u_ego_embeddings.weight.norm(p=1) + pos_ego_embeddings.weight.norm(p=1) + neg_ego_embeddings.weight.norm(p=1))
-            loss += self.reg_2 * (u_ego_embeddings.weight.norm() + pos_ego_embeddings.weight.norm() + neg_ego_embeddings.weight.norm())
+            loss += self.reg_1 * (u_ego_embeddings.norm(p=1) + pos_ego_embeddings.norm(p=1) + neg_ego_embeddings.norm(p=1))
+            loss += self.reg_2 * (u_ego_embeddings.norm() + pos_ego_embeddings.norm() + neg_ego_embeddings.norm())
 
         else:
             raise NotImplementedError(f'Invalid loss type: {self.loss_type}')
@@ -189,7 +189,7 @@ class LightGCN(GeneralRecommender):
             cands_ids = cands_ids.to(self.device)
 
             user_emb = self.restore_user_e[us].unsqueeze(dim=1) # batch * 1 * factor
-            item_emb = self.restore_item_e[cands_ids].transpose(0, 2, 1) # batch * factor * cand_num
+            item_emb = self.restore_item_e[cands_ids].transpose(1, 2) # batch * factor * cand_num
             scores = torch.bmm(user_emb, item_emb).squeeze() # batch * cand_num
 
             rank_ids = torch.argsort(scores, descending=True)
