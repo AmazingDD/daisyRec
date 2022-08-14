@@ -47,7 +47,7 @@ class EASE(GeneralRecommender):
         self.interaction_matrix = X # user_num * item_num
 
     def predict(self, u, i):
-        self.interaction_matrix[u, :].multiply(self.item_similarity[:, i].T).sum(axis=1).getA1()
+        return self.interaction_matrix[u, :].multiply(self.item_similarity[:, i].T).sum(axis=1).getA1()[0]
 
     def rank(self, test_loader):
         rec_ids = None

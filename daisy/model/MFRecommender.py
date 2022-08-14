@@ -99,7 +99,7 @@ class MF(GeneralRecommender):
     def predict(self, u, i):
         u = torch.tensor(u, device=self.device)
         i = torch.tensor(i, device=self.device)
-        pred = self.forward(u, i).cpu()
+        pred = self.forward(u, i).cpu().item()
         
         return pred
 
@@ -124,7 +124,7 @@ class MF(GeneralRecommender):
 
 
     def full_rank(self, u):
-        u = torch.tensor(u, self.device)
+        u = torch.tensor(u, device=self.device)
 
         user_emb = self.embed_user(u)
         items_emb = self.embed_item.weight 

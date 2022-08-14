@@ -97,7 +97,7 @@ class FM(GeneralRecommender):
     def predict(self, u, i):
         u = torch.tensor(u, device=self.device)
         i = torch.tensor(i, device=self.device)
-        pred = self.forward(u, i).cpu()
+        pred = self.forward(u, i).cpu().item()
         
         return pred
 
@@ -122,11 +122,11 @@ class FM(GeneralRecommender):
         return rec_ids.cpu().numpy()
 
     def full_rank(self, u):
-        u = torch.tensor(u, self.device)
+        u = torch.tensor(u, device=self.device)
 
         user_emb = self.embed_user(u)
         items_emb = self.embed_item.weight 
         scores = torch.matmul(user_emb, items_emb.transpose(1, 0)) #  (item_num,)
-        scores += self.u_bias(u) + self.i_bias.weight + self.bias_
+        scores += self.u_bias(u) + self.i_bias.weight.squeeze() + self.bias_
 
         return torch.argsort(scores, descending=True)[:self.topk].cpu().numpy()

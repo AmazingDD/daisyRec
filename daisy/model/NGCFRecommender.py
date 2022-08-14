@@ -217,7 +217,7 @@ class NGCF(GeneralRecommender):
         i_embedding = self.restore_item_e[i]
         pred = torch.matmul(u_embedding, i_embedding.t())
 
-        return pred.cpu()
+        return pred.cpu().item()
 
     def rank(self, test_loader):
         if self.restore_user_e is None or self.restore_item_e is None:

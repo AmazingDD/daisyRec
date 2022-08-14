@@ -1,3 +1,4 @@
+from ast import Global
 import json
 import optuna
 import numpy as np
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     config['logger'] = logger
 
     ''' unpack hyperparameters to tune '''
-    param_dict = json.loads(config['hyperopt_pack'])
+    param_dict = json.loads(config['tune_pack'])
     algo_name = config['algo_name']
     kpi_name = config['optimization_metric']
     tune_param_names = tune_params_config[algo_name]
@@ -133,6 +134,7 @@ if __name__ == '__main__':
 
     ''' define optimization target function '''
     def objective(trial):
+        global TRIAL_CNT
         for param in tune_param_names:
             if param not in param_dict.keys(): continue
                 
@@ -145,7 +147,7 @@ if __name__ == '__main__':
                         param, param_dict[param]['min'], param_dict[param]['max'], 1 if step is None else step)
                 elif param_type_config[param] == 'float':
                     config[param] = trial.suggest_float(
-                        param, param_dict[param]['min'], param_dict[param]['max'], param_dict[param]['step'])
+                        param, param_dict[param]['min'], param_dict[param]['max'], step=param_dict[param]['step'])
                 else:
                     raise ValueError(f'Invalid parameter type for {param}...')
             else:
@@ -224,7 +226,7 @@ if __name__ == '__main__':
 
     ''' record the best choices '''
     logger.info(f'Trial {study.best_trial.number} get the best {kpi_name}({study.best_trial.value}) with params: {study.best_trial.params}')
-    line = ','.join([study.best_params[param] for param in tune_param_names]) + f',{study.best_value:.4f}\n'
+    line = ','.join([str(study.best_params[param]) for param in tune_param_names]) + f',{study.best_value:.4f}\n'
     f.write(line)
     f.flush()
     f.close()

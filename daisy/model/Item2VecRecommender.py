@@ -79,7 +79,7 @@ class Item2Vec(GeneralRecommender):
         item_emb = self.shared_embedding(i)
         pred = (user_emb * item_emb).sum(dim=-1)
         
-        return pred.cpu()
+        return pred.cpu().item()
 
     def rank(self, test_loader):
         rec_ids = torch.tensor([], device=self.device)
@@ -101,7 +101,7 @@ class Item2Vec(GeneralRecommender):
         return rec_ids.cpu().numpy()
 
     def full_rank(self, u):
-        u = torch.tensor(u, self.device)
+        u = torch.tensor(u, device=self.device)
 
         user_emb = self.user_embedding(u)
         items_emb = self.shared_embedding.weight 

@@ -171,7 +171,7 @@ class NeuMF(GeneralRecommender):
     def predict(self, u, i):
         u = torch.tensor(u, device=self.device)
         i = torch.tensor(i, device=self.device)
-        pred = self.forward(u, i).cpu()
+        pred = self.forward(u, i).cpu().item()
 
         return pred
 
@@ -206,10 +206,10 @@ class NeuMF(GeneralRecommender):
 
             rec_ids = torch.cat((rec_ids, rank_list), 0)
 
-        return rec_ids
+        return rec_ids.cpu().numpy()
 
     def full_rank(self, u):
-        u = torch.tensor(u, self.device)
+        u = torch.tensor(u, device=self.device)
 
         if not self.model == 'MLP':
             embed_user_GMF = self.embed_user_GMF(u) # factor

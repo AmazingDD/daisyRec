@@ -4,9 +4,9 @@ reproducibility: True
 state: ~
 
 optimization_metric: 'ndcg'
-hyperopt_trail: 20
+hyperopt_trail: 30
 tune_testset: False
-hyperopt_pack: '{}'
+tune_pack: '{}'
 
 algo_name: 'mf'
 val_method: 'tsbr'

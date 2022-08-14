@@ -7,6 +7,7 @@
   year={2018}
 }
 '''
+import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -81,7 +82,7 @@ class VAECF(AERecommender):
         h = self.encoder(h)
 
         mu = h[:, :int(self.lat_dim / 2)]
-        logvar = h[:, int(self.lat_dim / 2):]
+        logvar = h[:, math.ceil(self.lat_dim / 2):]
 
         z = self.reparameterize(mu, logvar)
         z = self.decoder(z)
@@ -109,13 +110,13 @@ class VAECF(AERecommender):
         return loss
 
     def predict(self, u, i):
-        u = torch.tensor(u, device=self.device)
-        i = torch.tensor(i, device=self.device)
+        u = torch.tensor([u], device=self.device)
+        i = torch.tensor([i], device=self.device)
 
         rating_matrix = self.get_user_rating_matrix(u)
         scores, _, _ = self.forward(rating_matrix)
 
-        return scores[[torch.arange(len(i)).to(self.device), i]].cpu()
+        return scores[[torch.arange(len(i)).to(self.device), i]].cpu().item()
 
     def rank(self, test_loader):
         rec_ids = torch.tensor([], device=self.device)
@@ -137,7 +138,7 @@ class VAECF(AERecommender):
         return rec_ids.cpu().numpy()
 
     def full_rank(self, u):
-        u = torch.tensor(u, device=self.device)
+        u = torch.tensor([u], device=self.device)
         rating_matrix = self.get_user_rating_matrix(u)
         scores, _, _ = self.forward(rating_matrix)
 

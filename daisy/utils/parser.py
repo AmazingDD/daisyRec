@@ -9,9 +9,8 @@ def parse_args():
                         help='the metric to be optimized for hyper-parameter tuning via HyperOpt')
     parser.add_argument('--hyperopt_trail', 
                         type=int, 
-                        default=30, 
                         help='the number of trails of HyperOpt')
-    parser.add_argument('--hyperopt_pack', 
+    parser.add_argument('--tune_pack', 
                         type=str, 
                         help='record the searching space of hyper-parameters for HyperOpt')
     # common settings
