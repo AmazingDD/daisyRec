@@ -226,7 +226,7 @@ if __name__ == '__main__':
 
     ''' record the best choices '''
     logger.info(f'Trial {study.best_trial.number} get the best {kpi_name}({study.best_trial.value}) with params: {study.best_trial.params}')
-    line = ','.join([str(study.best_params[param]) for param in tune_param_names]) + f',{study.best_value:.4f}\n'
+    line = ','.join([str(study.best_params[param]) if param in param_dict.keys() else str(config[param]) for param in tune_param_names]) + f',{study.best_value:.4f}\n'
     f.write(line)
     f.flush()
     f.close()
