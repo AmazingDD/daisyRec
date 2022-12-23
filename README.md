@@ -39,12 +39,16 @@ git clone https://github.com/AmazingDD/daisyRec.git && cd daisyRec
 ```
 
 - Example codes are listed in `run_examples`, try to refer them and find out how to use daisy; you can also implement these codes by moving them into `daisyRec/`.
-  ```
-  python test.py
-  python tune.py
-  ```
+
 - The GUI Command Generator for `test.py` and `tune.py`, which can assist you to quikly write arguments and run the fair comparison experiments, is now available [**here**](https://daisyrec.netlify.app/).
 
+  The generated command will be like this:
+  ```
+  python tune.py --param1=20 --param2=30 ....
+  python test.py --param1=20 --param2=30 ....
+  ```
+  
+  We highly recommend you to implement the code with our GUI firstly!
 
 ### Documentation 
 
