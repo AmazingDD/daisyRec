@@ -58,7 +58,7 @@ class EASE(GeneralRecommender):
 
             slims = np.expand_dims(self.interaction_matrix[us, :].todense(), axis=1) # batch * item_num -> batch * 1* item_num
             sims = self.item_similarity[cands_ids, :].transpose(0, 2, 1) # batch * cand_num * item_num -> batch * item_num * cand_num
-            scores = np.einsum('BNi,BiM -> BNM', slims, sims).squeeze() # batch * 1 * cand_num -> batch * cand_num
+            scores = np.einsum('BNi,BiM -> BNM', slims, sims).squeeze(axis=1) # batch * 1 * cand_num -> batch * cand_num
             rank_ids = np.argsort(-scores)[:, :self.topk]
             rank_list = cands_ids[np.repeat(np.arange(len(rank_ids)).reshape(-1, 1), rank_ids.shape[1], axis=1), rank_ids]
 
@@ -67,7 +67,5 @@ class EASE(GeneralRecommender):
         return rec_ids
 
     def full_rank(self, u):
-        r = self.interaction_matrix[u, :] @ self.item_similarity
-        scores = np.array(r).flatten()
-
-        return np.argsort(-scores)[:self.topk]
+        scores = self.interaction_matrix[u, :] @ self.item_similarity
+        return np.argsort(-scores)[:, :self.topk]
