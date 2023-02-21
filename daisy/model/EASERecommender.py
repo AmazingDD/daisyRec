@@ -7,18 +7,14 @@
   year={2019}
 }
 '''
-from typing import TypedDict, Iterable, Tuple
+from typing import TypedDict, Iterable
 
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 import scipy.sparse as sp
 
 
 class EaseConfig(TypedDict):
-    INTER_NAME: str
-    IID_NAME: str
-    UID_NAME: str
     user_num: int
     item_num: int
     reg: float
@@ -26,20 +22,27 @@ class EaseConfig(TypedDict):
 class EASE:
     def __init__(self, config: EaseConfig) -> None:
         super(EASE, self).__init__(config)
-        self.inter_name = config['INTER_NAME']
-        self.iid_name = config['IID_NAME']
-        self.uid_name = config['UID_NAME']
-
         self.user_num = config['user_num']
         self.item_num = config['item_num']
-
         self.reg_weight = config['reg']
 
-    def fit(self, train_set: pd.DataFrame) -> None:
-        row_ids = train_set[self.uid_name].values
-        col_ids = train_set[self.iid_name].values
+    def fit(self, users: npt.NDArray[np.int64], items: npt.NDArray[np.int64], values: npt.NDArray[np.float64]) -> None:
+        """
+        if train_set is pd.DataFrame
+        users = train_set[self.uid_name].values
+        items = train_set[self.iid_name].values
         values = train_set[self.inter_name].values
+        
+        Args:
+            users (npt.NDArray[np.int64]): user ids
+            items (npt.NDArray[np.int64]): item ids
+            values (npt.NDArray[Union[np.float64]]): interaction value (For example: movie rating) 
+        """
 
+        
+        row_ids = users
+        col_ids = items
+        
         X = sp.csr_matrix((values, (row_ids, col_ids)), shape=(self.user_num, self.item_num)).astype(np.float32)
 
         G = X.T @ X # item_num * item_num
