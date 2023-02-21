@@ -10,9 +10,11 @@
 
 ### Overview
 
-daisyRec is a Python toolkit developed for benchmarking top-N recommendation task. The name DAISY stands for multi-**D**imension f**A**ir compar**I**son for recommender **SY**stem. ***(Please note that DaisyRec is still under testing. If there is any issue, please feel free to let us know)*** 
+daisyRec is a Python toolkit developed for benchmarking top-N recommendation task. The name DAISY stands for multi-**D**imension f**A**ir compar**I**son for recommender **SY**stem. 
 
-The figure below shows the overall framework of DaisyRec. 
+***[DaisyRec v2.0](https://github.com/recsys-benchmark/DaisyRec-v2.0) is aviable now with more functions, and you are highly recommended to use DaisyRec v2.0***
+
+The figure below shows the overall framework of DaisyRec-v2.0. 
 
 <p align="center">
 <img src="images/framework.png" align="center" width="90%" style="margin: 0 auto">
