@@ -10,10 +10,8 @@
 import numpy as np
 import scipy.sparse as sp
 
-from daisy.model.AbstractRecommender import GeneralRecommender
 
-
-class EASE(GeneralRecommender):
+class EASE:
     def __init__(self, config):
         super(EASE, self).__init__(config)
         self.inter_name = config['INTER_NAME']

@@ -15,11 +15,8 @@ long_description = 'daisyRec is a Python toolkit developed for benchmarking top-
 # install_requires = [x.strip() for x in all_reqs if 'git+' not in x]
 
 install_requires = [
-    'torch>=1.1.0',
     'numpy>=1.18.0',
-    'scikit-learn>=1.0.2',
     'scipy>=1.5.2',
-    'pandas>=1.0.5',
     'tqdm>=4.48.2',
     'pyyaml>=5.1.0',
     'colorlog==4.7.2',
@@ -29,7 +26,10 @@ install_requires = [
 setup_requires = []
 
 extras_require = {
-    'optuna': ['optuna>=2.10.0']
+    'optuna': ['optuna>=2.10.0'],
+    'torch': ['torch>=1.1.0'],
+    'scikit-learn': ['scikit-learn>=1.0.2'],
+    'pandas': ['pandas>=1.0.5'],
 }
 
 print('=============================================')
