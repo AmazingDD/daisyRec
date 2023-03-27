@@ -35,7 +35,6 @@ class Item2Vec(GeneralRecommender):
         self.shared_embedding = nn.Embedding(config['item_num'], config['factors'])
         self.lr = config['lr']
         self.epochs = config['epochs']
-        self.out_act = nn.Sigmoid()
 
         # default loss function for item2vec is cross-entropy
         self.loss_type = 'CL'
@@ -50,8 +49,6 @@ class Item2Vec(GeneralRecommender):
         target_emb = self.shared_embedding(target_i) # batch_size * embedding_size
         context_emb = self.shared_embedding(context_j) # batch_size * embedding_size
         output = torch.sum(target_emb * context_emb, dim=1)
-        output = self.out_act(output)
-
         return output.view(-1)
 
     def fit(self, train_loader):
